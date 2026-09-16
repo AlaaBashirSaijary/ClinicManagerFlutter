@@ -50,7 +50,11 @@ android {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                // rootProject, not the bare file() this module's own dir
+                // would resolve against — storeFile in key.properties is
+                // "keystore/…", relative to android/ (where key.properties
+                // itself lives), same as keystorePropertiesFile below.
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
             }
         }
