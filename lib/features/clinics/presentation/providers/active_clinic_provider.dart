@@ -1,0 +1,164 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/database/clinic_data_database.dart';
+import '../../../../core/di/injection.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../domain/entities/clinic.dart';
+import '../../domain/repositories/clinic_repository.dart';
+
+class ActiveClinicState {
+  const ActiveClinicState({
+    this.clinics = const [],
+    this.active,
+    this.isLoading = true,
+    this.error,
+  });
+
+  final List<Clinic> clinics;
+  final Clinic? active;
+  final bool isLoading;
+  final String? error;
+
+  bool get isReady => !isLoading && active != null;
+
+  ActiveClinicState copyWith({
+    List<Clinic>? clinics,
+    Clinic? active,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
+    return ActiveClinicState(
+      clinics: clinics ?? this.clinics,
+      active: active ?? this.active,
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+    );
+  }
+}
+
+/// Resolves and holds the clinic whose database file is currently open —
+/// the piece that makes the clinic switcher work. Loads once auth
+/// resolves (a signed-in session is required before any clinic data makes
+/// sense), defaulting to the last one used (remembered in
+/// SharedPreferences) or the first registered clinic otherwise.
+class ActiveClinicNotifier extends Notifier<ActiveClinicState> {
+  static const _prefKey = 'clinic_manager.active_clinic_id';
+
+  late final ClinicRepository _repository;
+
+  @override
+  ActiveClinicState build() {
+    _repository = sl<ClinicRepository>();
+
+    // Re-resolve whenever sign-in state changes (covers login, onboarding,
+    // and logout — the next sign-in may be a different clinic set entirely
+    // if this device is ever reset, though in practice it's the same one).
+    ref.listen(authProvider, (previous, next) {
+      if (next.isSignedIn && previous?.isSignedIn != true) {
+        _resolve();
+      }
+    });
+
+    if (ref.read(authProvider).isSignedIn) {
+      Future.microtask(_resolve);
+    }
+
+    return const ActiveClinicState();
+  }
+
+  Future<void> _resolve() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    final result = await _repository.list();
+    await result.fold(
+      (failure) async {
+        state = state.copyWith(isLoading: false, error: failure.message);
+      },
+      (clinics) async {
+        if (clinics.isEmpty) {
+          // Shouldn't happen post-onboarding, but fail loudly rather than
+          // silently showing an empty dashboard if it ever does.
+          state = state.copyWith(
+            isLoading: false,
+            error: 'لا توجد عيادة مسجّلة على هذا الجهاز.',
+          );
+          return;
+        }
+
+        final prefs = await SharedPreferences.getInstance();
+        final lastId = prefs.getInt(_prefKey);
+        final chosen = clinics.firstWhere(
+          (c) => c.id == lastId,
+          orElse: () => clinics.first,
+        );
+
+        await ClinicDataDatabase.instance.switchTo(chosen.dbFileName);
+        state = state.copyWith(
+          clinics: clinics,
+          active: chosen,
+          isLoading: false,
+        );
+      },
+    );
+  }
+
+  /// Switches to an already-registered clinic.
+  Future<void> switchTo(Clinic clinic) async {
+    if (state.active?.id == clinic.id) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    await ClinicDataDatabase.instance.switchTo(clinic.dbFileName);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefKey, clinic.id);
+
+    state = state.copyWith(active: clinic, isLoading: false);
+  }
+
+  /// Creates a new clinic (its own empty database file) and switches to it
+  /// immediately, so "add clinic" feels like one action, not two.
+  Future<bool> createAndSwitch(String name) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    final result = await _repository.create(name);
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return false;
+      },
+      (clinic) {
+        state = state.copyWith(clinics: [...state.clinics, clinic]);
+        switchTo(clinic);
+        return true;
+      },
+    );
+  }
+
+  Future<bool> rename(Clinic clinic, String newName) async {
+    final result = await _repository.rename(clinic.id, newName);
+    return result.fold(
+      (failure) {
+        state = state.copyWith(error: failure.message);
+        return false;
+      },
+      (renamed) {
+        state = state.copyWith(
+          clinics: [
+            for (final c in state.clinics)
+              if (c.id == renamed.id) renamed else c,
+          ],
+          active: state.active?.id == renamed.id ? renamed : state.active,
+          clearError: true,
+        );
+        return true;
+      },
+    );
+  }
+}
+
+final activeClinicProvider =
+    NotifierProvider<ActiveClinicNotifier, ActiveClinicState>(
+      ActiveClinicNotifier.new,
+    );

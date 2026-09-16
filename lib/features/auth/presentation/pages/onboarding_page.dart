@@ -1,0 +1,220 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
+import '../../../../core/widgets/gradient_button.dart';
+import '../providers/auth_provider.dart';
+import 'login_page.dart';
+
+/// First launch, no clinic/admin exists yet. On-device equivalent of running
+/// database/seeders/ClinicSeeder.php once, except the clinic actually types
+/// their own name/credentials instead of getting hardcoded demo ones.
+class OnboardingPage extends ConsumerStatefulWidget {
+  const OnboardingPage({super.key});
+
+  @override
+  ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
+}
+
+class _OnboardingPageState extends ConsumerState<OnboardingPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _clinicController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _passwordConfirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _clinicController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _passwordConfirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    await ref
+        .read(authProvider.notifier)
+        .completeOnboarding(
+          clinicName: _clinicController.text.trim(),
+          adminName: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('إعداد العيادة لأول مرة')),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.formWidth(context, base: 460),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FadeSlideIn(
+                      child: SvgPicture.asset(
+                        'assets/images/Doctor-pana.svg',
+                        height: Responsive.scale(context, 180),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FadeSlideIn(
+                      child: const Text(
+                        'هذا أول تشغيل للتطبيق — أنشئي حساب العيادة والمدير مرة واحدة.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.inkSoft,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    TextFormField(
+                      controller: _clinicController,
+                      decoration: const InputDecoration(
+                        labelText: 'اسم العيادة',
+                      ),
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'اسمك'),
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textDirection: TextDirection.ltr,
+                      decoration: const InputDecoration(
+                        labelText: 'البريد الإلكتروني',
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'مطلوب';
+                        if (!v.contains('@')) return 'بريد إلكتروني غير صحيح';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      textDirection: TextDirection.ltr,
+                      decoration: const InputDecoration(
+                        labelText: 'كلمة المرور',
+                      ),
+                      validator: (v) => (v == null || v.length < 8)
+                          ? '8 أحرف على الأقل'
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _passwordConfirmController,
+                      obscureText: true,
+                      textDirection: TextDirection.ltr,
+                      decoration: const InputDecoration(
+                        labelText: 'تأكيد كلمة المرور',
+                      ),
+                      validator: (v) => v != _passwordController.text
+                          ? 'كلمتا المرور غير متطابقتين'
+                          : null,
+                    ),
+                    if (auth.error != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        auth.error!,
+                        style: const TextStyle(
+                          color: AppColors.danger,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.lg),
+                    FadeSlideIn(
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.sky.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/images/Insurance-pana.svg',
+                              height: 64,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            const Expanded(
+                              child: Text(
+                                'بياناتك تبقى محفوظة على هذا الجهاز فقط ولا '
+                                'تُرسل لأي خادم خارجي — وستحصلين على رمز '
+                                'استرداد بعد إنشاء الحساب لاستعادته إذا نسيتِ '
+                                'كلمة المرور.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.inkSoft,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    auth.isLoading
+                        ? const Center(
+                            child: SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                              ),
+                            ),
+                          )
+                        : GradientButton(
+                            label: 'إنشاء الحساب والدخول',
+                            icon: Icons.check_rounded,
+                            onPressed: _submit,
+                          ),
+                    const SizedBox(height: AppSpacing.md),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                        ),
+                        child: const Text(
+                          'قمت بإعداد العيادة من قبل؟ تسجيل الدخول',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

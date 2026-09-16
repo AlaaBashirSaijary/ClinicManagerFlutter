@@ -1,0 +1,109 @@
+import 'package:equatable/equatable.dart';
+
+/// A future-dated booking — distinct from `Visit`, which is the historical
+/// exam record filled in *after* the patient is actually seen. This is what
+/// lets the doctor plan "من قادم بكرا؟" instead of only looking backward.
+enum AppointmentStatus {
+  scheduled,
+  completed,
+  cancelled;
+
+  String get label => switch (this) {
+    AppointmentStatus.scheduled => 'مجدول',
+    AppointmentStatus.completed => 'تمت الزيارة',
+    AppointmentStatus.cancelled => 'ملغى',
+  };
+
+  static AppointmentStatus fromValue(String value) =>
+      AppointmentStatus.values.firstWhere(
+        (s) => s.name == value,
+        orElse: () => AppointmentStatus.scheduled,
+      );
+}
+
+/// Consultations are the paid, first-look appointment; follow-ups are the
+/// free re-checks within the clinic's follow-up window afterward (see
+/// AppointmentRepository.getFollowUpDays). Staff can always override the
+/// suggested type when booking.
+enum AppointmentType {
+  consultation,
+  followUp;
+
+  String get label => switch (this) {
+    AppointmentType.consultation => 'كشفية',
+    AppointmentType.followUp => 'متابعة',
+  };
+
+  /// Consultations require payment; follow-ups within the window are free.
+  /// No fee amount is tracked — just whether one is owed.
+  bool get requiresPayment => this == AppointmentType.consultation;
+
+  static AppointmentType fromValue(String value) =>
+      AppointmentType.values.firstWhere(
+        (t) => t.name == value,
+        orElse: () => AppointmentType.consultation,
+      );
+}
+
+class Appointment extends Equatable {
+  const Appointment({
+    this.id,
+    required this.patientId,
+    required this.scheduledAt,
+    this.status = AppointmentStatus.scheduled,
+    this.type = AppointmentType.consultation,
+    this.notes,
+    this.createdAt,
+    this.patientName,
+    this.patientPhone,
+  });
+
+  final int? id;
+  final int patientId;
+  final DateTime scheduledAt;
+  final AppointmentStatus status;
+  final AppointmentType type;
+  final String? notes;
+  final DateTime? createdAt;
+
+  /// Populated only by list/lookup queries that join against `patients` —
+  /// never sent back to storage (see AppointmentModel.toMap).
+  final String? patientName;
+  final String? patientPhone;
+
+  Appointment copyWith({
+    int? id,
+    int? patientId,
+    DateTime? scheduledAt,
+    AppointmentStatus? status,
+    AppointmentType? type,
+    String? notes,
+    DateTime? createdAt,
+    String? patientName,
+    String? patientPhone,
+  }) {
+    return Appointment(
+      id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      status: status ?? this.status,
+      type: type ?? this.type,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      patientName: patientName ?? this.patientName,
+      patientPhone: patientPhone ?? this.patientPhone,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    id,
+    patientId,
+    scheduledAt,
+    status,
+    type,
+    notes,
+    patientName,
+    patientPhone,
+  ];
+}
