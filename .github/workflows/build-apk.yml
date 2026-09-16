@@ -1,0 +1,54 @@
+name: Build release APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.9"
+          channel: stable
+
+      # Recreates what android/.gitignore deliberately keeps out of the
+      # repo (see android/keystore/README.md) — the keystore and its
+      # passwords, held instead as encrypted repo secrets. Without this,
+      # the Gradle build falls back to debug signing (see the
+      # hasReleaseKeystore check in android/app/build.gradle.kts) instead
+      # of failing outright, so a missing secret would silently produce an
+      # unsigned-for-release APK rather than an error — the explicit check
+      # below turns that into a loud failure instead.
+      - name: Restore the release keystore
+        run: |
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "::error::KEYSTORE_BASE64 secret is not set — see android/keystore/README.md for what to upload."
+            exit 1
+          fi
+          mkdir -p android/keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/clinic_manager_release.jks
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEYSTORE_KEY_ALIAS }}
+          storeFile=keystore/clinic_manager_release.jks
+          EOF
+
+      - run: flutter pub get
+      - run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clinic-manager-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
