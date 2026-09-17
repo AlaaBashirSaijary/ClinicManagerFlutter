@@ -5,6 +5,7 @@ class ExamFieldTemplateModel extends ExamFieldTemplate {
     super.id,
     required super.label,
     super.hasSides,
+    super.isLongText,
     super.sortOrder,
   });
 
@@ -13,6 +14,7 @@ class ExamFieldTemplateModel extends ExamFieldTemplate {
         id: map['id']! as int,
         label: map['label']! as String,
         hasSides: (map['has_sides']! as int) == 1,
+        isLongText: (map['is_long_text']! as int) == 1,
         sortOrder: map['sort_order']! as int,
       );
 
@@ -20,6 +22,7 @@ class ExamFieldTemplateModel extends ExamFieldTemplate {
     return {
       'label': label,
       'has_sides': hasSides ? 1 : 0,
+      'is_long_text': isLongText ? 1 : 0,
       'sort_order': sortOrder,
     };
   }

@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:dartz/dartz.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/visit.dart';
 import '../../domain/entities/visit_field_value.dart';
@@ -16,6 +18,8 @@ class VisitRepositoryImpl implements VisitRepository {
 
   final VisitLocalDataSource _local;
 
+  static final _dateFormat = DateFormat('yyyy/MM/dd');
+
   @override
   Future<Either<Failure, List<Visit>>> listForPatient(int patientId) async {
     try {
@@ -28,7 +32,12 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<Either<Failure, Visit>> create(Visit visit) async {
     try {
-      return Right(await _local.create(VisitModel.fromEntity(visit)));
+      final created = await _local.create(VisitModel.fromEntity(visit));
+      await ActivityLogService.instance.log(
+        ActivityAction.visitCreated,
+        entityLabel: _dateFormat.format(created.visitDate),
+      );
+      return Right(created);
     } catch (e) {
       return Left(StorageFailure('تعذّر حفظ زيارة الفحص: $e'));
     }
@@ -37,7 +46,12 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<Either<Failure, Visit>> update(Visit visit) async {
     try {
-      return Right(await _local.update(VisitModel.fromEntity(visit)));
+      final updated = await _local.update(VisitModel.fromEntity(visit));
+      await ActivityLogService.instance.log(
+        ActivityAction.visitUpdated,
+        entityLabel: _dateFormat.format(updated.visitDate),
+      );
+      return Right(updated);
     } catch (e) {
       return Left(StorageFailure('تعذّر تحديث زيارة الفحص: $e'));
     }
@@ -46,7 +60,14 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<Either<Failure, void>> delete(int id) async {
     try {
+      final existing = await _local.find(id);
       await _local.delete(id);
+      await ActivityLogService.instance.log(
+        ActivityAction.visitDeleted,
+        entityLabel: existing == null
+            ? null
+            : _dateFormat.format(existing.visitDate),
+      );
       return const Right(null);
     } catch (e) {
       return Left(StorageFailure('تعذّر حذف زيارة الفحص: $e'));

@@ -12,6 +12,7 @@ import '../../../../core/widgets/pressable_scale.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../clinics/presentation/widgets/clinic_switcher.dart';
+import '../../../help/presentation/pages/help_guide_page.dart';
 import '../../domain/entities/patient.dart';
 import 'patient_detail_page.dart';
 import 'patient_form_page.dart';
@@ -289,6 +290,16 @@ class _DashboardHeader extends StatelessWidget {
                           child: ClinicSwitcher(compact: true, onDark: true),
                         ),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'دليل الاستخدام',
+                    icon: const Icon(
+                      Icons.help_outline_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const HelpGuidePage()),
                     ),
                   ),
                   Consumer(
@@ -615,8 +626,10 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// Up to 20 rows at a time (see PatientsListState.perPage) in a real table
-/// instead of an ever-growing scroll list, so 100+ patients stays usable.
+/// Up to 20 rows at a time (see PatientsListState.perPage) — a card-list of
+/// evenly proportioned columns (via Expanded/flex, not DataTable's
+/// content-fitted auto-widths, which read as cramped and uneven) instead of
+/// an ever-growing scroll list, so 100+ patients stays usable.
 class _PatientsTable extends StatelessWidget {
   const _PatientsTable({
     required this.patients,
@@ -637,107 +650,207 @@ class _PatientsTable extends StatelessWidget {
         boxShadow: AppShadows.card,
       ),
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 42,
-          dataRowMinHeight: 52,
-          dataRowMaxHeight: 60,
-          headingTextStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-            color: AppColors.aqua,
+      child: Column(
+        children: [
+          const _PatientsTableHeader(),
+          for (final (index, patient) in patients.indexed) ...[
+            if (index > 0) const Divider(height: 1, indent: AppSpacing.lg),
+            _PatientRow(
+              patient: patient,
+              onToggleStatus: () => onToggleStatus(patient.id!),
+              onOpen: () => onOpen(patient.id!),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Column widths every row below must match exactly, so headers line up
+/// with the cells under them instead of drifting the way DataTable's
+/// per-column auto-sizing could.
+class _PatientColumns {
+  const _PatientColumns._();
+
+  static const name = 3;
+  static const number = 2;
+  static const phone = 2;
+  static const status = 2;
+  static const action = 44.0; // fixed, not flex — one icon's worth of width
+}
+
+class _PatientsTableHeader extends StatelessWidget {
+  const _PatientsTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontWeight: FontWeight.w700,
+      fontSize: 11.5,
+      color: AppColors.aqua,
+      letterSpacing: 0.2,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      color: AppColors.sky.withValues(alpha: 0.5),
+      child: const Row(
+        children: [
+          Expanded(
+            flex: _PatientColumns.name,
+            child: Text('الاسم', style: style),
           ),
-          columns: const [
-            DataColumn(label: Text('الاسم')),
-            DataColumn(label: Text('رقم الملف')),
-            DataColumn(label: Text('الهاتف')),
-            DataColumn(label: Text('الحالة')),
-            DataColumn(label: Text('')),
-          ],
-          rows: [
-            for (final patient in patients)
-              DataRow(
-                cells: [
-                  DataCell(
-                    Text(
-                      patient.fullName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                    onTap: () => onOpen(patient.id!),
-                  ),
-                  DataCell(
-                    Text(
-                      patient.patientNumber ?? '—',
-                      style: const TextStyle(
-                        color: AppColors.aqua,
-                        fontSize: 12,
-                      ),
-                      textDirection: TextDirection.ltr,
-                    ),
-                    onTap: () => onOpen(patient.id!),
-                  ),
-                  DataCell(
-                    Text(
-                      patient.phone ?? '—',
-                      style: const TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: 12,
-                      ),
-                      textDirection: TextDirection.ltr,
-                    ),
-                    onTap: () => onOpen(patient.id!),
-                  ),
-                  DataCell(
-                    GestureDetector(
-                      onTap: () => onToggleStatus(patient.id!),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: patient.isActive
-                              ? AppColors.ok.withValues(alpha: 0.1)
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          patient.statusLabel,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: patient.isActive
-                                ? AppColors.ok
-                                : Colors.grey.shade600,
-                          ),
+          Expanded(
+            flex: _PatientColumns.number,
+            child: Text('رقم الملف', style: style),
+          ),
+          Expanded(
+            flex: _PatientColumns.phone,
+            child: Text('الهاتف', style: style),
+          ),
+          Expanded(
+            flex: _PatientColumns.status,
+            child: Text('الحالة', style: style, textAlign: TextAlign.center),
+          ),
+          SizedBox(width: _PatientColumns.action),
+        ],
+      ),
+    );
+  }
+}
+
+class _PatientRow extends StatelessWidget {
+  const _PatientRow({
+    required this.patient,
+    required this.onToggleStatus,
+    required this.onOpen,
+  });
+
+  final Patient patient;
+  final VoidCallback onToggleStatus;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: _PatientColumns.name,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppColors.aqua.withValues(alpha: 0.12),
+                      child: Text(
+                        patient.fullName.isNotEmpty ? patient.fullName[0] : '؟',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.aquaDeep,
+                          fontSize: 13,
                         ),
                       ),
                     ),
-                  ),
-                  DataCell(
-                    IconButton(
-                      tooltip: 'فتح الإضبارة',
-                      icon: const Icon(
-                        Icons.chevron_left_rounded,
-                        color: AppColors.aqua,
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        patient.fullName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                          color: AppColors.ink,
+                        ),
                       ),
-                      onPressed: () => onOpen(patient.id!),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-          ],
+              Expanded(
+                flex: _PatientColumns.number,
+                child: Text(
+                  patient.patientNumber ?? '—',
+                  style: const TextStyle(
+                    color: AppColors.aqua,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                  ),
+                  textDirection: TextDirection.ltr,
+                ),
+              ),
+              Expanded(
+                flex: _PatientColumns.phone,
+                child: Text(
+                  patient.phone ?? '—',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 12.5,
+                  ),
+                  textDirection: TextDirection.ltr,
+                ),
+              ),
+              Expanded(
+                flex: _PatientColumns.status,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: onToggleStatus,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: patient.isActive
+                            ? AppColors.ok.withValues(alpha: 0.1)
+                            : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        patient.statusLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: patient.isActive
+                              ? AppColors.ok
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: _PatientColumns.action,
+                child: const Icon(
+                  Icons.chevron_left_rounded,
+                  color: AppColors.lens,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// السابق/التالي, each with its arrow pointing *inward* toward the middle
+/// of the bar — the conventional RTL pagination pattern ("« السابق" /
+/// "التالي »"), built by hand instead of via TextButton.icon so the icon's
+/// position relative to its label is never left to an implicit default.
 class _PaginationBar extends StatelessWidget {
   const _PaginationBar({
     required this.page,
@@ -758,31 +871,95 @@ class _PaginationBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
-          TextButton.icon(
-            onPressed: onPrevious,
-            icon: const Icon(Icons.chevron_right_rounded),
-            label: const Text('السابق'),
+          _PagerButton(
+            label: 'السابق',
+            icon: Icons.chevron_left_rounded,
+            iconFirst: false,
+            onTap: onPrevious,
           ),
           const Spacer(),
-          Text(
-            'صفحة $page من $lastPage — $total مريض',
-            style: const TextStyle(color: AppColors.inkSoft, fontSize: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.sky.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'صفحة $page من $lastPage — $total مريض',
+              style: const TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const Spacer(),
-          TextButton.icon(
-            onPressed: onNext,
-            icon: const Icon(Icons.chevron_left_rounded),
-            label: const Text('التالي'),
+          _PagerButton(
+            label: 'التالي',
+            icon: Icons.chevron_right_rounded,
+            iconFirst: true,
+            onTap: onNext,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PagerButton extends StatelessWidget {
+  const _PagerButton({
+    required this.label,
+    required this.icon,
+    required this.iconFirst,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+
+  /// True to place the icon before the label in reading order (used by the
+  /// "next" button, whose icon points further into the bar from the left);
+  /// false places it after (the "previous" button, whose icon points into
+  /// the bar from the right) — explicit either way, not left to a default.
+  final bool iconFirst;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final color = enabled ? AppColors.aqua : AppColors.lens;
+    final iconWidget = Icon(icon, size: 18, color: color);
+    final labelWidget = Text(
+      label,
+      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
+    );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: iconFirst
+                ? [iconWidget, const SizedBox(width: 4), labelWidget]
+                : [labelWidget, const SizedBox(width: 4), iconWidget],
+          ),
+        ),
       ),
     );
   }

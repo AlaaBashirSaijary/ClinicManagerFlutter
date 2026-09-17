@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,6 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../legal/presentation/pages/privacy_policy_page.dart';
+import '../../../legal/presentation/pages/terms_of_use_page.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
 
@@ -181,6 +184,57 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Text.rich(
+                          TextSpan(
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.inkSoft,
+                              height: 1.6,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'بإنشاء الحساب أنتِ توافقين على ',
+                              ),
+                              TextSpan(
+                                text: 'سياسة الخصوصية',
+                                style: const TextStyle(
+                                  color: AppColors.aqua,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const PrivacyPolicyPage(),
+                                    ),
+                                  ),
+                              ),
+                              const TextSpan(text: ' و'),
+                              TextSpan(
+                                text: 'شروط الاستخدام',
+                                style: const TextStyle(
+                                  color: AppColors.aqua,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const TermsOfUsePage(),
+                                    ),
+                                  ),
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
                     auth.isLoading
                         ? const Center(
                             child: SizedBox(

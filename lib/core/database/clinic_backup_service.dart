@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
 
+import 'activity_log_service.dart';
 import 'app_database.dart';
 import 'clinic_data_database.dart';
 
@@ -71,6 +73,11 @@ class ClinicBackupService {
 
     await _pruneOldBackups(dir, baseName);
 
+    await ActivityLogService.instance.log(
+      ActivityAction.backupCreated,
+      entityLabel: backupName,
+    );
+
     return ClinicBackup(
       filePath: copied.path,
       fileName: backupName,
@@ -135,9 +142,40 @@ class ClinicBackupService {
     return backups.first.createdAt;
   }
 
-  /// Overwrites the active clinic's live file with [backup], closing and
-  /// reopening the connection so the copy isn't blocked by an open handle.
-  /// Destructive — callers must confirm with the user first.
+  /// Copies [backup] to a temp file beside [targetPath] and opens it once
+  /// to confirm it's actually a readable SQLite database *before*
+  /// [targetPath] is touched at all — returns the validated temp path for
+  /// the caller to swap into place with a rename (atomic on the
+  /// filesystems this app runs on) once it's ready to. Deletes the temp
+  /// file and throws instead if the backup turns out corrupt.
+  Future<String> _copyToValidatedTemp(
+    ClinicBackup backup,
+    String targetPath,
+  ) async {
+    final tempPath = '$targetPath.restoring';
+    await File(backup.filePath).copy(tempPath);
+
+    try {
+      final probe = await openDatabase(tempPath, readOnly: true);
+      await probe.close();
+    } catch (e) {
+      await File(tempPath).delete();
+      throw StateError('ملف النسخة الاحتياطية تالف أو غير صالح: $e');
+    }
+
+    return tempPath;
+  }
+
+  /// Overwrites the active clinic's live file with [backup] — the "استبدال"
+  /// choice, destructive to the clinic's current data. Callers must confirm
+  /// with the user first (see AdminHomePage's restore-choice dialog, which
+  /// also offers [restoreBackupInto] as the non-destructive alternative).
+  /// The current live file is snapshotted as an ordinary backup right
+  /// before being touched, so a restore done by mistake can itself be
+  /// undone from the same "النسخ المحفوظة" list afterward. The backup is
+  /// copied and validated *before* the live connection is closed, so the
+  /// clinic stays usable for as long as possible and only goes offline for
+  /// the brief close-rename-reopen swap itself.
   Future<void> restoreBackup(ClinicBackup backup) async {
     final activeFileName = ClinicDataDatabase.instance.activeDbFileName;
     if (activeFileName == null) {
@@ -147,8 +185,33 @@ class ClinicBackupService {
     final folder = await AppDatabase.instance.currentFolder();
     final targetPath = p.join(folder, activeFileName);
 
+    if (await File(targetPath).exists()) {
+      await createBackup();
+    }
+
+    final tempPath = await _copyToValidatedTemp(backup, targetPath);
+
     await ClinicDataDatabase.instance.closeActive();
-    await File(backup.filePath).copy(targetPath);
+    await File(tempPath).rename(targetPath);
     await ClinicDataDatabase.instance.switchTo(activeFileName);
+
+    await ActivityLogService.instance.log(
+      ActivityAction.backupRestored,
+      entityLabel: backup.fileName,
+    );
+  }
+
+  /// Copies [backup]'s bytes into the file for [dbFileName] — the
+  /// non-destructive "عيادة جديدة منفصلة" restore choice. Meant to be
+  /// called right after a brand-new, still-empty clinic is registered (see
+  /// ActiveClinicNotifier.restoreBackupAsNewClinic), before that clinic's
+  /// file has ever been opened, so it starts out holding this backup's data
+  /// instead of a blank schema — the currently-active clinic is never
+  /// touched at all.
+  Future<void> restoreBackupInto(String dbFileName, ClinicBackup backup) async {
+    final folder = await AppDatabase.instance.currentFolder();
+    final targetPath = p.join(folder, dbFileName);
+    final tempPath = await _copyToValidatedTemp(backup, targetPath);
+    await File(tempPath).rename(targetPath);
   }
 }

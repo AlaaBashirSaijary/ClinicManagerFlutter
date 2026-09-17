@@ -9,11 +9,16 @@ import '../../../../core/security/app_lock_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinics/domain/entities/clinic.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
+import '../../../help/presentation/pages/help_guide_page.dart';
+import '../../../legal/presentation/pages/privacy_policy_page.dart';
+import '../../../legal/presentation/pages/terms_of_use_page.dart';
 import '../../../reports/presentation/pages/monthly_report_page.dart';
 import '../../../visits/presentation/pages/exam_template_settings_page.dart';
+import 'activity_log_page.dart';
 
 /// The "الإدارة" tab: everything a clinic owner needs to manage their own
 /// account, the clinics registered on this device, and where the data
@@ -34,12 +39,16 @@ class AdminHomePage extends ConsumerWidget {
               spacing: AppSpacing.xl,
               children: [
                 _AccountSection(),
+                _HelpSection(),
+                _UsersSection(),
                 _SecuritySection(),
                 _ClinicsSection(),
                 _ExamFormSection(),
                 _ReportsSection(),
+                _ActivityLogSection(),
                 _BackupSection(),
                 _StorageSection(),
+                _LegalSection(),
                 _AboutFooter(),
               ],
             ),
@@ -432,6 +441,388 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Text('حفظ'),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================== دليل الاستخدام ==============================
+
+/// A direct link to the in-app help guide — the same content published as
+/// a standalone web page, but reachable without leaving the app. Also
+/// reachable from the dashboard header for staff who never see this page
+/// (non-admin accounts).
+class _HelpSection extends StatelessWidget {
+  const _HelpSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.menu_book_rounded,
+          title: 'دليل الاستخدام',
+          subtitle: 'شرح تفصيلي لكل شاشة وميزة في التطبيق',
+        ),
+        _SectionCard(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const HelpGuidePage())),
+            icon: const Icon(Icons.menu_book_rounded, size: 18),
+            label: const Text('فتح دليل الاستخدام'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================== المستخدمون ==============================
+
+/// Separate accounts per staff member instead of one shared login — lets
+/// the clinic add nurses (or a second admin, e.g. a co-owner doctor)
+/// without everyone using the same credentials, and gives an admin a way
+/// to reset a colleague's forgotten password directly (see
+/// AuthLocalDataSource.adminSetPassword) instead of that being a dead end.
+class _UsersSection extends ConsumerStatefulWidget {
+  const _UsersSection();
+
+  @override
+  ConsumerState<_UsersSection> createState() => _UsersSectionState();
+}
+
+class _UsersSectionState extends ConsumerState<_UsersSection> {
+  List<AppUser> _users = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final users = await ref.read(authProvider.notifier).listClinicUsers();
+    if (!mounted) return;
+    setState(() {
+      _users = users;
+      _loading = false;
+    });
+  }
+
+  Future<void> _addUser() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _AddUserDialog(),
+    );
+    if (result == true) _load();
+  }
+
+  Future<void> _resetPassword(AppUser user) async {
+    final controller = TextEditingController();
+    final newPassword = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('كلمة مرور جديدة لـ ${user.name}'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: true,
+          textDirection: TextDirection.ltr,
+          decoration: const InputDecoration(labelText: 'كلمة المرور الجديدة'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+    if (newPassword == null || newPassword.isEmpty || !mounted) return;
+
+    final error = await ref
+        .read(authProvider.notifier)
+        .adminSetPassword(userId: user.id, newPassword: newPassword);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? 'تم تغيير كلمة مرور ${user.name}.')),
+    );
+  }
+
+  Future<void> _deleteUser(AppUser user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('حذف حساب ${user.name}؟'),
+        content: const Text(
+          'لن يعود بإمكان هذا الشخص تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('حذف', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final error = await ref
+        .read(authProvider.notifier)
+        .deleteStaffUser(user.id);
+    if (!mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    } else {
+      _load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUserId = ref.watch(authProvider).user?.id;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.group_rounded,
+          title: 'المستخدمون',
+          subtitle: 'حساب مستقل لكل من يستخدم التطبيق بهذه العيادة',
+        ),
+        _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_loading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else
+                for (final user in _users) ...[
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: AppColors.aqua,
+                        child: Text(
+                          user.name.isNotEmpty ? user.name[0] : '؟',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              user.email,
+                              textDirection: TextDirection.ltr,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.sky,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          user.isAdmin ? 'مدير' : 'ممرضة',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.aquaDeep,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'إعادة تعيين كلمة المرور',
+                        icon: const Icon(Icons.password_rounded, size: 18),
+                        onPressed: () => _resetPassword(user),
+                      ),
+                      if (user.id != currentUserId)
+                        IconButton(
+                          tooltip: 'حذف الحساب',
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: AppColors.danger,
+                          ),
+                          onPressed: () => _deleteUser(user),
+                        ),
+                    ],
+                  ),
+                  if (user != _users.last) const Divider(height: AppSpacing.lg),
+                ],
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: _addUser,
+                icon: const Icon(Icons.person_add_alt_1_rounded),
+                label: const Text('إضافة مستخدم جديد'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddUserDialog extends ConsumerStatefulWidget {
+  const _AddUserDialog();
+
+  @override
+  ConsumerState<_AddUserDialog> createState() => _AddUserDialogState();
+}
+
+class _AddUserDialogState extends ConsumerState<_AddUserDialog> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isAdmin = false;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    final error = await ref
+        .read(authProvider.notifier)
+        .createStaffUser(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          isAdmin: _isAdmin,
+        );
+
+    if (!mounted) return;
+
+    if (error == null) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() {
+        _saving = false;
+        _error = error;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('إضافة مستخدم جديد'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'الاسم'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textDirection: TextDirection.ltr,
+            decoration: const InputDecoration(labelText: 'البريد الإلكتروني'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            textDirection: TextDirection.ltr,
+            decoration: const InputDecoration(labelText: 'كلمة المرور'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('ممرضة'),
+                selected: !_isAdmin,
+                onSelected: (_) => setState(() => _isAdmin = false),
+              ),
+              ChoiceChip(
+                label: const Text('مدير'),
+                selected: _isAdmin,
+                onSelected: (_) => setState(() => _isAdmin = true),
+              ),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: const TextStyle(color: AppColors.danger, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          child: const Text('إلغاء'),
+        ),
+        TextButton(
+          onPressed: _saving ? null : _submit,
+          child: _saving
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('إنشاء'),
         ),
       ],
     );
@@ -871,16 +1262,162 @@ class _ReportsSection extends StatelessWidget {
   }
 }
 
+// ============================== سجل النشاط ==============================
+
+class _ActivityLogSection extends StatelessWidget {
+  const _ActivityLogSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.history_rounded,
+          title: 'سجل النشاط',
+          subtitle: 'من فعل ماذا ومتى — لكل التغييرات في هذه العيادة',
+        ),
+        _SectionCard(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ActivityLogPage())),
+            icon: const Icon(Icons.history_rounded, size: 18),
+            label: const Text('عرض سجل النشاط'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ============================== النسخ الاحتياطي ==============================
 
-class _BackupSection extends StatefulWidget {
+enum _RestoreChoice { newClinic, replace }
+
+/// Lets the doctor choose, with the consequence of each spelled out
+/// plainly, instead of the app only ever offering a full destructive
+/// replace: restoring an old backup doesn't have to mean losing everything
+/// entered since — it can become its own separate clinic instead, with the
+/// active one left completely untouched.
+class _RestoreChoiceDialog extends StatelessWidget {
+  const _RestoreChoiceDialog({required this.backup, required this.dateFormat});
+
+  final ClinicBackup backup;
+  final DateFormat dateFormat;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('استعادة نسخة ${dateFormat.format(backup.createdAt)}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _RestoreOptionTile(
+            icon: Icons.library_add_rounded,
+            color: AppColors.ok,
+            title: 'استعادة كعيادة جديدة منفصلة',
+            subtitle:
+                'الخيار الأكثر أمانًا. لا يتغيّر أي شيء في بيانات العيادة '
+                'الحالية إطلاقًا — تُضاف بيانات هذه النسخة كعيادة جديدة '
+                'مستقلة تمامًا، يمكن التبديل إليها أو تعديل اسمها لاحقًا، '
+                'بينما تبقى العيادة الحالية كما هي دون أي مساس.',
+            onTap: () => Navigator.of(context).pop(_RestoreChoice.newClinic),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _RestoreOptionTile(
+            icon: Icons.warning_amber_rounded,
+            color: AppColors.danger,
+            title: 'استبدال بيانات العيادة الحالية',
+            subtitle:
+                'يمسح كل بيانات العيادة الحالية ويستبدلها بالكامل بمحتوى '
+                'هذه النسخة. يأخذ التطبيق نسخة احتياطية تلقائية من البيانات '
+                'الحالية أولًا احتياطًا، لكن الاستبدال نفسه فوري داخل '
+                'العيادة الحالية نفسها.',
+            onTap: () => Navigator.of(context).pop(_RestoreChoice.replace),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('إلغاء'),
+        ),
+      ],
+    );
+  }
+}
+
+class _RestoreOptionTile extends StatelessWidget {
+  const _RestoreOptionTile({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.inkSoft,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BackupSection extends ConsumerStatefulWidget {
   const _BackupSection();
 
   @override
-  State<_BackupSection> createState() => _BackupSectionState();
+  ConsumerState<_BackupSection> createState() => _BackupSectionState();
 }
 
-class _BackupSectionState extends State<_BackupSection> {
+class _BackupSectionState extends ConsumerState<_BackupSection> {
   List<ClinicBackup> _backups = [];
   bool _loading = true;
   bool _creating = false;
@@ -931,38 +1468,59 @@ class _BackupSectionState extends State<_BackupSection> {
   }
 
   Future<void> _restoreBackup(ClinicBackup backup) async {
-    final confirmed = await showDialog<bool>(
+    final choice = await showDialog<_RestoreChoice>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('استعادة هذه النسخة؟'),
-        content: Text(
-          'سيتم استبدال بيانات العيادة الحالية بالكامل بنسخة '
-          '${_dateFormat.format(backup.createdAt)}. لا يمكن التراجع عن هذا الإجراء.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'استعادة',
-              style: TextStyle(color: AppColors.danger),
-            ),
-          ),
-        ],
-      ),
+      builder: (dialogContext) =>
+          _RestoreChoiceDialog(backup: backup, dateFormat: _dateFormat),
     );
+    if (choice == null) return;
 
-    if (confirmed != true) return;
+    switch (choice) {
+      case _RestoreChoice.newClinic:
+        await _restoreAsNewClinic(backup);
+      case _RestoreChoice.replace:
+        await _replaceWithBackup(backup);
+    }
+  }
 
+  /// The safe choice: the active clinic's data is never touched — this
+  /// backup becomes its own separate clinic instead.
+  Future<void> _restoreAsNewClinic(ClinicBackup backup) async {
+    setState(() => _message = null);
+
+    final currentName = ref.read(activeClinicProvider).active?.name ?? 'عيادة';
+    final suggestedName =
+        '$currentName (نسخة ${_dateFormat.format(backup.createdAt)})';
+
+    final ok = await ref
+        .read(activeClinicProvider.notifier)
+        .restoreBackupAsNewClinic(backup, suggestedName);
+
+    if (!mounted) return;
+    setState(() {
+      if (ok) {
+        _message =
+            'تمت الاستعادة كعيادة جديدة باسم "$suggestedName" — '
+            'يمكن تعديل الاسم أو التبديل إليها من قسم "العيادات" أعلاه.';
+        _messageIsError = false;
+      } else {
+        _message =
+            ref.read(activeClinicProvider).error ??
+            'تعذّرت الاستعادة كعيادة جديدة.';
+        _messageIsError = true;
+      }
+    });
+  }
+
+  /// The destructive choice: overwrites the active clinic's current data.
+  Future<void> _replaceWithBackup(ClinicBackup backup) async {
     setState(() => _message = null);
     try {
       await ClinicBackupService.instance.restoreBackup(backup);
       if (!mounted) return;
       setState(() {
-        _message = 'تمت استعادة النسخة الاحتياطية بنجاح.';
+        _message =
+            'تمت استعادة النسخة الاحتياطية بنجاح (استبدال البيانات الحالية).';
         _messageIsError = false;
       });
     } catch (e) {
@@ -1239,6 +1797,53 @@ class _StorageSectionState extends State<_StorageSection> {
                   'توصيله وأن تطبيق "الملفات" يقدر يشوفه.',
                   style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================== قانوني ==============================
+
+/// Links to the privacy policy and terms of use — both are still drafts
+/// (see the warning banner at the top of each page) until reviewed by a
+/// lawyer, but living here means they're always one tap away for a doctor
+/// who wants to check what they agreed to, not just shown once during
+/// onboarding and then forgotten.
+class _LegalSection extends StatelessWidget {
+  const _LegalSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.gavel_rounded,
+          title: 'قانوني',
+          subtitle: 'سياسة الخصوصية وشروط الاستخدام',
+        ),
+        _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+                ),
+                icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+                label: const Text('سياسة الخصوصية'),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
+                ),
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: const Text('شروط الاستخدام'),
               ),
             ],
           ),

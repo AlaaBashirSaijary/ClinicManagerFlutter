@@ -10,9 +10,13 @@ import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/usecases/get_follow_up_days.dart';
+import '../../domain/usecases/get_half_price_days.dart';
 import '../../domain/usecases/set_follow_up_days.dart';
+import '../../domain/usecases/set_half_price_days.dart';
 import '../providers/appointments_provider.dart';
+import '../widgets/appointment_type_style.dart';
 import 'appointment_form_page.dart';
+import 'queue_display_page.dart';
 
 /// Day-by-day view of scheduled appointments — the future-looking
 /// counterpart to the patients dashboard, which only shows history.
@@ -27,18 +31,26 @@ class AppointmentsPage extends ConsumerWidget {
     return day.year == now.year && day.month == now.month && day.day == now.day;
   }
 
-  Future<void> _editFollowUpDays(BuildContext context) async {
-    final current = await sl<GetFollowUpDays>().call(const NoParams());
+  /// One dialog for both booking windows: how long a re-check stays free,
+  /// and how much further after that it stays half price before counting
+  /// as a fresh, full-price consultation again — both fully doctor-set, no
+  /// fixed defaults baked into the flow itself.
+  Future<void> _editBookingWindows(BuildContext context) async {
+    final followUpResult = await sl<GetFollowUpDays>().call(const NoParams());
+    final halfPriceResult = await sl<GetHalfPriceDays>().call(const NoParams());
     if (!context.mounted) return;
 
-    final controller = TextEditingController(
-      text: current.fold((_) => '30', (days) => '$days'),
+    final followUpController = TextEditingController(
+      text: followUpResult.fold((_) => '30', (days) => '$days'),
+    );
+    final halfPriceController = TextEditingController(
+      text: halfPriceResult.fold((_) => '60', (days) => '$days'),
     );
 
-    final result = await showDialog<int>(
+    final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('فترة المتابعة المجانية'),
+        title: const Text('فترات حجز المواعيد'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,34 +60,57 @@ class AppointmentsPage extends ConsumerWidget {
               'مجانية تلقائيًا.',
               style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
-              controller: controller,
+              controller: followUpController,
               autofocus: true,
               textDirection: TextDirection.ltr,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'عدد الأيام'),
+              decoration: const InputDecoration(
+                labelText: 'متابعة مجانية (يوم)',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            const Text(
+              'عدد الأيام الإضافية بعدها — حتى هذا الحد تُعتبر المواعيد '
+              '"نصف معاينة" (نصف الأجرة)، وبعده تعود كشفية كاملة.',
+              style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: halfPriceController,
+              textDirection: TextDirection.ltr,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'نصف معاينة حتى (يوم)',
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('إلغاء'),
           ),
           TextButton(
-            onPressed: () {
-              final days = int.tryParse(controller.text.trim());
-              Navigator.of(dialogContext).pop(days);
-            },
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('حفظ'),
           ),
         ],
       ),
     );
 
-    if (result == null || result <= 0) return;
-    await sl<SetFollowUpDays>().call(result);
+    if (result != true) return;
+
+    final followUpDays = int.tryParse(followUpController.text.trim());
+    final halfPriceDays = int.tryParse(halfPriceController.text.trim());
+
+    if (followUpDays != null && followUpDays > 0) {
+      await sl<SetFollowUpDays>().call(followUpDays);
+    }
+    if (halfPriceDays != null && halfPriceDays > 0) {
+      await sl<SetHalfPriceDays>().call(halfPriceDays);
+    }
   }
 
   /// Confirms, then deletes and reports whether it actually happened — used
@@ -116,18 +151,27 @@ class AppointmentsPage extends ConsumerWidget {
     final notifier = ref.read(appointmentsProvider.notifier);
     final day = state.day ?? DateTime.now();
 
-    final paidCount = state.appointments
-        .where((a) => a.type.requiresPayment)
+    final fullCount = state.appointments
+        .where((a) => a.type == AppointmentType.consultation)
         .length;
-    final freeCount = state.appointments.length - paidCount;
+    final halfCount = state.appointments
+        .where((a) => a.type == AppointmentType.halfConsultation)
+        .length;
+    final freeCount = state.appointments
+        .where((a) => a.type == AppointmentType.followUp)
+        .length;
 
     return Scaffold(
       body: Column(
         children: [
           _AppointmentsHeader(
-            onSettings: () => _editFollowUpDays(context),
+            onSettings: () => _editBookingWindows(context),
+            onQueueDisplay: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const QueueDisplayPage())),
             total: state.appointments.length,
-            paid: paidCount,
+            full: fullCount,
+            half: halfCount,
             free: freeCount,
           ),
           Transform.translate(
@@ -208,14 +252,18 @@ class AppointmentsPage extends ConsumerWidget {
 class _AppointmentsHeader extends StatelessWidget {
   const _AppointmentsHeader({
     required this.onSettings,
+    required this.onQueueDisplay,
     required this.total,
-    required this.paid,
+    required this.full,
+    required this.half,
     required this.free,
   });
 
   final VoidCallback onSettings;
+  final VoidCallback onQueueDisplay;
   final int total;
-  final int paid;
+  final int full;
+  final int half;
   final int free;
 
   @override
@@ -252,7 +300,12 @@ class _AppointmentsHeader extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'فترة المتابعة المجانية',
+                    tooltip: 'شاشة الانتظار',
+                    icon: const Icon(Icons.tv_rounded, color: Colors.white),
+                    onPressed: onQueueDisplay,
+                  ),
+                  IconButton(
+                    tooltip: 'فترات حجز المواعيد',
                     icon: const Icon(Icons.timer_outlined, color: Colors.white),
                     onPressed: onSettings,
                   ),
@@ -271,15 +324,23 @@ class _AppointmentsHeader extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _HeaderStat(
-                      icon: Icons.payments_rounded,
-                      value: '$paid',
+                      icon: AppointmentType.consultation.icon,
+                      value: '$full',
                       label: 'كشفية',
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _HeaderStat(
-                      icon: Icons.volunteer_activism_rounded,
+                      icon: AppointmentType.halfConsultation.icon,
+                      value: '$half',
+                      label: 'نصف معاينة',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _HeaderStat(
+                      icon: AppointmentType.followUp.icon,
                       value: '$free',
                       label: 'متابعة',
                     ),
@@ -560,13 +621,9 @@ class _AppointmentCard extends StatelessWidget {
                             ),
                           ),
                           Icon(
-                            appointment.type.requiresPayment
-                                ? Icons.payments_rounded
-                                : Icons.volunteer_activism_rounded,
+                            appointment.type.icon,
                             size: 12,
-                            color: appointment.type.requiresPayment
-                                ? AppColors.danger
-                                : AppColors.ok,
+                            color: appointment.type.color,
                           ),
                           const SizedBox(width: 3),
                           Text(
@@ -574,9 +631,7 @@ class _AppointmentCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: appointment.type.requiresPayment
-                                  ? AppColors.danger
-                                  : AppColors.ok,
+                              color: appointment.type.color,
                             ),
                           ),
                         ],

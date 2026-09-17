@@ -1,10 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/security/current_actor.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login.dart';
+
+/// A ValidationFailure's own [Failure.message] is a generic placeholder —
+/// the real, user-facing text lives in its field errors. Everywhere else
+/// in the app that's read directly (a form's `errorText:` per field); here
+/// there's no per-field UI, so surface the first field error as the single
+/// message instead of the generic one.
+String _errorMessage(Failure failure) {
+  if (failure is ValidationFailure && failure.fieldErrors.isNotEmpty) {
+    return failure.fieldErrors.values.first;
+  }
+  return failure.message;
+}
 
 /// Mirrors what `auth()->user()` gives every Blade view: null while
 /// unresolved/signed-out, otherwise the signed-in AppUser. [needsOnboarding]
@@ -66,6 +80,13 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState();
   }
 
+  /// Keeps CurrentActor in sync with whoever's signed in — see its doc
+  /// comment for why ActivityLogService reads from there instead of this
+  /// state directly.
+  void _syncActor(AppUser? user) {
+    CurrentActor.instance.set(userId: user?.id, userName: user?.name);
+  }
+
   Future<void> _restore() async {
     if (!await _local.hasAnyUser()) {
       state = state.copyWith(needsOnboarding: true, isLoading: false);
@@ -73,6 +94,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     final user = await _repository.currentUser();
+    _syncActor(user);
     state = state.copyWith(user: user, isLoading: false);
   }
 
@@ -87,6 +109,7 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       },
       (user) {
+        _syncActor(user);
         state = state.copyWith(user: user, isLoading: false, clearError: true);
         return true;
       },
@@ -95,7 +118,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> signOut() async {
     await _repository.logout();
-    state = state.copyWith(user: null);
+    _syncActor(null);
     state = AuthState(isLoading: false, needsOnboarding: false, user: null);
   }
 
@@ -114,6 +137,7 @@ class AuthNotifier extends Notifier<AuthState> {
       password: password,
     );
     await _local.rememberSession(account.user.id);
+    _syncActor(account.user);
 
     state = AuthState(
       user: account.user,
@@ -140,6 +164,7 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       },
       (user) {
+        _syncActor(user);
         state = state.copyWith(user: user, clearError: true);
         return true;
       },
@@ -188,6 +213,57 @@ class AuthNotifier extends Notifier<AuthState> {
 
     final result = await _repository.regenerateRecoveryCode(userId);
     return result.fold((failure) => null, (code) => code);
+  }
+
+  /// Every account in the signed-in admin's clinic — empty (not an error)
+  /// if called before a clinic is active.
+  Future<List<AppUser>> listClinicUsers() async {
+    final clinicId = state.user?.clinicId;
+    if (clinicId == null) return const [];
+
+    final result = await _repository.listClinicUsers(clinicId);
+    return result.fold((_) => const [], (users) => users);
+  }
+
+  /// Adds a staff account to the signed-in admin's clinic. Returns the
+  /// failure message on error, or null on success.
+  Future<String?> createStaffUser({
+    required String name,
+    required String email,
+    required String password,
+    required bool isAdmin,
+  }) async {
+    final clinicId = state.user?.clinicId;
+    if (clinicId == null) return 'لا توجد عيادة نشطة.';
+
+    final result = await _repository.createStaffUser(
+      clinicId: clinicId,
+      name: name,
+      email: email,
+      password: password,
+      isAdmin: isAdmin,
+    );
+    return result.fold(_errorMessage, (_) => null);
+  }
+
+  /// Admin resets another account's password — returns the failure message
+  /// on error, or null on success.
+  Future<String?> adminSetPassword({
+    required int userId,
+    required String newPassword,
+  }) async {
+    final result = await _repository.adminSetPassword(
+      userId: userId,
+      newPassword: newPassword,
+    );
+    return result.fold(_errorMessage, (_) => null);
+  }
+
+  /// Removes a staff account — returns the failure message on error (e.g.
+  /// "that's the clinic's last admin"), or null on success.
+  Future<String?> deleteStaffUser(int userId) async {
+    final result = await _repository.deleteStaffUser(userId);
+    return result.fold(_errorMessage, (_) => null);
   }
 }
 

@@ -1,29 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../appointments/domain/entities/appointment.dart';
 import '../../../appointments/domain/usecases/get_monthly_appointment_counts.dart';
+import '../../../appointments/presentation/widgets/appointment_type_style.dart';
+import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../patients/domain/usecases/get_new_patients_count.dart';
+import '../pdf/monthly_report_pdf_export.dart';
 
 /// A per-month snapshot for the clinic owner: how many paid consultations
 /// and free follow-ups happened, and how many new patients came in — all
 /// derived from data already recorded (appointment type, patient
 /// created_at), no separate bookkeeping needed.
-class MonthlyReportPage extends StatefulWidget {
+class MonthlyReportPage extends ConsumerStatefulWidget {
   const MonthlyReportPage({super.key});
 
   @override
-  State<MonthlyReportPage> createState() => _MonthlyReportPageState();
+  ConsumerState<MonthlyReportPage> createState() => _MonthlyReportPageState();
 }
 
-class _MonthlyReportPageState extends State<MonthlyReportPage> {
+class _MonthlyReportPageState extends ConsumerState<MonthlyReportPage> {
   static final _monthFormat = DateFormat('MMMM yyyy', 'ar');
 
   late DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   bool _loading = true;
+  bool _exporting = false;
   int _consultations = 0;
+  int _halfConsultations = 0;
   int _followUps = 0;
   int _newPatients = 0;
   String? _error;
@@ -70,6 +76,7 @@ class _MonthlyReportPageState extends State<MonthlyReportPage> {
       _error = appointmentsError ?? patientsError;
       appointmentsResult.fold((_) {}, (counts) {
         _consultations = counts[AppointmentType.consultation] ?? 0;
+        _halfConsultations = counts[AppointmentType.halfConsultation] ?? 0;
         _followUps = counts[AppointmentType.followUp] ?? 0;
       });
       patientsResult.fold((_) {}, (count) => _newPatients = count);
@@ -81,10 +88,46 @@ class _MonthlyReportPageState extends State<MonthlyReportPage> {
     _load();
   }
 
+  Future<void> _export() async {
+    setState(() => _exporting = true);
+    try {
+      await MonthlyReportPdfExport.export(
+        clinicName: ref.read(activeClinicProvider).active?.name ?? '',
+        month: _month,
+        consultations: _consultations,
+        halfConsultations: _halfConsultations,
+        followUps: _followUps,
+        newPatients: _newPatients,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('تعذّر تصدير التقرير: $e')));
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('التقرير الشهري')),
+      appBar: AppBar(
+        title: const Text('التقرير الشهري'),
+        actions: [
+          IconButton(
+            tooltip: 'طباعة / تصدير PDF',
+            onPressed: _loading || _exporting ? null : _export,
+            icon: _exporting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_rounded),
+          ),
+        ],
+      ),
       body: ResponsiveBody(
         child: Column(
           children: [
@@ -158,8 +201,8 @@ class _MonthlyReportPageState extends State<MonthlyReportPage> {
                           children: [
                             Expanded(
                               child: _ReportTile(
-                                icon: Icons.payments_rounded,
-                                color: AppColors.danger,
+                                icon: AppointmentType.consultation.icon,
+                                color: AppointmentType.consultation.color,
                                 value: _consultations,
                                 label: 'كشفيات مدفوعة',
                               ),
@@ -167,8 +210,17 @@ class _MonthlyReportPageState extends State<MonthlyReportPage> {
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: _ReportTile(
-                                icon: Icons.volunteer_activism_rounded,
-                                color: AppColors.ok,
+                                icon: AppointmentType.halfConsultation.icon,
+                                color: AppointmentType.halfConsultation.color,
+                                value: _halfConsultations,
+                                label: 'نصف معاينة',
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: _ReportTile(
+                                icon: AppointmentType.followUp.icon,
+                                color: AppointmentType.followUp.color,
                                 value: _followUps,
                                 label: 'متابعات مجانية',
                               ),
@@ -191,7 +243,10 @@ class _MonthlyReportPageState extends State<MonthlyReportPage> {
                               child: _ReportTile(
                                 icon: Icons.event_note_rounded,
                                 color: AppColors.focus,
-                                value: _consultations + _followUps,
+                                value:
+                                    _consultations +
+                                    _halfConsultations +
+                                    _followUps,
                                 label: 'إجمالي المواعيد',
                               ),
                             ),

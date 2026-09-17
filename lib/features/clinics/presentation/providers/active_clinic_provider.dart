@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/database/activity_log_service.dart';
+import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/database/clinic_data_database.dart';
 import '../../../../core/di/injection.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -134,6 +136,46 @@ class ActiveClinicNotifier extends Notifier<ActiveClinicState> {
         return true;
       },
     );
+  }
+
+  /// Restores [backup] into a brand-new clinic instead of overwriting the
+  /// active one — the non-destructive alternative to
+  /// ClinicBackupService.restoreBackup: the current clinic's data is never
+  /// touched at all, and the restored data becomes its own separate clinic
+  /// the doctor can switch to, browse, export from, and rename freely.
+  Future<bool> restoreBackupAsNewClinic(
+    ClinicBackup backup,
+    String name,
+  ) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    final result = await _repository.create(name);
+    final clinic = result.fold((failure) {
+      state = state.copyWith(isLoading: false, error: failure.message);
+      return null;
+    }, (clinic) => clinic);
+    if (clinic == null) return false;
+
+    try {
+      await ClinicBackupService.instance.restoreBackupInto(
+        clinic.dbFileName,
+        backup,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'تعذّرت استعادة النسخة كعيادة جديدة: $e',
+      );
+      return false;
+    }
+
+    state = state.copyWith(clinics: [...state.clinics, clinic]);
+    await switchTo(clinic);
+    await ActivityLogService.instance.log(
+      ActivityAction.backupRestored,
+      entityLabel: backup.fileName,
+    );
+    return true;
   }
 
   Future<bool> rename(Clinic clinic, String newName) async {

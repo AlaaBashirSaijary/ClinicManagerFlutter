@@ -16,7 +16,7 @@ class SaveExamTemplate
   @override
   Future<Either<Failure, ExamFieldTemplate>> call(ExamFieldTemplate params) {
     return params.id == null
-        ? _repository.create(params.label, params.hasSides)
+        ? _repository.create(params.label, params.hasSides, params.isLongText)
         : _repository.update(params);
   }
 }

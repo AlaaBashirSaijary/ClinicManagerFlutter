@@ -36,4 +36,29 @@ abstract class AuthRepository {
   /// previous one. Returns the plaintext code — the only time it's ever
   /// visible again after account creation.
   Future<Either<Failure, String>> regenerateRecoveryCode(int userId);
+
+  /// Every account belonging to [clinicId] — powers the Admin page's
+  /// "المستخدمون" list.
+  Future<Either<Failure, List<AppUser>>> listClinicUsers(int clinicId);
+
+  /// Admin-only: adds a staff account to [clinicId]. [isAdmin] lets the
+  /// clinic add a second admin (e.g. a co-owner doctor), not just nurses.
+  Future<Either<Failure, AppUser>> createStaffUser({
+    required int clinicId,
+    required String name,
+    required String email,
+    required String password,
+    required bool isAdmin,
+  });
+
+  /// Admin-only: resets another account's password without needing its
+  /// current one — the counterpart to [changePassword]'s self-service flow.
+  Future<Either<Failure, Unit>> adminSetPassword({
+    required int userId,
+    required String newPassword,
+  });
+
+  /// Admin-only: removes a staff account. Fails if [userId] is the
+  /// clinic's last remaining admin.
+  Future<Either<Failure, Unit>> deleteStaffUser(int userId);
 }

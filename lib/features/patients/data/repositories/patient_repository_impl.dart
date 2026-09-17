@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/patient.dart';
 import '../../domain/repositories/patient_repository.dart';
@@ -55,6 +56,10 @@ class PatientRepositoryImpl implements PatientRepository {
   Future<Either<Failure, Patient>> create(Patient patient) async {
     try {
       final created = await _local.create(PatientModel.fromEntity(patient));
+      await ActivityLogService.instance.log(
+        ActivityAction.patientCreated,
+        entityLabel: created.fullName,
+      );
       return Right(created);
     } catch (e) {
       return Left(StorageFailure('تعذّر حفظ إضبارة المريض: $e'));
@@ -69,6 +74,10 @@ class PatientRepositoryImpl implements PatientRepository {
         return const Left(NotFoundFailure('المريض غير موجود.'));
       }
       final updated = await _local.update(PatientModel.fromEntity(patient));
+      await ActivityLogService.instance.log(
+        ActivityAction.patientUpdated,
+        entityLabel: updated.fullName,
+      );
       return Right(updated);
     } catch (e) {
       return Left(StorageFailure('تعذّر تحديث إضبارة المريض: $e'));
@@ -83,6 +92,12 @@ class PatientRepositoryImpl implements PatientRepository {
         return const Left(NotFoundFailure('المريض غير موجود.'));
       }
       final updated = await _local.toggleStatus(id);
+      await ActivityLogService.instance.log(
+        updated.isActive
+            ? ActivityAction.patientActivated
+            : ActivityAction.patientDeactivated,
+        entityLabel: updated.fullName,
+      );
       return Right(updated);
     } catch (e) {
       return Left(StorageFailure('تعذّر تحديث حالة المريض: $e'));

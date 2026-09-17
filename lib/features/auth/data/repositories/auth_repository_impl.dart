@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -122,6 +123,92 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(await _local.regenerateRecoveryCode(userId));
     } catch (e) {
       return Left(UnexpectedFailure('تعذّر إنشاء رمز استرداد جديد: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AppUser>>> listClinicUsers(int clinicId) async {
+    try {
+      return Right(await _local.listUsersForClinic(clinicId));
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة قائمة المستخدمين: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AppUser>> createStaffUser({
+    required int clinicId,
+    required String name,
+    required String email,
+    required String password,
+    required bool isAdmin,
+  }) async {
+    if (name.trim().isEmpty) {
+      return const Left(ValidationFailure({'name': 'أدخلي الاسم.'}));
+    }
+    if (!email.contains('@')) {
+      return const Left(
+        ValidationFailure({'email': 'بريد إلكتروني غير صحيح.'}),
+      );
+    }
+    if (password.length < 8) {
+      return const Left(ValidationFailure({'password': '8 أحرف على الأقل.'}));
+    }
+    try {
+      final user = await _local.createStaffUser(
+        clinicId: clinicId,
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+        role: isAdmin ? 'admin' : 'nurse',
+      );
+      await ActivityLogService.instance.log(
+        ActivityAction.userCreated,
+        entityLabel: user.name,
+      );
+      return Right(user);
+    } on StateError catch (e) {
+      return Left(ValidationFailure({'email': e.message}));
+    } catch (e) {
+      return Left(UnexpectedFailure('تعذّر إنشاء الحساب: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> adminSetPassword({
+    required int userId,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < 8) {
+      return const Left(ValidationFailure({'password': '8 أحرف على الأقل.'}));
+    }
+    try {
+      final target = await _local.findById(userId);
+      await _local.adminSetPassword(userId, newPassword);
+      await ActivityLogService.instance.log(
+        ActivityAction.userPasswordReset,
+        entityLabel: target?.name,
+      );
+      return const Right(unit);
+    } catch (e) {
+      return Left(UnexpectedFailure('تعذّر تغيير كلمة المرور: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteStaffUser(int userId) async {
+    try {
+      final target = await _local.findById(userId);
+      await _local.deleteUser(userId);
+      await ActivityLogService.instance.log(
+        ActivityAction.userDeleted,
+        entityLabel: target?.name,
+      );
+      return const Right(unit);
+    } on StateError catch (e) {
+      return Left(ValidationFailure({'user': e.message}));
+    } catch (e) {
+      return Left(StorageFailure('تعذّر حذف المستخدم: $e'));
     }
   }
 }

@@ -42,7 +42,7 @@ class AppointmentLocalDataSource {
   Future<AppointmentModel> create(AppointmentModel appointment) async {
     final db = await _db.database;
     final id = await db.insert('appointments', appointment.toMap());
-    return (await _find(id))!;
+    return (await find(id))!;
   }
 
   Future<AppointmentModel> update(AppointmentModel appointment) async {
@@ -53,7 +53,7 @@ class AppointmentLocalDataSource {
       where: 'id = ?',
       whereArgs: [appointment.id],
     );
-    return (await _find(appointment.id!))!;
+    return (await find(appointment.id!))!;
   }
 
   Future<void> delete(int id) async {
@@ -61,11 +61,32 @@ class AppointmentLocalDataSource {
     await db.delete('appointments', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<AppointmentModel?> _find(int id) async {
+  Future<AppointmentModel?> find(int id) async {
     final db = await _db.database;
     final rows = await db.rawQuery('$_joinedSelect WHERE appointments.id = ?', [
       id,
     ]);
+    if (rows.isEmpty) return null;
+    return AppointmentModel.fromMap(rows.first);
+  }
+
+  /// The other non-cancelled appointment already booked at the exact same
+  /// [scheduledAt], if any — [excludeId] skips the appointment being edited
+  /// so re-saving one at its own unchanged time doesn't flag itself.
+  Future<AppointmentModel?> findConflict(
+    DateTime scheduledAt, {
+    int? excludeId,
+  }) async {
+    final db = await _db.database;
+    final where = StringBuffer(
+      "appointments.status != 'cancelled' AND appointments.scheduled_at = ?",
+    );
+    final args = <Object?>[scheduledAt.toIso8601String()];
+    if (excludeId != null) {
+      where.write(' AND appointments.id != ?');
+      args.add(excludeId);
+    }
+    final rows = await db.rawQuery('$_joinedSelect WHERE $where LIMIT 1', args);
     if (rows.isEmpty) return null;
     return AppointmentModel.fromMap(rows.first);
   }
@@ -99,6 +120,24 @@ class AppointmentLocalDataSource {
     final db = await _db.database;
     await db.update('clinic_settings', {
       'follow_up_days': days,
+    }, where: 'id = 1');
+  }
+
+  Future<int> getHalfPriceDays() async {
+    final db = await _db.database;
+    final rows = await db.query(
+      'clinic_settings',
+      columns: ['half_price_days'],
+      where: 'id = 1',
+    );
+    if (rows.isEmpty) return 60;
+    return rows.first['half_price_days']! as int;
+  }
+
+  Future<void> setHalfPriceDays(int days) async {
+    final db = await _db.database;
+    await db.update('clinic_settings', {
+      'half_price_days': days,
     }, where: 'id = 1');
   }
 

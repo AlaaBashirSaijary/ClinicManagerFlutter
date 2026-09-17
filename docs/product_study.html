@@ -1,0 +1,422 @@
+<title>خارطة طريق عيادتي</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#F5F7F8;
+    --paper-raised:#FFFFFF;
+    --ink:#11212E;
+    --ink-soft:#4A5C68;
+    --ink-faint:#7C8C96;
+    --teal:#0E7490;
+    --teal-deep:#0B5563;
+    --teal-wash:#E4F1F3;
+    --gold:#A9701D;
+    --gold-wash:#F6ECDA;
+    --line:#DCE4E7;
+    --line-strong:#C3D0D4;
+    --done:#157A4C;
+    --done-wash:#E3F3EA;
+    --partial:#A9701D;
+    --partial-wash:#F6ECDA;
+    --missing:#7C8C96;
+    --missing-wash:#EAEEF0;
+    --shadow: 0 16px 40px -28px rgba(17,33,46,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E161C;
+      --paper-raised:#152229;
+      --ink:#E8EEF1;
+      --ink-soft:#AEC0C8;
+      --ink-faint:#7E939C;
+      --teal:#4FC1DD;
+      --teal-deep:#7FD4E8;
+      --teal-wash:#123039;
+      --gold:#E3B166;
+      --gold-wash:#33270F;
+      --line:#243138;
+      --line-strong:#324450;
+      --done:#4ED08A;
+      --done-wash:#0F2A1E;
+      --partial:#E3B166;
+      --partial-wash:#33270F;
+      --missing:#8598A1;
+      --missing-wash:#1B262C;
+      --shadow: 0 16px 40px -28px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E161C;
+    --paper-raised:#152229;
+    --ink:#E8EEF1;
+    --ink-soft:#AEC0C8;
+    --ink-faint:#7E939C;
+    --teal:#4FC1DD;
+    --teal-deep:#7FD4E8;
+    --teal-wash:#123039;
+    --gold:#E3B166;
+    --gold-wash:#33270F;
+    --line:#243138;
+    --line-strong:#324450;
+    --done:#4ED08A;
+    --done-wash:#0F2A1E;
+    --partial:#E3B166;
+    --partial-wash:#33270F;
+    --missing:#8598A1;
+    --missing-wash:#1B262C;
+    --shadow: 0 16px 40px -28px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+    line-height:1.7;
+    padding-inline:20px;
+    padding-block:56px 96px;
+  }
+  h1,h2,h3{
+    font-family:'Markazi Text','Traditional Arabic',serif;
+    font-weight:700;
+    color:var(--ink);
+    text-wrap:balance;
+    line-height:1.25;
+  }
+  .wrap{max-width:880px;margin-inline:auto;}
+  .wide{max-width:1080px;margin-inline:auto;}
+
+  /* ---------- Masthead ---------- */
+  .masthead{display:flex;flex-direction:column;gap:14px;padding-block:0 40px;border-bottom:1px solid var(--line);margin-bottom:40px;}
+  .eyebrow{font-size:13px;font-weight:600;color:var(--teal);letter-spacing:.04em;}
+  .masthead h1{font-size:clamp(30px,4.2vw,44px);margin:0;}
+  .masthead .sub{font-size:17px;color:var(--ink-soft);max-width:62ch;}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-faint);margin-top:6px;}
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px;}
+  .stat-tile{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;padding:16px 14px;}
+  .stat-tile .n{font-family:'Markazi Text',serif;font-size:30px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;}
+  .stat-tile .l{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  @media (max-width:640px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+
+  /* ---------- Section rhythm ---------- */
+  section{padding-block:44px;}
+  section + section{border-top:1px solid var(--line);}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:8px;flex-wrap:wrap;}
+  .section-head h2{font-size:26px;margin:0;}
+  .section-num{font-family:'Markazi Text',serif;font-size:15px;color:var(--ink-faint);}
+  .lede{color:var(--ink-soft);max-width:68ch;font-size:15.5px;margin-top:4px;}
+
+  /* ---------- Current-state checklist ---------- */
+  .built-list{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-top:22px;}
+  .built-item{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;padding:2px 0;}
+  .built-item .dot{flex:none;width:18px;height:18px;border-radius:50%;background:var(--done-wash);color:var(--done);display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px;}
+  .built-item b{display:block;color:var(--ink);}
+  .built-item span{color:var(--ink-soft);}
+  @media (max-width:640px){.built-list{grid-template-columns:1fr;}}
+
+  /* ---------- Feature matrix ---------- */
+  .matrix{width:100%;border-collapse:separate;border-spacing:0;margin-top:20px;font-size:14.5px;}
+  .matrix th{text-align:start;font-weight:600;color:var(--ink-soft);font-size:12.5px;letter-spacing:.02em;padding:0 14px 10px;border-bottom:1px solid var(--line-strong);}
+  .matrix td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .matrix tr:last-child td{border-bottom:none;}
+  .matrix .feat{font-weight:600;color:var(--ink);}
+  .matrix .why{color:var(--ink-soft);font-size:13.8px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;}
+  .chip.done{background:var(--done-wash);color:var(--done);}
+  .chip.partial{background:var(--partial-wash);color:var(--partial);}
+  .chip.missing{background:var(--missing-wash);color:var(--missing);}
+  .effort{font-size:12.5px;color:var(--ink-faint);white-space:nowrap;}
+  .matrix-scroll{overflow-x:auto;}
+  @media (max-width:760px){
+    .matrix thead{display:none;}
+    .matrix, .matrix tbody, .matrix tr, .matrix td{display:block;width:100%;}
+    .matrix tr{padding:14px 0;border-bottom:1px solid var(--line);}
+    .matrix td{border:none;padding:3px 0;}
+    .matrix td:before{content:attr(data-label);display:block;font-size:11.5px;color:var(--ink-faint);margin-bottom:2px;}
+  }
+
+  /* ---------- Licensing panel ---------- */
+  .panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:20px;padding:28px 30px;box-shadow:var(--shadow);margin-top:22px;}
+  .panel h3{font-size:19px;margin:0 0 6px;}
+  .model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;}
+  .model{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--paper);}
+  .model .rec{display:inline-block;font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-wash);padding:2px 8px;border-radius:999px;margin-bottom:8px;}
+  .model h4{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:15px;font-weight:700;margin:0 0 6px;color:var(--ink);}
+  .model p{font-size:13.3px;color:var(--ink-soft);margin:0;}
+  @media (max-width:760px){.model-grid{grid-template-columns:1fr;}}
+
+  /* ---------- Constraints ---------- */
+  .constraint{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);}
+  .constraint:last-child{border-bottom:none;}
+  .constraint .mark{flex:none;width:6px;border-radius:3px;background:var(--gold);}
+  .constraint h4{font-size:15.5px;margin:0 0 4px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;}
+  .constraint p{margin:0;color:var(--ink-soft);font-size:14px;max-width:70ch;}
+
+  /* ---------- Roadmap ---------- */
+  .phases{display:flex;flex-direction:column;margin-top:24px;}
+  .phase{display:grid;grid-template-columns:64px 1fr;gap:18px;padding-block:22px;position:relative;}
+  .phase:not(:last-child):after{content:"";position:absolute;right:31px;top:60px;bottom:-4px;width:1px;background:var(--line-strong);}
+  [dir="rtl"] .phase:not(:last-child):after{right:31px;left:auto;}
+  .phase .badge{width:64px;height:64px;border-radius:50%;background:var(--teal-wash);color:var(--teal-deep);display:flex;align-items:center;justify-content:center;font-family:'Markazi Text',serif;font-weight:700;font-size:15px;text-align:center;line-height:1.15;z-index:1;}
+  .phase h4{margin:2px 0 6px;font-size:17px;}
+  .phase p{margin:0 0 10px;color:var(--ink-soft);font-size:14px;max-width:64ch;}
+  .phase ul{margin:0;padding-inline-start:18px;font-size:13.6px;color:var(--ink-soft);display:grid;gap:3px;}
+  .phase li::marker{color:var(--teal);}
+
+  /* ---------- Non-code needs ---------- */
+  .need-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:20px;}
+  .need{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--paper-raised);}
+  .need h4{margin:0 0 4px;font-size:14.5px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;}
+  .need p{margin:0;font-size:13.3px;color:var(--ink-soft);}
+  @media (max-width:640px){.need-grid{grid-template-columns:1fr;}}
+
+  footer{max-width:880px;margin:56px auto 0;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);}
+</style>
+
+<div class="wrap masthead">
+  <div class="eyebrow">دراسة داخلية — عيادتي</div>
+  <h1>من تطبيق عيادة واحدة إلى منتج يُباع لأي طبيب</h1>
+  <p class="sub">جرد صادق لما بُني فعليًا، والفجوات التي تفصل عيادتي اليوم عن كونها منتجًا تجاريًا جاهزًا للبيع — مع الأخذ بعين الاعتبار أن التطبيق مصمم أصلًا للعمل بلا إنترنت، وهذا قيد حقيقي يُشكّل كل قرار لاحق.</p>
+  <div class="meta">
+    <span>سبتمبر ٢٠٢٦</span>
+    <span>Flutter · SQLite محلي · بدون خادم</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat-tile"><div class="n">٣</div><div class="l">مستويات أولوية</div></div>
+    <div class="stat-tile"><div class="n">١٧</div><div class="l">ميزة مرصودة</div></div>
+    <div class="stat-tile"><div class="n">٤</div><div class="l">قيود معمارية صريحة</div></div>
+    <div class="stat-tile"><div class="n">٣</div><div class="l">مراحل تنفيذ مقترحة</div></div>
+  </div>
+</div>
+
+<section class="wrap" id="foundation">
+  <div class="section-head"><h2>الأساس الذي يستحق البناء عليه</h2><span class="section-num">٠١</span></div>
+  <p class="lede">التطبيق ليس نقطة الصفر. القرار الأهم اللي صار فعلاً — فصل حقول الفحص عن كونها مخصصة لعيادة عيون — هو اللي يفتح الباب أصلاً لبيعه لأي اختصاص. الباقي بنية تحتية جيدة تحتاج طبقة "منتج" فوقها.</p>
+  <div class="built-list">
+    <div class="built-item"><div class="dot">✓</div><div><b>نموذج فحص قابل للتخصيص</b><span>كل عيادة تبني حقول الزيارة الخاصة فيها — مو محصور بجدول عين/عين</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>عيادات متعددة بقاعدة بيانات منفصلة</b><span>فصل حقيقي على مستوى الملف، مو مجرد فلترة بعمود</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>مواعيد بنوعين (كشفية/متابعة)</b><span>مع اقتراح تلقائي حسب فترة متابعة قابلة للتعديل</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>نسخ احتياطي + تذكير دوري</b><span>يدوي لكن له حراسة ضد النسيان</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>قفل اختياري برمز</b><span>+ رمز استرداد بلا حاجة لبريد إلكتروني فعلي</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>هوية بصرية وأيقونة خاصة</b><span>مو تصميم فلاتر افتراضي</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>تقرير شهري (كشفيات/متابعات/مرضى جدد)</b><span>عدّاد لا مبالغ — نقطة مهمة لاحقًا</span></div></div>
+    <div class="built-item"><div class="dot">✓</div><div><b>مسار توزيع مبدئي عبر GitHub Actions</b><span>APK موقّع بدون الحاجة لجهاز بناء محلي</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="tier1">
+  <div class="section-head"><h2>المستوى الأول — ما لا يوجد بيع تجاري بدونه</h2><span class="section-num">٠٢</span></div>
+  <p class="lede">هذه ليست "ميزات إضافية"، هذه شروط الدخول. طبيب واحد بحسابه الشخصي شيء، منتج تبيعينه لعشرات الأطباء شيء آخر تمامًا.</p>
+  <div class="matrix-scroll">
+  <table class="matrix">
+    <thead><tr><th>الميزة</th><th>ليش ما فيها بيع</th><th>الحالة</th><th>الجهد</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="feat" data-label="الميزة">حسابات متعددة بأدوار (طبيب/ممرضة)</td>
+        <td class="why" data-label="السبب">كل عيادة حقيقية فيها أكثر من شخص يستخدم الجهاز — وحساب واحد مشترك يعني صفر مساءلة</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">عالي</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">ترخيص وتفعيل لكل نسخة</td>
+        <td class="why" data-label="السبب">حاليًا أي حد يملك ملف APK يشغّل التطبيق بلا حدود — ما في آلية دفع أو تحقق أصلًا</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">عالي</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">طباعة/تصدير الإضبارة كـ PDF</td>
+        <td class="why" data-label="السبب">الطبيب يحتاج يسلّم المريض ورقة — تطبيق دون طباعة يبقى "أقل من" النظام الورقي بعين الزبون</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">متوسط</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">آلية تحديث فعلية</td>
+        <td class="why" data-label="السبب">التوزيع الحالي (APK يدوي) يعني كل تحسين يحتاج زيارة لكل جهاز — لا يصمد مع أكثر من ٣-٤ عملاء</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">عالي</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">سياسة خصوصية + شروط استخدام مكتوبة</td>
+        <td class="why" data-label="السبب">بيانات مرضى — أي طبيب جاد بيسأل "وين بتروح بياناتي؟" قبل ما يوقّع</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">منخفض</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">سجل نشاط (من عدّل/حذف ماذا ومتى)</td>
+        <td class="why" data-label="السبب">حماية للطبيب نفسه قانونيًا، وضرورية بمجرد ما يصير أكثر من مستخدم على نفس العيادة</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">متوسط</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="wrap" id="tier2">
+  <div class="section-head"><h2>المستوى الثاني — ما يفرّق المنتج عن الدفتر الورقي</h2><span class="section-num">٠٣</span></div>
+  <p class="lede">بعد ما تتوفر شروط الدخول، هذه الميزات هي سبب اختيار طبيب لعيادتي بدل أي بديل — ورقي أو رقمي.</p>
+  <div class="matrix-scroll">
+  <table class="matrix">
+    <thead><tr><th>الميزة</th><th>القيمة التسويقية</th><th>الحالة</th><th>الجهد</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="feat" data-label="الميزة">تقرير مالي حقيقي بمبالغ</td>
+        <td class="why" data-label="السبب">التقرير الحالي عدّاد فقط. طبيب يريد يعرف "كم دخلت هالشهر؟" رقمًا فعليًا لا عدد زيارات</td>
+        <td data-label="الحالة"><span class="chip partial">جزئية</span></td>
+        <td class="effort" data-label="الجهد">متوسط</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">تذكير مواعيد عبر واتساب/رسالة</td>
+        <td class="why" data-label="السبب">تقليل الغياب — الأثر الأكبر على دخل العيادة من أي ميزة وحيدة، لكنه يحتاج اتصال إنترنت جزئي</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">عالي</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">منع تعارض حجز نفس الموعد مرتين</td>
+        <td class="why" data-label="السبب">خطأ شائع بالحجز اليدوي — منعه بسيط تقنيًا وقيمته واضحة فورًا</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">منخفض</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">شاشة انتظار/طابور للعرض بصالة الاستقبال</td>
+        <td class="why" data-label="السبب">تفصل عيادتي بصريًا عن "تطبيق إداري" لتصير "نظام العيادة" اللي يشوفه المريض</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">متوسط</td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">أداة استيراد من إكسل/دفتر سابق</td>
+        <td class="why" data-label="السبب">أكبر عائق أمام أي عيادة قائمة للتحول — "شو رح يصير بسجلاتي القديمة؟"</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+        <td class="effort" data-label="الجهد">متوسط</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="wrap" id="tier3">
+  <div class="section-head"><h2>المستوى الثالث — للتوسع لاحقًا</h2><span class="section-num">٠٤</span></div>
+  <p class="lede">قيمتها حقيقية، لكنها تُبنى بعد ما يثبت المنتج نفسه مع أول عشرة عملاء — بناؤها مبكرًا وقت مسروق من المستوى الأول والثاني.</p>
+  <div class="matrix-scroll">
+  <table class="matrix">
+    <thead><tr><th>الميزة</th><th>لمن تفيد</th><th>الحالة</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="feat" data-label="الميزة">مزامنة بين أكثر من جهاز لنفس العيادة</td>
+        <td class="why" data-label="السبب">عيادات فيها أكثر من غرفة كشف/جهاز بنفس الوقت</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">نسخة احتياطية سحابية اختيارية</td>
+        <td class="why" data-label="السبب">عملاء يريدون حماية إضافية فوق القرص الخارجي المحلي</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">واجهة إنجليزية إلى جانب العربية</td>
+        <td class="why" data-label="السبب">توسّع خارج السوق الناطق بالعربية فقط</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+      </tr>
+      <tr>
+        <td class="feat" data-label="الميزة">علامة تجارية مخصّصة لكل عيادة (شعارها هي)</td>
+        <td class="why" data-label="السبب">عيادات كبيرة تفضّل التطبيق يحمل اسمها هي لا اسم "عيادتي"</td>
+        <td data-label="الحالة"><span class="chip missing">غير موجودة</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="wrap" id="licensing">
+  <div class="section-head"><h2>تحدي لا مفر منه: كيف تُرخّصين تطبيقًا بلا إنترنت؟</h2><span class="section-num">٠٥</span></div>
+  <p class="lede">هذه أهم نقطة بكل الدراسة، لأنها القرار الوحيد اللي ما فيه "أضيفيها لاحقًا" — هي تحدد شكل كل شي فوق. تطبيق SaaS عادي يتحقق من الاشتراك عبر خادمه في كل فتحة؛ عيادتي بالتصميم ما بتتصل بأي خادم. لازم تختاري وين تقف على هذا الطيف:</p>
+  <div class="panel">
+    <h3>ثلاثة مسارات واقعية</h3>
+    <p style="color:var(--ink-soft);font-size:14px;margin:0;">كل واحد يفترض ثقة أو بنية تحتية مختلفة — لا يوجد خيار "بلا تنازلات".</p>
+    <div class="model-grid">
+      <div class="model">
+        <span class="rec">الأقرب للواقع الحالي</span>
+        <h4>بيع مباشر + دعم شخصي</h4>
+        <p>بلا رخصة برمجية أصلًا — العلاقة نفسها هي الحماية (عقد، دعم، تحديثات يدوية). يناسب أول ٥-١٠ عملاء وهو ما يحدث فعليًا الآن.</p>
+      </div>
+      <div class="model">
+        <h4>رمز تفعيل + تحقق دوري عند الاتصال</h4>
+        <p>مفتاح لمرة واحدة لكل عيادة، يُتحقق منه إذا توفر إنترنت (حتى لو نادرًا) دون كسر العمل أوفلاين. توازن معقول بين الحماية والوعد بعدم الاتصال.</p>
+      </div>
+      <div class="model">
+        <h4>طبقة سحابية اختيارية مدفوعة</h4>
+        <p>النسخة الأساسية تبقى مجانية الترخيص/مرة واحدة، والمزامنة/النسخ السحابي (المستوى الثالث) هي ما يُشترك فيه شهريًا. يحوّل القيد المعماري لمصدر دخل بدل مشكلة.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="constraints">
+  <div class="section-head"><h2>قيود معمارية يجب قولها بصراحة</h2><span class="section-num">٠٦</span></div>
+  <p class="lede">هذه ليست عيوبًا يجب إخفاؤها — هي حدود تحدد أي عيادة تشتري اليوم وأيها تنتظر التوسع.</p>
+  <div>
+    <div class="constraint"><div class="mark"></div><div><h4>جهاز واحد نشط بنفس الوقت لكل عيادة</h4><p>قاعدة البيانات ملف محلي على جهاز واحد. عيادة بغرفتي كشف تعملان بنفس اللحظة على تابلتين منفصلين — لا تصلح لها النسخة الحالية دون حل مزامنة.</p></div></div>
+    <div class="constraint"><div class="mark"></div><div><h4>لا حماية من فقدان الجهاز نفسه</h4><p>النسخ الاحتياطي موجود، لكن سرقة/كسر التابلت بدون نسخة حديثة يعني ضياع فعلي. لازم يكون هذا مذكورًا بوضوح بعقد البيع، لا مفاجأة لاحقة.</p></div></div>
+    <div class="constraint"><div class="mark"></div><div><h4>iOS يحتاج مسار توزيع مختلف تمامًا عن أندرويد</h4><p>APK يكفي لأندرويد. آيباد يحتاج TestFlight أو App Store فعليًا — حساب مطوّرين آبل ومراجعة، وهذا وقت وتكلفة منفصلة كليًا.</p></div></div>
+    <div class="constraint"><div class="mark"></div><div><h4>لا مساءلة على مستوى المستخدم الفردي بعد</h4><p>حساب واحد لكل عيادة يعني: لو دخلت ممرضة وعدّلت سجلًا، ما في أي أثر يوثّق من فعل ماذا — هذا يمنع فعليًا بيع المنتج لأي عيادة فيها أكثر من موظف حتى يُحل.</p></div></div>
+  </div>
+</section>
+
+<section class="wide" id="roadmap">
+  <div class="section-head"><h2>خارطة طريق مقترحة</h2><span class="section-num">٠٧</span></div>
+  <p class="lede">ثلاث مراحل متتالية، كل وحدة تفتح شريحة عملاء جديدة عوض ما تكون قائمة ميزات عشوائية.</p>
+  <div class="phases">
+    <div class="phase">
+      <div class="badge">المرحلة<br>١</div>
+      <div>
+        <h4>جاهزة للبيع اليدوي (شهر إلى شهرين)</h4>
+        <p>الهدف: تقدرين تبيعي لطبيب جديد اليوم دون خجل من فجوة واضحة.</p>
+        <ul>
+          <li>حسابات متعددة بأدوار أساسية (طبيب/ممرضة)</li>
+          <li>طباعة/تصدير PDF للإضبارة</li>
+          <li>سجل نشاط بسيط</li>
+          <li>سياسة خصوصية وشروط استخدام مكتوبة</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="badge">المرحلة<br>٢</div>
+      <div>
+        <h4>جاهزة للتوسع لعشرات العملاء (شهرين إلى ثلاثة)</h4>
+        <p>الهدف: تقدري تبيعي بلا حضورك شخصيًا بكل مرة.</p>
+        <ul>
+          <li>رمز تفعيل + تحقق دوري عند توفر الاتصال</li>
+          <li>آلية تحديث داخل التطبيق</li>
+          <li>تقرير مالي حقيقي بمبالغ</li>
+          <li>تذكير مواعيد واتساب (يحتاج اتصال جزئي)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="badge">المرحلة<br>٣</div>
+      <div>
+        <h4>منتج ناضج (بعد إثبات الطلب)</h4>
+        <p>الهدف: تناسبي عيادات أكبر وأسواق أوسع، لا فقط الطبيب المستقل.</p>
+        <ul>
+          <li>مزامنة بين أجهزة متعددة لنفس العيادة</li>
+          <li>نسخة سحابية اختيارية مدفوعة</li>
+          <li>واجهة إنجليزية</li>
+          <li>علامة تجارية مخصّصة لكل عيادة</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="non-code">
+  <div class="section-head"><h2>ما هو خارج الكود بالكامل</h2><span class="section-num">٠٨</span></div>
+  <p class="lede">نصف "البيع لأطباء" ليس برمجة على الإطلاق — وتجاهله يُسقط أفضل تطبيق.</p>
+  <div class="need-grid">
+    <div class="need"><h4>قناة دعم مباشرة</h4><p>واتساب أو هاتف — الأطباء والممرضات المستهدفون ليسوا تقنيين، رسالة بريد إلكتروني لا تكفي.</p></div>
+    <div class="need"><h4>فيديو/دليل تدريب قصير</h4><p>خمس دقائق تكفي لأغلب الميزات — يقلل اعتمادك الشخصي على شرح كل عيادة من الصفر.</p></div>
+    <div class="need"><h4>عقد بيع واضح</h4><p>يذكر صراحة: ما الذي يحدث لو ضاع الجهاز، من يملك البيانات، وماذا يعني "بلا إنترنت" عمليًا.</p></div>
+    <div class="need"><h4>نسخة تجريبية محدودة</h4><p>طبيب يجرب قبل ما يشتري — مريض وهمي أو حد زمني، بدل الاعتماد على الثقة الشخصية فقط.</p></div>
+  </div>
+</section>
+
+<footer class="wrap">دراسة داخلية لتخطيط المنتج — عيادتي · مبنية على حالة الكود الفعلية حتى تاريخ الإصدار.</footer>

@@ -1,5 +1,7 @@
 import 'package:dartz/dartz.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
@@ -10,6 +12,8 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   const AppointmentRepositoryImpl(this._local);
 
   final AppointmentLocalDataSource _local;
+
+  static final _dateTimeFormat = DateFormat('yyyy/MM/dd h:mm a');
 
   @override
   Future<Either<Failure, List<Appointment>>> listBetween(
@@ -37,9 +41,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Either<Failure, Appointment>> create(Appointment appointment) async {
     try {
-      return Right(
-        await _local.create(AppointmentModel.fromEntity(appointment)),
+      final created = await _local.create(
+        AppointmentModel.fromEntity(appointment),
       );
+      await ActivityLogService.instance.log(
+        ActivityAction.appointmentCreated,
+        entityLabel: _label(created),
+      );
+      return Right(created);
     } catch (e) {
       return Left(StorageFailure('تعذّر حجز الموعد: $e'));
     }
@@ -48,9 +57,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Either<Failure, Appointment>> update(Appointment appointment) async {
     try {
-      return Right(
-        await _local.update(AppointmentModel.fromEntity(appointment)),
+      final updated = await _local.update(
+        AppointmentModel.fromEntity(appointment),
       );
+      await ActivityLogService.instance.log(
+        ActivityAction.appointmentUpdated,
+        entityLabel: _label(updated),
+      );
+      return Right(updated);
     } catch (e) {
       return Left(StorageFailure('تعذّر تحديث الموعد: $e'));
     }
@@ -59,11 +73,22 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Either<Failure, void>> delete(int id) async {
     try {
+      final existing = await _local.find(id);
       await _local.delete(id);
+      await ActivityLogService.instance.log(
+        ActivityAction.appointmentDeleted,
+        entityLabel: existing == null ? null : _label(existing),
+      );
       return const Right(null);
     } catch (e) {
       return Left(StorageFailure('تعذّر حذف الموعد: $e'));
     }
+  }
+
+  String _label(Appointment appointment) {
+    final patient = appointment.patientName;
+    final when = _dateTimeFormat.format(appointment.scheduledAt);
+    return patient == null ? when : '$patient — $when';
   }
 
   @override
@@ -95,6 +120,25 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
+  Future<Either<Failure, int>> getHalfPriceDays() async {
+    try {
+      return Right(await _local.getHalfPriceDays());
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة إعداد فترة نصف المعاينة: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setHalfPriceDays(int days) async {
+    try {
+      await _local.setHalfPriceDays(days);
+      return const Right(null);
+    } catch (e) {
+      return Left(StorageFailure('تعذّر حفظ إعداد فترة نصف المعاينة: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, Map<AppointmentType, int>>> countByTypeBetween(
     DateTime start,
     DateTime end,
@@ -107,6 +151,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       });
     } catch (e) {
       return Left(StorageFailure('تعذّر حساب إحصاء المواعيد: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Appointment?>> findConflict(
+    DateTime scheduledAt, {
+    int? excludeId,
+  }) async {
+    try {
+      return Right(
+        await _local.findConflict(scheduledAt, excludeId: excludeId),
+      );
+    } catch (e) {
+      return Left(StorageFailure('تعذّر التحقق من تعارض الموعد: $e'));
     }
   }
 }

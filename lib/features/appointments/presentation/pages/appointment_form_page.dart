@@ -8,8 +8,10 @@ import '../../../../core/widgets/gradient_button.dart';
 import '../../../patients/domain/entities/patient.dart';
 import '../../../patients/domain/usecases/get_patients.dart';
 import '../../domain/entities/appointment.dart';
+import '../../domain/usecases/find_appointment_conflict.dart';
 import '../../domain/usecases/get_follow_up_suggestion.dart';
 import '../providers/appointments_provider.dart';
+import '../widgets/appointment_type_style.dart';
 
 /// Books a new appointment, or edits an existing one when [appointment] is
 /// passed — the same "one form, id decides create vs. update" convention
@@ -157,11 +159,6 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       return;
     }
 
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-
     final scheduledAt = DateTime(
       _date.year,
       _date.month,
@@ -169,6 +166,47 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       _time.hour,
       _time.minute,
     );
+
+    final conflictResult = await sl<FindAppointmentConflict>().call(
+      FindAppointmentConflictParams(
+        scheduledAt: scheduledAt,
+        excludeId: widget.appointment?.id,
+      ),
+    );
+    final conflict = conflictResult.fold((_) => null, (a) => a);
+    if (conflict != null) {
+      if (!mounted) return;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تعارض في الموعد'),
+          content: Text(
+            'يوجد موعد آخر محجوز لـ"${conflict.patientName ?? 'مريض آخر'}" '
+            'في نفس هذا التوقيت. هل تريدين الحجز رغم ذلك؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                'حجز رغم التعارض',
+                style: TextStyle(color: AppColors.danger),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
 
     final appointment = Appointment(
       id: widget.appointment?.id,
@@ -197,6 +235,12 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     }
   }
 
+  String _priceLabel(AppointmentType type) => switch (type) {
+    AppointmentType.consultation => 'بدفع كامل',
+    AppointmentType.halfConsultation => 'نصف الأجرة',
+    AppointmentType.followUp => 'مجانية',
+  };
+
   String? _suggestionHint() {
     final suggestion = _suggestion;
     if (suggestion == null) return null;
@@ -206,11 +250,17 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     final daysSince = DateTime.now()
         .difference(suggestion.lastConsultationDate!)
         .inDays;
-    if (suggestion.suggestedType == AppointmentType.followUp) {
-      final remaining = suggestion.followUpDays - daysSince;
-      return 'ضمن فترة المتابعة المجانية (متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
+    switch (suggestion.suggestedType) {
+      case AppointmentType.followUp:
+        final remaining = suggestion.followUpDays - daysSince;
+        return 'ضمن فترة المتابعة المجانية (متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
+      case AppointmentType.halfConsultation:
+        final remaining = suggestion.halfPriceDays - daysSince;
+        return 'انتهت فترة المتابعة المجانية — ضمن فترة نصف المعاينة '
+            '(متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
+      case AppointmentType.consultation:
+        return 'انتهت فترة نصف المعاينة (${suggestion.halfPriceDays} يوم) منذ آخر كشفية.';
     }
-    return 'انتهت فترة المتابعة (${suggestion.followUpDays} يوم) منذ آخر كشفية.';
   }
 
   @override
@@ -359,17 +409,8 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
               children: [
                 for (final type in AppointmentType.values)
                   ChoiceChip(
-                    avatar: Icon(
-                      type.requiresPayment
-                          ? Icons.payments_rounded
-                          : Icons.volunteer_activism_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      type.requiresPayment
-                          ? '${type.label} (بدفع)'
-                          : '${type.label} (مجانية)',
-                    ),
+                    avatar: Icon(type.icon, size: 16, color: type.color),
+                    label: Text('${type.label} (${_priceLabel(type)})'),
                     selected: _type == type,
                     onSelected: (_) => setState(() => _type = type),
                   ),

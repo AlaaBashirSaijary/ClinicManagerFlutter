@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 5;
+  static const _schemaVersion = 8;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -31,6 +31,12 @@ class ClinicDataDatabase {
     'Lens',
     'Poster.S',
   ];
+
+  /// Of the default rows above, the three that hold descriptive clinical
+  /// findings rather than a short refraction number — seeded (and, on
+  /// upgrade, retroactively flagged) with [isLongText] so their input gets
+  /// a multi-line box that can actually fit a sentence.
+  static const _defaultLongTextLabels = ['Anter.S', 'Lens', 'Poster.S'];
 
   Database? _db;
   String? _openDbFileName;
@@ -74,6 +80,7 @@ class ClinicDataDatabase {
       onCreate: _createSchema,
       onUpgrade: _upgradeSchema,
     );
+    await _ensureExamFieldsSeeded(_db!);
     _openDbFileName = dbFileName;
   }
 
@@ -163,6 +170,29 @@ class ClinicDataDatabase {
     await _createVisitPhotosTable(db);
     await _createExamFieldTables(db);
     await _seedDefaultExamFields(db);
+    await _createActivityLogTable(db);
+  }
+
+  /// Who did what and when — the accountability multiple staff accounts
+  /// need (see ActivityLogService). `actor_user_id`/`actor_name` are a
+  /// snapshot, not a foreign key: the acting user's row lives in the
+  /// app-level database (see AppDatabase), a different file this one can't
+  /// join against, and keeping the name here means an entry still reads
+  /// correctly even if that account is later deleted.
+  Future<void> _createActivityLogTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE activity_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor_user_id INTEGER,
+        actor_name TEXT NOT NULL,
+        action TEXT NOT NULL,
+        entity_label TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX activity_log_created_at_index ON activity_log (created_at)',
+    );
   }
 
   /// Doctor-configurable exam form — replaces the old fixed OD/OS columns
@@ -177,6 +207,7 @@ class ClinicDataDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         label TEXT NOT NULL,
         has_sides INTEGER NOT NULL DEFAULT 0,
+        is_long_text INTEGER NOT NULL DEFAULT 0,
         sort_order INTEGER NOT NULL DEFAULT 0
       )
     ''');
@@ -198,11 +229,30 @@ class ClinicDataDatabase {
     );
   }
 
+  /// Reseeds the default eye-clinic exam fields whenever a clinic's form
+  /// turns up completely empty on open — a doctor should never land on a
+  /// blank "add every field yourself" screen, whether that's a fresh
+  /// install, a migration edge case, or the last field having been deleted
+  /// from Admin > قوالب الفحص. Never touches a form that already has any
+  /// rows, including one deliberately narrowed to a single custom field —
+  /// this only fills a genuinely empty form.
+  Future<void> _ensureExamFieldsSeeded(Database db) async {
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) AS c FROM exam_field_templates',
+    );
+    final count = rows.first['c']! as int;
+    if (count == 0) {
+      await _seedDefaultExamFields(db);
+    }
+  }
+
   Future<void> _seedDefaultExamFields(Database db) async {
     for (var i = 0; i < _defaultExamFieldLabels.length; i++) {
+      final label = _defaultExamFieldLabels[i];
       await db.insert('exam_field_templates', {
-        'label': _defaultExamFieldLabels[i],
+        'label': label,
         'has_sides': 1,
+        'is_long_text': _defaultLongTextLabels.contains(label) ? 1 : 0,
         'sort_order': i,
       });
     }
@@ -312,18 +362,26 @@ class ClinicDataDatabase {
   }
 
   /// A single-row table of clinic-wide policy knobs that aren't tied to any
-  /// one patient/visit/appointment — currently just how many days after a
-  /// paid consultation a follow-up stays free. Nurses set this from the
-  /// Appointments page, not locked behind Admin, since it's their call day
-  /// to day (see AppointmentRepository.setFollowUpDays).
+  /// one patient/visit/appointment — how many days after a paid
+  /// consultation a follow-up stays free (`follow_up_days`), and how many
+  /// further days after that a re-check is still discounted to half price
+  /// (`half_price_days`) before it counts as a fresh consultation again.
+  /// Nurses set both from the Appointments page, not locked behind Admin,
+  /// since it's their call day to day (see AppointmentRepository
+  /// .setFollowUpDays / .setHalfPriceDays).
   Future<void> _createClinicSettingsTable(Database db) async {
     await db.execute('''
       CREATE TABLE clinic_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        follow_up_days INTEGER NOT NULL DEFAULT 30
+        follow_up_days INTEGER NOT NULL DEFAULT 30,
+        half_price_days INTEGER NOT NULL DEFAULT 60
       )
     ''');
-    await db.insert('clinic_settings', {'id': 1, 'follow_up_days': 30});
+    await db.insert('clinic_settings', {
+      'id': 1,
+      'follow_up_days': 30,
+      'half_price_days': 60,
+    });
   }
 
   Future<void> _upgradeSchema(
@@ -351,6 +409,36 @@ class ClinicDataDatabase {
       await _createExamFieldTables(db);
       await _seedDefaultExamFields(db);
       await _migrateFixedExamColumnsToTemplates(db);
+    }
+    if (oldVersion < 6) {
+      await _createActivityLogTable(db);
+    }
+    if (oldVersion < 7) {
+      await db.execute(
+        'ALTER TABLE exam_field_templates ADD COLUMN is_long_text INTEGER NOT NULL DEFAULT 0',
+      );
+      // Retroactively flag the same three default rows _seedDefaultExamFields
+      // would flag on a fresh install, so an existing clinic gets the bigger
+      // input box too without having to find and toggle it by hand.
+      for (final label in _defaultLongTextLabels) {
+        await db.update(
+          'exam_field_templates',
+          {'is_long_text': 1},
+          where: 'label = ?',
+          whereArgs: [label],
+        );
+      }
+    }
+    if (oldVersion < 8) {
+      // Only if clinic_settings already existed pre-upgrade (created
+      // starting at version 3) — an oldVersion < 3 upgrade just created it
+      // fresh above, already with this column, so altering it again here
+      // would fail with "duplicate column name".
+      if (oldVersion >= 3) {
+        await db.execute(
+          'ALTER TABLE clinic_settings ADD COLUMN half_price_days INTEGER NOT NULL DEFAULT 60',
+        );
+      }
     }
   }
 }

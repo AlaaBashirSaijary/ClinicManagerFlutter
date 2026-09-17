@@ -9,6 +9,7 @@ abstract class ExamTemplateRepository {
   Future<Either<Failure, ExamFieldTemplate>> create(
     String label,
     bool hasSides,
+    bool isLongText,
   );
 
   Future<Either<Failure, ExamFieldTemplate>> update(ExamFieldTemplate template);

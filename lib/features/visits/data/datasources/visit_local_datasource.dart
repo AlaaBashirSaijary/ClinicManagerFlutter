@@ -24,7 +24,7 @@ class VisitLocalDataSource {
   Future<VisitModel> create(VisitModel visit) async {
     final db = await _db.database;
     final id = await db.insert('visits', visit.toMap());
-    return (await _find(id))!;
+    return (await find(id))!;
   }
 
   Future<VisitModel> update(VisitModel visit) async {
@@ -35,7 +35,7 @@ class VisitLocalDataSource {
       where: 'id = ?',
       whereArgs: [visit.id],
     );
-    return (await _find(visit.id!))!;
+    return (await find(visit.id!))!;
   }
 
   Future<void> delete(int id) async {
@@ -57,7 +57,7 @@ class VisitLocalDataSource {
     return rows.first['c']! as int;
   }
 
-  Future<VisitModel?> _find(int id) async {
+  Future<VisitModel?> find(int id) async {
     final db = await _db.database;
     final rows = await db.query('visits', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return null;

@@ -82,6 +82,16 @@ class AppLockNotifier extends Notifier<AppLockState> {
     await _service.setPin(newPin);
     return true;
   }
+
+  /// Turns the lock off without checking the (forgotten) PIN — the caller
+  /// must have already verified identity another way first (see
+  /// ForgotPinPage, which re-authenticates with the account's own email and
+  /// password instead). The clinic can set a fresh PIN afterward from
+  /// Admin if they still want the lock on.
+  Future<void> disableWithoutPin() async {
+    await _service.disable();
+    state = state.copyWith(enabled: false, isLocked: false);
+  }
 }
 
 final appLockProvider = NotifierProvider<AppLockNotifier, AppLockState>(

@@ -249,4 +249,98 @@ class AuthLocalDataSource {
     );
     return true;
   }
+
+  /// Every account in [clinicId] — the clinic's admin always exists, staff
+  /// ("nurse") accounts are created via [createStaffUser]. Admins first,
+  /// then alphabetical, so the person who owns the clinic reads as such.
+  Future<List<AppUserModel>> listUsersForClinic(int clinicId) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT users.*, clinics.name AS clinic_name
+      FROM users
+      LEFT JOIN clinics ON clinics.id = users.clinic_id
+      WHERE users.clinic_id = ?
+      ORDER BY (users.role = 'admin') DESC, users.name COLLATE NOCASE ASC
+      ''',
+      [clinicId],
+    );
+    return rows.map(AppUserModel.fromMap).toList();
+  }
+
+  /// Adds another account to [clinicId] — the multi-user feature a single
+  /// shared login can't give any real clinic: separate credentials per
+  /// staff member, and (via [role]) whether they can reach the Admin page.
+  /// No recovery code is issued here — a staff account that forgets its
+  /// password gets reset by the clinic's admin instead (see
+  /// [adminSetPassword]), matching how AuthGate only ever grants Admin
+  /// access to `role == 'admin'`.
+  Future<AppUserModel> createStaffUser({
+    required int clinicId,
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final db = await _db.database;
+    final normalizedEmail = email.trim().toLowerCase();
+
+    final existing = await db.query(
+      'users',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [normalizedEmail],
+    );
+    if (existing.isNotEmpty) {
+      throw StateError('هذا البريد الإلكتروني مستخدم مسبقًا.');
+    }
+
+    final now = DateTime.now().toIso8601String();
+    final userId = await db.insert('users', {
+      'clinic_id': clinicId,
+      'name': name,
+      'email': normalizedEmail,
+      'password': BCrypt.hashpw(password, BCrypt.gensalt()),
+      'role': role,
+      'created_at': now,
+      'updated_at': now,
+    });
+    return (await findById(userId))!;
+  }
+
+  /// Admin-only password reset for someone else's account — no current
+  /// password required, since the whole point is the other person can't
+  /// provide one. Callers must verify the acting user is an admin first.
+  Future<void> adminSetPassword(int userId, String newPassword) async {
+    final db = await _db.database;
+    await db.update(
+      'users',
+      {
+        'password': BCrypt.hashpw(newPassword, BCrypt.gensalt()),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  /// Removes a staff account, refusing to remove a clinic's last admin so
+  /// it never ends up with no one able to reach the Admin page at all.
+  Future<void> deleteUser(int userId) async {
+    final db = await _db.database;
+    final user = await findById(userId);
+    if (user == null) return;
+
+    if (user.role == 'admin') {
+      final admins = await db.rawQuery(
+        "SELECT COUNT(*) AS c FROM users WHERE clinic_id = ? AND role = 'admin'",
+        [user.clinicId],
+      );
+      if ((admins.first['c']! as int) <= 1) {
+        throw StateError('لا يمكن حذف آخر مدير في العيادة.');
+      }
+    }
+
+    await db.delete('users', where: 'id = ?', whereArgs: [userId]);
+  }
 }

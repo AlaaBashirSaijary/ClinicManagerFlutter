@@ -21,22 +21,29 @@ enum AppointmentStatus {
       );
 }
 
-/// Consultations are the paid, first-look appointment; follow-ups are the
-/// free re-checks within the clinic's follow-up window afterward (see
-/// AppointmentRepository.getFollowUpDays). Staff can always override the
-/// suggested type when booking.
+/// Consultations are the full-price, first-look appointment; follow-ups are
+/// the free re-checks within the clinic's follow-up window afterward; a
+/// half consultation sits between the two — a discounted re-check once the
+/// free window has passed but the visit is still soon enough after the
+/// original consultation to not count as a fresh one (see
+/// AppointmentRepository.getFollowUpDays / getHalfPriceDays). Staff can
+/// always override the suggested type when booking.
 enum AppointmentType {
   consultation,
+  halfConsultation,
   followUp;
 
   String get label => switch (this) {
     AppointmentType.consultation => 'كشفية',
+    AppointmentType.halfConsultation => 'نصف معاينة',
     AppointmentType.followUp => 'متابعة',
   };
 
-  /// Consultations require payment; follow-ups within the window are free.
-  /// No fee amount is tracked — just whether one is owed.
-  bool get requiresPayment => this == AppointmentType.consultation;
+  /// True for both full and half-price consultations — only a free
+  /// follow-up owes nothing. No fee amount is tracked, just whether one is
+  /// owed; call sites that need to tell full and half payment apart should
+  /// switch on the type itself instead of relying on this alone.
+  bool get requiresPayment => this != AppointmentType.followUp;
 
   static AppointmentType fromValue(String value) =>
       AppointmentType.values.firstWhere(

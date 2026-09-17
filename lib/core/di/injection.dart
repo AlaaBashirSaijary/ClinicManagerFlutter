@@ -9,11 +9,14 @@ import '../../features/appointments/domain/repositories/appointment_repository.d
 import '../../features/appointments/domain/usecases/delete_appointment.dart';
 import '../../features/appointments/domain/usecases/get_appointments_for_day.dart';
 import '../../features/appointments/domain/usecases/get_follow_up_days.dart';
+import '../../features/appointments/domain/usecases/find_appointment_conflict.dart';
 import '../../features/appointments/domain/usecases/get_follow_up_suggestion.dart';
+import '../../features/appointments/domain/usecases/get_half_price_days.dart';
 import '../../features/appointments/domain/usecases/get_monthly_appointment_counts.dart';
 import '../../features/appointments/domain/usecases/get_upcoming_appointments.dart';
 import '../../features/appointments/domain/usecases/save_appointment.dart';
 import '../../features/appointments/domain/usecases/set_follow_up_days.dart';
+import '../../features/appointments/domain/usecases/set_half_price_days.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -118,7 +121,10 @@ void setupDependencyInjection() {
   sl.registerFactory(() => SaveAppointment(sl()));
   sl.registerFactory(() => DeleteAppointment(sl()));
   sl.registerFactory(() => GetFollowUpSuggestion(sl()));
+  sl.registerFactory(() => FindAppointmentConflict(sl()));
   sl.registerFactory(() => GetFollowUpDays(sl()));
   sl.registerFactory(() => SetFollowUpDays(sl()));
+  sl.registerFactory(() => GetHalfPriceDays(sl()));
+  sl.registerFactory(() => SetHalfPriceDays(sl()));
   sl.registerFactory(() => GetMonthlyAppointmentCounts(sl()));
 }

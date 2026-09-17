@@ -24,9 +24,10 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
   Future<Either<Failure, ExamFieldTemplate>> create(
     String label,
     bool hasSides,
+    bool isLongText,
   ) async {
     try {
-      return Right(await _local.create(label, hasSides));
+      return Right(await _local.create(label, hasSides, isLongText));
     } catch (e) {
       return Left(StorageFailure('تعذّر إضافة حقل الفحص: $e'));
     }
@@ -43,6 +44,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
             id: template.id,
             label: template.label,
             hasSides: template.hasSides,
+            isLongText: template.isLongText,
             sortOrder: template.sortOrder,
           ),
         ),

@@ -5,12 +5,14 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../visits/domain/entities/visit.dart';
 import '../../../visits/presentation/pages/visit_form_page.dart';
 import '../../../visits/presentation/providers/visits_provider.dart';
 import '../../domain/entities/patient.dart';
 import '../../domain/usecases/get_patient.dart';
 import '../../domain/usecases/toggle_patient_status.dart';
+import '../pdf/patient_pdf_export.dart';
 import 'patient_form_page.dart';
 
 /// Mirrors resources/views/patients/show.blade.php.
@@ -97,8 +99,16 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
   Widget build(BuildContext context) {
     final patient = _patient;
 
+    final clinicName = ref.watch(activeClinicProvider).active?.name ?? '';
+
     return Scaffold(
-      appBar: AppBar(title: Text(patient?.fullName ?? 'إضبارة')),
+      appBar: AppBar(
+        title: Text(patient?.fullName ?? 'إضبارة'),
+        actions: [
+          if (patient != null)
+            PatientPdfExportButton(patient: patient, clinicName: clinicName),
+        ],
+      ),
       body: _error != null
           ? Center(
               child: Text(

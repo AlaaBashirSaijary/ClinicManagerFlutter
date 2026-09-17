@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -42,6 +44,11 @@ class _VisitFormPageState extends State<VisitFormPage> {
   final _singleControllers = <int, TextEditingController>{};
   final _rightControllers = <int, TextEditingController>{};
   final _leftControllers = <int, TextEditingController>{};
+
+  /// Photos picked before the visit itself has been saved — a brand-new
+  /// visit has no id yet for AddVisitPhoto to attach to, so these are held
+  /// in memory and uploaded right after _submit() creates the visit row.
+  final List<Uint8List> _pendingPhotos = [];
 
   bool _saving = false;
 
@@ -174,7 +181,21 @@ class _VisitFormPageState extends State<VisitFormPage> {
       final valuesResult = await sl<SaveVisitFieldValues>().call(
         SaveVisitFieldValuesParams(visitId: saved.id!, values: values),
       );
-      return valuesResult.fold((failure) => failure.message, (_) => null);
+      final valuesError = valuesResult.fold(
+        (failure) => failure.message,
+        (_) => null,
+      );
+      if (valuesError != null) return valuesError;
+
+      // A new visit's photos were only ever held in memory (see
+      // _pendingPhotos) — now that it has an id, hand them to the same
+      // usecase _PhotosSection uses once a visit already exists.
+      for (final bytes in _pendingPhotos) {
+        await sl<AddVisitPhoto>().call(
+          AddVisitPhotoParams(visitId: saved.id!, imageData: bytes),
+        );
+      }
+      return null;
     });
 
     if (!mounted) return;
@@ -295,19 +316,12 @@ class _VisitFormPageState extends State<VisitFormPage> {
                       if (_isEdit)
                         _PhotosSection(visitId: widget.visit!.id!)
                       else
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.sky.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Text(
-                            'يمكن إرفاق صور بهذه الزيارة بعد حفظها لأول مرة.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
+                        _PendingPhotosSection(
+                          photos: _pendingPhotos,
+                          onAdd: (bytes) =>
+                              setState(() => _pendingPhotos.add(bytes)),
+                          onRemove: (index) =>
+                              setState(() => _pendingPhotos.removeAt(index)),
                         ),
                       _saving
                           ? const Center(
@@ -456,56 +470,52 @@ class _ExamTable extends StatelessWidget {
               ),
               child: template.hasSides
                   ? Row(
+                      crossAxisAlignment: template.isLongText
+                          ? CrossAxisAlignment.start
+                          : CrossAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 90,
-                          child: Text(
-                            template.label,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                        ),
                         Expanded(
                           child: _SideField(
-                            label: 'يمين',
-                            controller: rightControllers[template.id!]!,
+                            label: 'يسار',
+                            controller: leftControllers[template.id!]!,
+                            isLongText: template.isLongText,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: _SideField(
-                            label: 'يسار',
-                            controller: leftControllers[template.id!]!,
+                            label: 'يمين',
+                            controller: rightControllers[template.id!]!,
+                            isLongText: template.isLongText,
                           ),
+                        ),
+                        _RowLabel(
+                          label: template.label,
+                          topPadding: template.isLongText,
                         ),
                       ],
                     )
                   : Row(
+                      crossAxisAlignment: template.isLongText
+                          ? CrossAxisAlignment.start
+                          : CrossAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 90,
-                          child: Text(
-                            template.label,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                        ),
                         Expanded(
                           child: TextField(
                             controller: singleControllers[template.id!],
                             textDirection: TextDirection.ltr,
+                            maxLines: template.isLongText ? 4 : 1,
+                            minLines: template.isLongText ? 3 : 1,
                             style: const TextStyle(fontSize: 13),
                             decoration: const InputDecoration(
                               isDense: true,
                               border: InputBorder.none,
                             ),
                           ),
+                        ),
+                        _RowLabel(
+                          label: template.label,
+                          topPadding: template.isLongText,
                         ),
                       ],
                     ),
@@ -516,18 +526,54 @@ class _ExamTable extends StatelessWidget {
   }
 }
 
+/// The row's own field name — kept as a separate small widget now that it
+/// sits at the *end* of the row (see _ExamTable's reversed column order)
+/// instead of leading it, with an optional top nudge so it lines up with a
+/// multi-line long-text box instead of that box's vertical center.
+class _RowLabel extends StatelessWidget {
+  const _RowLabel({required this.label, required this.topPadding});
+
+  final String label;
+  final bool topPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 90,
+      child: Padding(
+        padding: EdgeInsets.only(top: topPadding ? 10 : 0),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: AppColors.inkSoft,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SideField extends StatelessWidget {
-  const _SideField({required this.label, required this.controller});
+  const _SideField({
+    required this.label,
+    required this.controller,
+    this.isLongText = false,
+  });
 
   final String label;
   final TextEditingController controller;
+  final bool isLongText;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      textAlign: TextAlign.center,
+      textAlign: isLongText ? TextAlign.start : TextAlign.center,
       textDirection: TextDirection.ltr,
+      maxLines: isLongText ? 4 : 1,
+      minLines: isLongText ? 3 : 1,
       style: const TextStyle(fontSize: 12),
       decoration: InputDecoration(
         isDense: true,
@@ -766,6 +812,183 @@ class _PhotosSectionState extends State<_PhotosSection> {
                   ),
               ],
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The create-mode counterpart to _PhotosSection: a brand-new visit has no
+/// id yet for AddVisitPhoto to attach to, so photos picked here are held in
+/// memory by the parent form (see _VisitFormPageState._pendingPhotos) and
+/// only actually uploaded once _submit() has created the visit row.
+class _PendingPhotosSection extends StatefulWidget {
+  const _PendingPhotosSection({
+    required this.photos,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<Uint8List> photos;
+  final ValueChanged<Uint8List> onAdd;
+  final ValueChanged<int> onRemove;
+
+  @override
+  State<_PendingPhotosSection> createState() => _PendingPhotosSectionState();
+}
+
+class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
+  bool _picking = false;
+
+  Future<void> _pickAndAdd(ImageSource source) async {
+    Navigator.of(context).pop(); // close the source-picker sheet
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+    if (file == null) return;
+
+    setState(() => _picking = true);
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    setState(() => _picking = false);
+    widget.onAdd(bytes);
+  }
+
+  Future<void> _showSourcePicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded),
+              title: const Text('التقاط صورة'),
+              onTap: () => _pickAndAdd(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('اختيار من المعرض'),
+              onTap: () => _pickAndAdd(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _viewFullScreen(Uint8List bytes) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(child: InteractiveViewer(child: Image.memory(bytes))),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'الصور المرفقة',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              _picking
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : TextButton.icon(
+                      onPressed: _showSourcePicker,
+                      icon: const Icon(Icons.add_a_photo_rounded, size: 18),
+                      label: const Text('إضافة صورة'),
+                    ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (widget.photos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'لا توجد صور مرفقة بعد.',
+                style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+              ),
+            )
+          else
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final (index, bytes) in widget.photos.indexed)
+                  GestureDetector(
+                    onTap: () => _viewFullScreen(bytes),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            bytes,
+                            width: 84,
+                            height: 84,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => widget.onRemove(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'سيتم حفظ الصور مع الزيارة عند الضغط على "حفظ الزيارة".',
+            style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+          ),
         ],
       ),
     );

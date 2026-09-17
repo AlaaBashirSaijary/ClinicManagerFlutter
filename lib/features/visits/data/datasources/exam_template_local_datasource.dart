@@ -20,7 +20,11 @@ class ExamTemplateLocalDataSource {
     return rows.map(ExamFieldTemplateModel.fromMap).toList();
   }
 
-  Future<ExamFieldTemplateModel> create(String label, bool hasSides) async {
+  Future<ExamFieldTemplateModel> create(
+    String label,
+    bool hasSides,
+    bool isLongText,
+  ) async {
     final db = await _db.database;
     final rows = await db.rawQuery(
       'SELECT MAX(sort_order) AS m FROM exam_field_templates',
@@ -30,6 +34,7 @@ class ExamTemplateLocalDataSource {
     final id = await db.insert('exam_field_templates', {
       'label': label,
       'has_sides': hasSides ? 1 : 0,
+      'is_long_text': isLongText ? 1 : 0,
       'sort_order': nextOrder,
     });
     return (await _find(db, id))!;

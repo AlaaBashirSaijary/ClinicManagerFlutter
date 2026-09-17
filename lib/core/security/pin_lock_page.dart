@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_mark.dart';
 import 'app_lock_provider.dart';
+import 'forgot_pin_page.dart';
 
 const _pinLength = 4;
 
-/// Shown whenever the app is locked (see AppLockNotifier) — a plain PIN pad,
-/// no fallback and no "forgot PIN" link on purpose: this lock is opt-in and
-/// reversible from Admin, so losing the PIN just means asking whoever set
-/// it up, not a real account-recovery situation.
+/// Shown whenever the app is locked (see AppLockNotifier) — a plain PIN pad
+/// with a "forgot PIN" escape hatch (see ForgotPinPage) that re-verifies
+/// identity through the account's own email/password instead of the PIN.
 class PinLockPage extends ConsumerStatefulWidget {
   const PinLockPage({super.key});
 
@@ -111,6 +111,16 @@ class _PinLockPageState extends ConsumerState<PinLockPage> {
                   onDigit: _onDigit,
                   onBackspace: _onBackspace,
                   enabled: !_checking,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ForgotPinPage()),
+                  ),
+                  child: const Text(
+                    'نسيت الرمز؟',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),

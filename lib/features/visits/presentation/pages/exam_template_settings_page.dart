@@ -157,9 +157,12 @@ class _ExamTemplateSettingsPageState extends State<ExamTemplateSettingsPage> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  template.hasSides
-                                      ? 'له جانبان (يمين/يسار)'
-                                      : 'قيمة واحدة',
+                                  [
+                                    template.hasSides
+                                        ? 'له جانبان (يمين/يسار)'
+                                        : 'قيمة واحدة',
+                                    if (template.isLongText) 'نص طويل',
+                                  ].join(' — '),
                                   style: const TextStyle(fontSize: 11),
                                 ),
                                 trailing: Row(
@@ -213,6 +216,7 @@ class _FieldTemplateDialogState extends State<_FieldTemplateDialog> {
     text: widget.existing?.label ?? '',
   );
   late bool _hasSides = widget.existing?.hasSides ?? false;
+  late bool _isLongText = widget.existing?.isLongText ?? false;
 
   @override
   void dispose() {
@@ -229,6 +233,7 @@ class _FieldTemplateDialogState extends State<_FieldTemplateDialog> {
         id: widget.existing?.id,
         label: label,
         hasSides: _hasSides,
+        isLongText: _isLongText,
         sortOrder: widget.existing?.sortOrder ?? 0,
       ),
     );
@@ -256,6 +261,16 @@ class _FieldTemplateDialogState extends State<_FieldTemplateDialog> {
             contentPadding: EdgeInsets.zero,
             title: const Text(
               'له جانبان (يمين/يسار)',
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+          CheckboxListTile(
+            value: _isLongText,
+            onChanged: (v) => setState(() => _isLongText = v ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'نص طويل (يحتاج مساحة أكبر للكتابة)',
               style: TextStyle(fontSize: 13),
             ),
           ),
