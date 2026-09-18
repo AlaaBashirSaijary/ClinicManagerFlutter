@@ -47,6 +47,7 @@ import '../../features/visits/domain/usecases/delete_visit_photo.dart';
 import '../../features/visits/domain/usecases/get_exam_templates.dart';
 import '../../features/visits/domain/usecases/get_today_visits_count.dart';
 import '../../features/visits/domain/usecases/get_visit_field_values.dart';
+import '../../features/visits/domain/usecases/get_visit_field_values_for_visits.dart';
 import '../../features/visits/domain/usecases/get_visit_photos.dart';
 import '../../features/visits/domain/usecases/get_visits.dart';
 import '../../features/visits/domain/usecases/reorder_exam_templates.dart';
@@ -99,6 +100,7 @@ void setupDependencyInjection() {
   sl.registerFactory(() => AddVisitPhoto(sl()));
   sl.registerFactory(() => DeleteVisitPhoto(sl()));
   sl.registerFactory(() => GetVisitFieldValues(sl()));
+  sl.registerFactory(() => GetVisitFieldValuesForVisits(sl()));
   sl.registerFactory(() => SaveVisitFieldValues(sl()));
 
   // Exam form templates (doctor-configurable exam fields)

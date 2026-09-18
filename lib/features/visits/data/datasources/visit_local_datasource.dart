@@ -113,6 +113,30 @@ class VisitLocalDataSource {
     return rows.map(VisitFieldValueModel.fromMap).toList();
   }
 
+  /// Same as [listFieldValues], but for every id in [visitIds] in one query
+  /// — used where a caller needs a whole patient's exam history (e.g. the
+  /// PDF export) instead of looping one query per visit.
+  Future<Map<int, List<VisitFieldValueModel>>> listFieldValuesForVisits(
+    List<int> visitIds,
+  ) async {
+    if (visitIds.isEmpty) return {};
+    final db = await _db.database;
+    final placeholders = List.filled(visitIds.length, '?').join(', ');
+    final rows = await db.query(
+      'visit_field_values',
+      where: 'visit_id IN ($placeholders)',
+      whereArgs: visitIds,
+    );
+    final byVisit = <int, List<VisitFieldValueModel>>{
+      for (final id in visitIds) id: [],
+    };
+    for (final row in rows) {
+      final model = VisitFieldValueModel.fromMap(row);
+      byVisit[model.visitId]!.add(model);
+    }
+    return byVisit;
+  }
+
   /// Replaces every stored value for [visitId] with [values] — a visit's
   /// exam form is saved as a whole, not diffed field-by-field.
   Future<void> saveFieldValues(

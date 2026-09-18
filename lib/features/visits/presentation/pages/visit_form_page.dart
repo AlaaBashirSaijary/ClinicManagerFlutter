@@ -786,6 +786,12 @@ class _PhotosSectionState extends State<_PhotosSection> {
                             width: 84,
                             height: 84,
                             fit: BoxFit.cover,
+                            // Decodes straight to thumbnail size instead of
+                            // the photo's full camera resolution — without
+                            // this, a visit with several photos noticeably
+                            // jank on first paint/scroll.
+                            cacheWidth: 168,
+                            cacheHeight: 168,
                           ),
                         ),
                         Positioned(
@@ -958,6 +964,8 @@ class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
                             width: 84,
                             height: 84,
                             fit: BoxFit.cover,
+                            cacheWidth: 168,
+                            cacheHeight: 168,
                           ),
                         ),
                         Positioned(

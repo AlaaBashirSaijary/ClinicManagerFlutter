@@ -28,6 +28,12 @@ abstract class VisitRepository {
 
   Future<Either<Failure, List<VisitFieldValue>>> listFieldValues(int visitId);
 
+  /// Same as [listFieldValues], but for every visit in [visitIds] at once —
+  /// one query instead of one per visit, for callers (like the patient PDF
+  /// export) that need a whole patient's exam history in one go.
+  Future<Either<Failure, Map<int, List<VisitFieldValue>>>>
+  listFieldValuesForVisits(List<int> visitIds);
+
   /// Replaces every stored value for [visitId] with [values] — a visit's
   /// exam form is saved as a whole, not diffed field-by-field.
   Future<Either<Failure, void>> saveFieldValues(

@@ -9,7 +9,7 @@ import '../../../visits/domain/entities/exam_field_template.dart';
 import '../../../visits/domain/entities/visit.dart';
 import '../../../visits/domain/entities/visit_field_value.dart';
 import '../../../visits/domain/usecases/get_exam_templates.dart';
-import '../../../visits/domain/usecases/get_visit_field_values.dart';
+import '../../../visits/domain/usecases/get_visit_field_values_for_visits.dart';
 import '../../../visits/domain/usecases/get_visits.dart';
 import '../../domain/entities/patient.dart';
 
@@ -37,11 +37,13 @@ class PatientPdfExport {
       for (final template in templates) template.id!: template,
     };
 
-    final visitValues = <int, List<VisitFieldValue>>{};
-    for (final visit in visits) {
-      final valuesResult = await sl<GetVisitFieldValues>().call(visit.id!);
-      visitValues[visit.id!] = valuesResult.fold((_) => [], (v) => v);
-    }
+    final valuesResult = await sl<GetVisitFieldValuesForVisits>().call([
+      for (final visit in visits) visit.id!,
+    ]);
+    final visitValues = valuesResult.fold(
+      (_) => <int, List<VisitFieldValue>>{},
+      (v) => v,
+    );
 
     final document = await PdfKit.newDocument();
 

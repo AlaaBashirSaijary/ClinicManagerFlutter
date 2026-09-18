@@ -13,6 +13,7 @@ import '../../domain/usecases/get_follow_up_days.dart';
 import '../../domain/usecases/get_half_price_days.dart';
 import '../../domain/usecases/set_follow_up_days.dart';
 import '../../domain/usecases/set_half_price_days.dart';
+import '../../../visits/presentation/pages/visit_form_page.dart';
 import '../providers/appointments_provider.dart';
 import '../widgets/appointment_type_style.dart';
 import 'appointment_form_page.dart';
@@ -226,6 +227,28 @@ class AppointmentsPage extends ConsumerWidget {
                           },
                           onConfirmDelete: () =>
                               _confirmAndDelete(context, ref, appointment),
+                          onQuickComplete: () => notifier.save(
+                            appointment.copyWith(
+                              status: AppointmentStatus.completed,
+                            ),
+                          ),
+                          onStartVisit: () async {
+                            final saved = await Navigator.of(context)
+                                .push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (_) => VisitFormPage(
+                                      patientId: appointment.patientId,
+                                    ),
+                                  ),
+                                );
+                            if (saved == true) {
+                              await notifier.save(
+                                appointment.copyWith(
+                                  status: AppointmentStatus.completed,
+                                ),
+                              );
+                            }
+                          },
                         ),
                       );
                     },
@@ -522,6 +545,8 @@ class _AppointmentCard extends StatelessWidget {
     required this.timeFormat,
     required this.onTap,
     required this.onConfirmDelete,
+    required this.onQuickComplete,
+    required this.onStartVisit,
   });
 
   final Appointment appointment;
@@ -532,6 +557,17 @@ class _AppointmentCard extends StatelessWidget {
   /// it actually happened, so the swipe-away animation only completes on
   /// a real delete instead of snapping back after the fact.
   final Future<bool> Function() onConfirmDelete;
+
+  /// Marks the appointment "تمت الزيارة" directly from the card — the
+  /// common case (patient was seen, nothing else about the booking
+  /// changed) shouldn't cost a screen transition through the full edit
+  /// form just to flip one status.
+  final VoidCallback onQuickComplete;
+
+  /// Jumps straight into recording this patient's exam instead of making
+  /// staff re-search for a patient they were just looking at on this very
+  /// card.
+  final VoidCallback onStartVisit;
 
   Color get _statusColor => switch (appointment.status) {
     AppointmentStatus.scheduled => AppColors.focus,
@@ -653,13 +689,64 @@ class _AppointmentCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_left_rounded,
-                  color: AppColors.lens,
-                  size: 20,
-                ),
+                if (appointment.status == AppointmentStatus.scheduled) ...[
+                  _QuickActionButton(
+                    tooltip: 'ابدئي الفحص',
+                    icon: Icons.medical_information_outlined,
+                    color: AppColors.focus,
+                    onTap: onStartVisit,
+                  ),
+                  const SizedBox(width: 4),
+                  _QuickActionButton(
+                    tooltip: 'تمت الزيارة',
+                    icon: Icons.check_circle_outline_rounded,
+                    color: AppColors.ok,
+                    onTap: onQuickComplete,
+                  ),
+                ] else
+                  const Icon(
+                    Icons.chevron_left_rounded,
+                    color: AppColors.lens,
+                    size: 20,
+                  ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small round icon affordance for the two one-tap actions on a scheduled
+/// appointment card — deliberately tiny (not a labeled button) so both fit
+/// beside each other without crowding the card's existing content.
+class _QuickActionButton extends StatelessWidget {
+  const _QuickActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withValues(alpha: 0.1),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(7),
+            child: Icon(icon, size: 18, color: color),
           ),
         ),
       ),

@@ -127,6 +127,16 @@ class VisitRepositoryImpl implements VisitRepository {
   }
 
   @override
+  Future<Either<Failure, Map<int, List<VisitFieldValue>>>>
+  listFieldValuesForVisits(List<int> visitIds) async {
+    try {
+      return Right(await _local.listFieldValuesForVisits(visitIds));
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة بيانات الفحص: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> saveFieldValues(
     int visitId,
     List<VisitFieldValue> values,
