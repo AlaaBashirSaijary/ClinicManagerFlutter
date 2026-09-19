@@ -38,6 +38,8 @@ class VisitFormPage extends StatefulWidget {
 class _VisitFormPageState extends State<VisitFormPage> {
   late DateTime _visitDate = widget.visit?.visitDate ?? DateTime.now();
   final _notesController = TextEditingController();
+  late bool _needsFollowUp = widget.visit?.needsFollowUp ?? false;
+  late DateTime? _followUpBy = widget.visit?.followUpBy;
 
   bool _loadingTemplates = true;
   List<ExamFieldTemplate> _templates = [];
@@ -124,6 +126,17 @@ class _VisitFormPageState extends State<VisitFormPage> {
     if (picked != null) setState(() => _visitDate = picked);
   }
 
+  Future<void> _pickFollowUpDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _followUpBy ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 730)),
+    );
+    if (picked != null) setState(() => _followUpBy = picked);
+  }
+
   Future<void> _openTemplateSettings() async {
     await Navigator.of(
       context,
@@ -143,6 +156,8 @@ class _VisitFormPageState extends State<VisitFormPage> {
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
+      needsFollowUp: _needsFollowUp,
+      followUpBy: _needsFollowUp ? _followUpBy : null,
       createdAt: widget.visit?.createdAt,
     );
 
@@ -311,6 +326,80 @@ class _VisitFormPageState extends State<VisitFormPage> {
                           decoration: const InputDecoration(
                             labelText: 'ملاحظات إضافية',
                           ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: AppShadows.card,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            CheckboxListTile(
+                              value: _needsFollowUp,
+                              onChanged: (v) =>
+                                  setState(() => _needsFollowUp = v ?? false),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'هذا المريض يحتاج متابعة',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              subtitle: const Text(
+                                'يظهر ضمن "متابعات مستحقة" حتى تُسجَّل له زيارة جديدة',
+                                style: TextStyle(fontSize: 11.5),
+                              ),
+                            ),
+                            if (_needsFollowUp) ...[
+                              const SizedBox(height: AppSpacing.sm),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: _pickFollowUpDate,
+                                child: Container(
+                                  padding: const EdgeInsets.all(AppSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sky,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.event_repeat_rounded,
+                                        color: AppColors.aqua,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Text(
+                                        _followUpBy == null
+                                            ? 'تاريخ مستهدف للمتابعة (اختياري)'
+                                            : 'المتابعة بحلول: '
+                                                  '${_followUpBy!.year}-'
+                                                  '${_followUpBy!.month.toString().padLeft(2, '0')}-'
+                                                  '${_followUpBy!.day.toString().padLeft(2, '0')}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      if (_followUpBy != null)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.close_rounded,
+                                            size: 18,
+                                          ),
+                                          onPressed: () => setState(
+                                            () => _followUpBy = null,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       if (_isEdit)

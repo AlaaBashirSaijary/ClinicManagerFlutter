@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 8;
+  static const _schemaVersion = 9;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -156,6 +156,8 @@ class ClinicDataDatabase {
         poster_s_od TEXT,
         poster_s_os TEXT,
         notes TEXT,
+        needs_follow_up INTEGER NOT NULL DEFAULT 0,
+        follow_up_by TEXT,
         created_at TEXT,
         updated_at TEXT
       )
@@ -163,6 +165,9 @@ class ClinicDataDatabase {
 
     await db.execute(
       'CREATE INDEX visits_patient_date_index ON visits (patient_id, visit_date)',
+    );
+    await db.execute(
+      'CREATE INDEX visits_needs_follow_up_index ON visits (needs_follow_up)',
     );
 
     await _createAppointmentsTable(db);
@@ -439,6 +444,17 @@ class ClinicDataDatabase {
           'ALTER TABLE clinic_settings ADD COLUMN half_price_days INTEGER NOT NULL DEFAULT 60',
         );
       }
+    }
+    if (oldVersion < 9) {
+      // `visits` has existed since version 1, so no existence guard is
+      // needed the way clinic_settings above needed one.
+      await db.execute(
+        'ALTER TABLE visits ADD COLUMN needs_follow_up INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE visits ADD COLUMN follow_up_by TEXT');
+      await db.execute(
+        'CREATE INDEX visits_needs_follow_up_index ON visits (needs_follow_up)',
+      );
     }
   }
 }

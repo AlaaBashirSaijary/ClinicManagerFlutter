@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import '../../../../core/database/clinic_data_database.dart';
+import '../../domain/entities/follow_up_due.dart';
+import '../../domain/entities/patient_photo.dart';
 import '../../domain/entities/visit_photo.dart';
 import '../models/visit_field_value_model.dart';
 import '../models/visit_model.dart';
@@ -64,6 +66,45 @@ class VisitLocalDataSource {
     return VisitModel.fromMap(rows.first);
   }
 
+  /// Active patients whose *most recent* visit is flagged
+  /// [VisitModel.needsFollowUp] — a patient drops off this list the moment
+  /// a newer visit exists for them, flagged or not, so nothing has to be
+  /// marked "resolved" by hand. The correlated subquery is what finds
+  /// "most recent" per patient, using the same ordering convention as
+  /// [listForPatient] (visit_date DESC, id DESC).
+  Future<List<FollowUpDue>> listDueForFollowUp() async {
+    final db = await _db.database;
+    final rows = await db.rawQuery('''
+      SELECT v.id AS visit_id, v.patient_id, v.visit_date, v.follow_up_by,
+             p.full_name AS patient_name, p.phone AS patient_phone
+      FROM visits v
+      JOIN patients p ON p.id = v.patient_id
+      WHERE v.needs_follow_up = 1
+        AND p.is_active = 1
+        AND v.id = (
+          SELECT v2.id FROM visits v2
+          WHERE v2.patient_id = v.patient_id
+          ORDER BY v2.visit_date DESC, v2.id DESC
+          LIMIT 1
+        )
+      ORDER BY (v.follow_up_by IS NULL) ASC, v.follow_up_by ASC
+    ''');
+
+    return [
+      for (final row in rows)
+        FollowUpDue(
+          visitId: row['visit_id']! as int,
+          patientId: row['patient_id']! as int,
+          patientName: row['patient_name']! as String,
+          patientPhone: row['patient_phone'] as String?,
+          visitDate: DateTime.parse(row['visit_date']! as String),
+          followUpBy: row['follow_up_by'] == null
+              ? null
+              : DateTime.parse(row['follow_up_by']! as String),
+        ),
+    ];
+  }
+
   // ============================== الصور المرفقة ==============================
 
   Future<List<VisitPhoto>> listPhotos(int visitId) async {
@@ -99,6 +140,33 @@ class VisitLocalDataSource {
   Future<void> deletePhoto(int id) async {
     final db = await _db.database;
     await db.delete('visit_photos', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Every photo across every visit of [patientId], newest visit first —
+  /// backs the before/after comparison grid, which needs the whole photo
+  /// history flattened in one place rather than grouped per visit.
+  Future<List<PatientPhoto>> listPhotosForPatient(int patientId) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT vp.id AS id, vp.visit_id, vp.image_data, v.visit_date
+      FROM visit_photos vp
+      JOIN visits v ON v.id = vp.visit_id
+      WHERE v.patient_id = ?
+      ORDER BY v.visit_date DESC, vp.id DESC
+    ''',
+      [patientId],
+    );
+
+    return [
+      for (final row in rows)
+        PatientPhoto(
+          id: row['id']! as int,
+          visitId: row['visit_id']! as int,
+          visitDate: DateTime.parse(row['visit_date']! as String),
+          imageData: row['image_data']! as Uint8List,
+        ),
+    ];
   }
 
   // ============================== قيم حقول الفحص ==============================

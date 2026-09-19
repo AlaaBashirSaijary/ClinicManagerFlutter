@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
+import '../../domain/entities/follow_up_due.dart';
+import '../../domain/entities/patient_photo.dart';
 import '../../domain/entities/visit.dart';
 import '../../domain/entities/visit_field_value.dart';
 import '../../domain/entities/visit_photo.dart';
@@ -75,6 +77,15 @@ class VisitRepositoryImpl implements VisitRepository {
   }
 
   @override
+  Future<Either<Failure, List<FollowUpDue>>> listDueForFollowUp() async {
+    try {
+      return Right(await _local.listDueForFollowUp());
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة المتابعات المستحقة: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, int>> countDistinctPatientsToday() async {
     try {
       return Right(await _local.countDistinctPatientsToday());
@@ -112,6 +123,17 @@ class VisitRepositoryImpl implements VisitRepository {
       return const Right(null);
     } catch (e) {
       return Left(StorageFailure('تعذّر حذف الصورة: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<PatientPhoto>>> listPhotosForPatient(
+    int patientId,
+  ) async {
+    try {
+      return Right(await _local.listPhotosForPatient(patientId));
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة صور المريض: $e'));
     }
   }
 

@@ -14,6 +14,8 @@ class Visit extends Equatable {
     required this.patientId,
     required this.visitDate,
     this.notes,
+    this.needsFollowUp = false,
+    this.followUpBy,
     this.createdAt,
   });
 
@@ -21,6 +23,20 @@ class Visit extends Equatable {
   final int patientId;
   final DateTime visitDate;
   final String? notes;
+
+  /// The doctor's own judgment call at the time of this visit — "this
+  /// patient needs to be checked on again" — independent of the clinic's
+  /// automatic free/half-price follow-up windows (see AppointmentType),
+  /// which are about billing, not clinical need. Backs the "متابعات
+  /// مستحقة" list: a patient shows up there while this is their most
+  /// recent visit and it's still flagged, and drops off automatically the
+  /// moment they're seen again — no separate "resolved" step needed.
+  final bool needsFollowUp;
+
+  /// Optional target date the doctor has in mind for that follow-up — null
+  /// means "needs to come back at some point" with no specific deadline.
+  final DateTime? followUpBy;
+
   final DateTime? createdAt;
 
   Visit copyWith({
@@ -28,6 +44,9 @@ class Visit extends Equatable {
     int? patientId,
     DateTime? visitDate,
     String? notes,
+    bool? needsFollowUp,
+    DateTime? followUpBy,
+    bool clearFollowUpBy = false,
     DateTime? createdAt,
   }) {
     return Visit(
@@ -35,10 +54,19 @@ class Visit extends Equatable {
       patientId: patientId ?? this.patientId,
       visitDate: visitDate ?? this.visitDate,
       notes: notes ?? this.notes,
+      needsFollowUp: needsFollowUp ?? this.needsFollowUp,
+      followUpBy: clearFollowUpBy ? null : (followUpBy ?? this.followUpBy),
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   @override
-  List<Object?> get props => [id, patientId, visitDate, notes];
+  List<Object?> get props => [
+    id,
+    patientId,
+    visitDate,
+    notes,
+    needsFollowUp,
+    followUpBy,
+  ];
 }

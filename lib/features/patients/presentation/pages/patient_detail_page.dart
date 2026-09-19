@@ -7,7 +7,9 @@ import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../visits/domain/entities/visit.dart';
+import '../../../visits/presentation/pages/photo_comparison_page.dart';
 import '../../../visits/presentation/pages/visit_form_page.dart';
+import '../../../visits/presentation/providers/follow_ups_provider.dart';
 import '../../../visits/presentation/providers/visits_provider.dart';
 import '../../domain/entities/patient.dart';
 import '../../domain/usecases/get_patient.dart';
@@ -105,8 +107,21 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
       appBar: AppBar(
         title: Text(patient?.fullName ?? 'إضبارة'),
         actions: [
-          if (patient != null)
+          if (patient != null) ...[
+            IconButton(
+              tooltip: 'مقارنة صور قبل/بعد',
+              icon: const Icon(Icons.compare_rounded),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PhotoComparisonPage(
+                    patientId: patient.id!,
+                    patientName: patient.fullName,
+                  ),
+                ),
+              ),
+            ),
             PatientPdfExportButton(patient: patient, clinicName: clinicName),
+          ],
         ],
       ),
       body: _error != null
@@ -508,7 +523,10 @@ class _VisitsSectionState extends ConsumerState<_VisitsSection> {
                     builder: (_) => VisitFormPage(patientId: widget.patientId),
                   ),
                 );
-                if (saved == true) notifier.refresh();
+                if (saved == true) {
+                  notifier.refresh();
+                  ref.read(followUpsProvider.notifier).refresh();
+                }
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -600,9 +618,15 @@ class _VisitsSectionState extends ConsumerState<_VisitsSection> {
                       ),
                     ),
                   );
-                  if (saved == true) notifier.refresh();
+                  if (saved == true) {
+                    notifier.refresh();
+                    ref.read(followUpsProvider.notifier).refresh();
+                  }
                 },
-                onDelete: () => notifier.delete(visit.id!),
+                onDelete: () async {
+                  await notifier.delete(visit.id!);
+                  ref.read(followUpsProvider.notifier).refresh();
+                },
               ),
             if (lastPage > 1) ...[
               const SizedBox(height: AppSpacing.sm),

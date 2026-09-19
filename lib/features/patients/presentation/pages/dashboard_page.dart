@@ -13,6 +13,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../clinics/presentation/widgets/clinic_switcher.dart';
 import '../../../help/presentation/pages/help_guide_page.dart';
+import '../../../visits/presentation/pages/follow_ups_due_page.dart';
+import '../../../visits/presentation/providers/follow_ups_provider.dart';
 import '../../domain/entities/patient.dart';
 import 'patient_detail_page.dart';
 import 'patient_form_page.dart';
@@ -111,6 +113,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final notifier = ref.read(patientsListProvider.notifier);
     final stats = ref.watch(dashboardStatsProvider);
     final userName = ref.watch(authProvider).user?.name;
+    final followUps = ref.watch(followUpsProvider);
 
     return Scaffold(
       body: Column(
@@ -118,6 +121,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           _DashboardHeader(
             userName: userName,
             stats: stats,
+            followUpsDue: followUps.items.length,
             onAddPatient: _addPatient,
           ),
           Expanded(
@@ -148,6 +152,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           reminder: _backupReminder!,
                           onBackupNow: _backupNow,
                           onSnooze: _snoozeBackupReminder,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (!followUps.isLoading && followUps.items.isNotEmpty) ...[
+                      FadeSlideIn(
+                        child: _FollowUpsReminderBanner(
+                          count: followUps.items.length,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const FollowUpsDuePage(),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -238,12 +255,39 @@ class _DashboardHeader extends StatelessWidget {
   const _DashboardHeader({
     required this.userName,
     required this.stats,
+    required this.followUpsDue,
     required this.onAddPatient,
   });
 
   final String? userName;
   final DashboardStats stats;
+  final int followUpsDue;
   final VoidCallback onAddPatient;
+
+  /// "صباح الخير"/"مساء الخير"، اعتمادًا على وقت اليوم الحالي.
+  String get _timeGreeting {
+    final hour = DateTime.now().hour;
+    return hour < 12 ? 'صباح الخير' : 'مساء الخير';
+  }
+
+  /// جملة سردية بدل الأرقام الجافة: عدد مواعيد اليوم، المتابعات المستحقة،
+  /// والمرضى الجدد هالأسبوع — تُبنى بشكل تراكمي حسب المتوفر منها فقط.
+  String get _summarySentence {
+    final parts = <String>[];
+    if (stats.appointmentsToday > 0) {
+      parts.add('لديك ${stats.appointmentsToday} موعد اليوم');
+    }
+    if (followUpsDue > 0) {
+      parts.add('$followUpsDue متابعة مستحقة');
+    }
+    if (stats.newPatientsThisWeek > 0) {
+      parts.add('${stats.newPatientsThisWeek} مريض جديد هالأسبوع');
+    }
+    if (parts.isEmpty) {
+      return 'لا مواعيد ولا متابعات مستحقة اليوم — يوم هادئ!';
+    }
+    return '${parts.join('، ')}.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +317,9 @@ class _DashboardHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          userName ?? '',
+                          userName == null || userName!.isEmpty
+                              ? _timeGreeting
+                              : '$_timeGreeting د. $userName',
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,
@@ -315,6 +361,18 @@ class _DashboardHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!stats.isLoading) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  _summarySentence,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               Row(
                 children: [
@@ -582,6 +640,60 @@ class _BackupReminderBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A tappable nudge toward the "متابعات مستحقة" list — only shown when it's
+/// actually non-empty, same "don't clutter the dashboard when there's
+/// nothing to act on" rule the backup reminder above follows.
+class _FollowUpsReminderBanner extends StatelessWidget {
+  const _FollowUpsReminderBanner({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.focus.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.focus.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.event_repeat_rounded,
+                color: AppColors.focus,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  '$count ${count == 1 ? 'مريض بحاجة' : 'مرضى بحاجة'} متابعة.',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.focusDeep,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_left_rounded,
+                color: AppColors.focus,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

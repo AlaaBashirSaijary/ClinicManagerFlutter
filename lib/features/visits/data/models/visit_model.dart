@@ -6,6 +6,8 @@ class VisitModel extends Visit {
     required super.patientId,
     required super.visitDate,
     super.notes,
+    super.needsFollowUp,
+    super.followUpBy,
     super.createdAt,
   });
 
@@ -14,6 +16,8 @@ class VisitModel extends Visit {
     patientId: v.patientId,
     visitDate: v.visitDate,
     notes: v.notes,
+    needsFollowUp: v.needsFollowUp,
+    followUpBy: v.followUpBy,
     createdAt: v.createdAt,
   );
 
@@ -22,6 +26,10 @@ class VisitModel extends Visit {
     patientId: map['patient_id']! as int,
     visitDate: DateTime.parse(map['visit_date']! as String),
     notes: map['notes'] as String?,
+    needsFollowUp: (map['needs_follow_up'] as int?) == 1,
+    followUpBy: map['follow_up_by'] == null
+        ? null
+        : DateTime.parse(map['follow_up_by']! as String),
     createdAt: map['created_at'] == null
         ? null
         : DateTime.parse(map['created_at']! as String),
@@ -33,6 +41,8 @@ class VisitModel extends Visit {
       'patient_id': patientId,
       'visit_date': visitDate.toIso8601String().split('T').first,
       'notes': notes,
+      'needs_follow_up': needsFollowUp ? 1 : 0,
+      'follow_up_by': followUpBy?.toIso8601String().split('T').first,
       'created_at': createdAt?.toIso8601String() ?? now,
       'updated_at': now,
     };

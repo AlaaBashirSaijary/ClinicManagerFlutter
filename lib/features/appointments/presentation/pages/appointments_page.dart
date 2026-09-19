@@ -14,6 +14,7 @@ import '../../domain/usecases/get_half_price_days.dart';
 import '../../domain/usecases/set_follow_up_days.dart';
 import '../../domain/usecases/set_half_price_days.dart';
 import '../../../visits/presentation/pages/visit_form_page.dart';
+import '../../../visits/presentation/providers/follow_ups_provider.dart';
 import '../providers/appointments_provider.dart';
 import '../widgets/appointment_type_style.dart';
 import 'appointment_form_page.dart';
@@ -247,6 +248,7 @@ class AppointmentsPage extends ConsumerWidget {
                                   status: AppointmentStatus.completed,
                                 ),
                               );
+                              ref.read(followUpsProvider.notifier).refresh();
                             }
                           },
                         ),

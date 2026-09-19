@@ -3,12 +3,18 @@ import 'dart:typed_data';
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
+import '../entities/follow_up_due.dart';
+import '../entities/patient_photo.dart';
 import '../entities/visit.dart';
 import '../entities/visit_field_value.dart';
 import '../entities/visit_photo.dart';
 
 abstract class VisitRepository {
   Future<Either<Failure, List<Visit>>> listForPatient(int patientId);
+
+  /// Active patients whose most recent visit is flagged as needing
+  /// follow-up — backs the "متابعات مستحقة" list.
+  Future<Either<Failure, List<FollowUpDue>>> listDueForFollowUp();
 
   Future<Either<Failure, Visit>> create(Visit visit);
 
@@ -25,6 +31,12 @@ abstract class VisitRepository {
   Future<Either<Failure, void>> addPhoto(int visitId, Uint8List imageData);
 
   Future<Either<Failure, void>> deletePhoto(int id);
+
+  /// Every photo across a patient's whole visit history — backs the
+  /// before/after comparison page.
+  Future<Either<Failure, List<PatientPhoto>>> listPhotosForPatient(
+    int patientId,
+  );
 
   Future<Either<Failure, List<VisitFieldValue>>> listFieldValues(int visitId);
 
