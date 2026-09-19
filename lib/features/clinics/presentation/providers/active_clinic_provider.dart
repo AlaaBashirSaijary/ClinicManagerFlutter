@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/database/clinic_data_database.dart';
+import '../../../../core/database/update_safety_service.dart';
 import '../../../../core/di/injection.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/clinic.dart';
@@ -102,6 +103,12 @@ class ActiveClinicNotifier extends Notifier<ActiveClinicState> {
           active: chosen,
           isLoading: false,
         );
+
+        // Runs quietly after the dashboard is already showing, not before
+        // — a backup-safety check shouldn't add to how long opening the
+        // app after an update takes. See UpdateSafetyService's own doc
+        // comment for what this actually guards against.
+        UpdateSafetyService.instance.backupIfVersionChanged();
       },
     );
   }

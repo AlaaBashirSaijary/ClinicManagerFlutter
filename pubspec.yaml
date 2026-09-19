@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.1+3
+version: 1.2.0+4
 
 environment:
   sdk: ^3.10.8
@@ -77,6 +77,15 @@ dependencies:
   image_picker: ^1.1.2
   pdf: ^3.12.0
   printing: ^5.14.3
+
+  # Reads the installed app version/build number for display in Admin —
+  # lets a support visit confirm which build is on the device at a glance.
+  package_info_plus: ^9.0.1
+
+  # Opens the vendor's WhatsApp chat for the "تواصل مع الدعم" button —
+  # the direct-support channel this offline app relies on instead of any
+  # in-app licensing/update service.
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/clinic_backup_service.dart';
@@ -49,6 +51,7 @@ class AdminHomePage extends ConsumerWidget {
                 _BackupSection(),
                 _StorageSection(),
                 _LegalSection(),
+                _SupportSection(),
                 _AboutFooter(),
               ],
             ),
@@ -1858,6 +1861,86 @@ class _LegalSection extends StatelessWidget {
 /// Required by the license of the onboarding illustrations
 /// (assets/images/Doctor-pana.svg, Insurance-pana.svg — Storyset/Freepik,
 /// "free for personal and commercial purpose with attribution").
+// ============================== الدعم والإصدار ==============================
+
+/// The technical side of "بيع مباشر + دعم شخصي": no in-app license key or
+/// activation check (the relationship and the terms-of-use grant *are* the
+/// license for this stage — see legal/terms_of_use_page.dart), just two
+/// small, real conveniences that model actually needs — a one-tap channel
+/// to the vendor, and a version number visible without digging through
+/// device settings, so a support visit can confirm what's installed at a
+/// glance before deciding whether to bring an update.
+class _SupportSection extends StatefulWidget {
+  const _SupportSection();
+
+  @override
+  State<_SupportSection> createState() => _SupportSectionState();
+}
+
+class _SupportSectionState extends State<_SupportSection> {
+  static const _supportWhatsAppNumber = '963984668063';
+
+  PackageInfo? _info;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _info = info);
+    });
+  }
+
+  Future<void> _openSupport() async {
+    final message = Uri.encodeComponent(
+      'مرحبًا، بحاجة مساعدة بخصوص تطبيق عيادتي.',
+    );
+    final uri = Uri.parse(
+      'https://wa.me/$_supportWhatsAppNumber?text=$message',
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.support_agent_rounded,
+          title: 'الدعم والإصدار',
+          subtitle: 'تواصل مباشر مع الدعم، ورقم إصدار التطبيق الحالي',
+        ),
+        _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _openSupport,
+                icon: const Icon(Icons.chat_rounded, size: 18),
+                label: const Text('تواصل مع الدعم عبر واتساب'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              const Divider(height: 1),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                _info == null
+                    ? 'جارٍ التحقق من رقم الإصدار...'
+                    : 'الإصدار ${_info!.version} (رقم البناء ${_info!.buildNumber})',
+                style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _AboutFooter extends StatelessWidget {
   const _AboutFooter();
 

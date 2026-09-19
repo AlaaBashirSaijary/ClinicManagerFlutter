@@ -13,7 +13,7 @@ class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
   static const _vendorName = 'عيادتي';
-  static const _contactInfo = '[بريد إلكتروني أو رقم تواصل يُضاف هنا]';
+  static const _contactInfo = 'واتساب +963 984 668 063';
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,7 @@ class TermsOfUsePage extends StatelessWidget {
   const TermsOfUsePage({super.key});
 
   static const _vendorName = 'عيادتي';
-  static const _contactInfo = '[بريد إلكتروني أو رقم تواصل يُضاف هنا]';
+  static const _contactInfo = 'واتساب +963 984 668 063';
   static const _governingLaw = '[يُحدَّد لاحقًا حسب بلد التشغيل]';
 
   @override
