@@ -27,6 +27,7 @@ import '../../features/clinics/domain/repositories/clinic_repository.dart';
 import '../../features/patients/data/datasources/patient_local_datasource.dart';
 import '../../features/patients/data/repositories/patient_repository_impl.dart';
 import '../../features/patients/domain/repositories/patient_repository.dart';
+import '../../features/patient_import/domain/usecases/import_patients.dart';
 import '../../features/patients/domain/usecases/create_patient.dart';
 import '../../features/patients/domain/usecases/get_new_patients_count.dart';
 import '../../features/patients/domain/usecases/get_patient.dart';
@@ -49,6 +50,7 @@ import '../../features/visits/domain/usecases/get_today_visits_count.dart';
 import '../../features/visits/domain/usecases/get_visit_field_values.dart';
 import '../../features/visits/domain/usecases/get_visit_field_values_for_visits.dart';
 import '../../features/visits/domain/usecases/get_visit_photos.dart';
+import '../../features/visits/domain/usecases/get_financial_report.dart';
 import '../../features/visits/domain/usecases/get_follow_ups_due.dart';
 import '../../features/visits/domain/usecases/get_patient_photos.dart';
 import '../../features/visits/domain/usecases/get_visits.dart';
@@ -88,6 +90,7 @@ void setupDependencyInjection() {
   sl.registerFactory(() => CreatePatient(sl()));
   sl.registerFactory(() => UpdatePatient(sl()));
   sl.registerFactory(() => TogglePatientStatus(sl()));
+  sl.registerFactory(() => ImportPatients(sl(), sl()));
   sl.registerFactory(() => GetPatientStats(sl()));
   sl.registerFactory(() => GetNewPatientsCount(sl()));
 
@@ -96,6 +99,7 @@ void setupDependencyInjection() {
   sl.registerLazySingleton<VisitRepository>(() => VisitRepositoryImpl(sl()));
   sl.registerFactory(() => GetVisits(sl()));
   sl.registerFactory(() => GetFollowUpsDue(sl()));
+  sl.registerFactory(() => GetFinancialReport(sl()));
   sl.registerFactory(() => SaveVisit(sl()));
   sl.registerFactory(() => DeleteVisit(sl()));
   sl.registerFactory(() => GetTodayVisitsCount(sl()));

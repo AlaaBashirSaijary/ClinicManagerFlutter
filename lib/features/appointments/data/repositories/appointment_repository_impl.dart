@@ -13,7 +13,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   final AppointmentLocalDataSource _local;
 
-  static final _dateTimeFormat = DateFormat('yyyy/MM/dd h:mm a');
+  static final _dateTimeFormat = DateFormat('yyyy/MM/dd h:mm a', 'ar');
 
   @override
   Future<Either<Failure, List<Appointment>>> listBetween(

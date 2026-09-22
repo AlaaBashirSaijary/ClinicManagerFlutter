@@ -26,7 +26,7 @@ class AppointmentsPage extends ConsumerWidget {
   const AppointmentsPage({super.key});
 
   static final _dayFormat = DateFormat('EEEE، d MMMM', 'ar');
-  static final _timeFormat = DateFormat('h:mm a');
+  static final _timeFormat = DateFormat('h:mm a', 'ar');
 
   bool _isToday(DateTime day) {
     final now = DateTime.now();
@@ -295,7 +295,7 @@ class _AppointmentsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: AppColors.focusGradient,
+        gradient: AppColors.aquaGradient,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: SafeArea(

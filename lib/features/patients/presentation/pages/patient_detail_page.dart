@@ -14,6 +14,7 @@ import '../../../visits/presentation/providers/visits_provider.dart';
 import '../../domain/entities/patient.dart';
 import '../../domain/usecases/get_patient.dart';
 import '../../domain/usecases/toggle_patient_status.dart';
+import '../../domain/usecases/update_patient.dart';
 import '../pdf/patient_pdf_export.dart';
 import 'patient_form_page.dart';
 
@@ -344,6 +345,11 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
                       ],
                       stacked: true,
                     ),
+                    _FollowUpPlanCard(
+                      patient: patient,
+                      onUpdated: (updated) =>
+                          setState(() => _patient = updated),
+                    ),
                     _VisitsSection(patientId: widget.patientId),
                     GradientButton(
                       label: 'تعديل الإضبارة',
@@ -361,6 +367,110 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// Lets the doctor put a chronic-condition patient on a standing "check
+/// every N months" plan instead of re-flagging "يحتاج متابعة" by hand on
+/// every single visit — VisitFormPage reads [Patient.followUpPlanMonths]
+/// and pre-fills the follow-up flag/date for a new visit accordingly.
+class _FollowUpPlanCard extends StatefulWidget {
+  const _FollowUpPlanCard({required this.patient, required this.onUpdated});
+
+  final Patient patient;
+  final ValueChanged<Patient> onUpdated;
+
+  @override
+  State<_FollowUpPlanCard> createState() => _FollowUpPlanCardState();
+}
+
+class _FollowUpPlanCardState extends State<_FollowUpPlanCard> {
+  static const _options = [
+    (null, 'إيقاف'),
+    (1, 'كل شهر'),
+    (3, 'كل ٣ أشهر'),
+    (6, 'كل ٦ أشهر'),
+    (12, 'كل سنة'),
+  ];
+
+  bool _saving = false;
+
+  Future<void> _select(int? months) async {
+    if (months == widget.patient.followUpPlanMonths) return;
+    setState(() => _saving = true);
+    final result = await sl<UpdatePatient>().call(
+      widget.patient.copyWith(
+        followUpPlanMonths: months,
+        clearFollowUpPlanMonths: months == null,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    result.fold(
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      widget.onUpdated,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.patient.followUpPlanMonths;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.event_repeat_rounded,
+                color: AppColors.aqua,
+                size: 18,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              const Text(
+                'خطة متابعة دورية',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              if (_saving) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'لمريض يحتاج فحصًا دوريًا (مرض مزمن مثلًا) — كل زيارة جديدة له '
+            'تُعلَّم تلقائيًا "يحتاج متابعة" بتاريخ مستهدف بعد المدة المحددة.',
+            style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final (months, label) in _options)
+                ChoiceChip(
+                  label: Text(label),
+                  selected: active == months,
+                  onSelected: _saving ? null : (_) => _select(months),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -699,6 +809,30 @@ class _VisitRow extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
+            if (visit.feeAmount != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: visit.remainingAmount != null
+                      ? AppColors.danger.withValues(alpha: 0.1)
+                      : AppColors.ok.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  visit.remainingAmount != null
+                      ? 'متبقي ${visit.remainingAmount!.toStringAsFixed(0)}'
+                      : '${visit.feeAmount!.toStringAsFixed(0)} ل.س',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: visit.remainingAmount != null
+                        ? AppColors.danger
+                        : AppColors.ok,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
             IconButton(
               icon: const Icon(
                 Icons.delete_outline_rounded,

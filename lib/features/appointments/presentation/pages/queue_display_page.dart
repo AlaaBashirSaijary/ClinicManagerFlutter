@@ -27,7 +27,7 @@ class QueueDisplayPage extends ConsumerStatefulWidget {
 
 class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
   static const _refreshInterval = Duration(seconds: 20);
-  static final _timeFormat = DateFormat('h:mm a');
+  static final _timeFormat = DateFormat('h:mm a', 'ar');
 
   List<Appointment> _appointments = [];
   bool _loading = true;

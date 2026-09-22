@@ -43,7 +43,18 @@ class PdfKit {
   static Future<pw.Document> newDocument() async {
     await _ensureFonts();
     return pw.Document(
-      theme: pw.ThemeData.withFont(base: _regular!, bold: _bold!),
+      theme: pw.ThemeData.withFont(
+        base: _regular!,
+        bold: _bold!,
+        // The bundled IBM Plex Sans Arabic file is an Arabic-only subset —
+        // it has no glyphs for plain ASCII punctuation (":", ".", "%", "(",
+        // ")", ...), which are common in this app's exported text (times,
+        // amounts, percentages). Flutter's own text rendering falls back to
+        // another font automatically for a missing glyph; the `pdf`
+        // package doesn't, so without an explicit fallback those
+        // characters render as tofu boxes instead of just being skipped.
+        fontFallback: [pw.Font.helvetica(), pw.Font.helveticaBold()],
+      ),
     );
   }
 
@@ -68,7 +79,7 @@ class PdfKit {
     );
   }
 
-  static final _generatedAtFormat = DateFormat('yyyy/MM/dd - h:mm a');
+  static final _generatedAtFormat = DateFormat('yyyy/MM/dd - h:mm a', 'ar');
 
   /// The header block every export page starts with: clinic name, the
   /// document's own title, and when it was generated — so a printed page

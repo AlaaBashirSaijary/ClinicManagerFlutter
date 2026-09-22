@@ -18,6 +18,8 @@ import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../help/presentation/pages/help_guide_page.dart';
 import '../../../legal/presentation/pages/privacy_policy_page.dart';
 import '../../../legal/presentation/pages/terms_of_use_page.dart';
+import '../../../patient_import/presentation/pages/patient_import_page.dart';
+import '../../../reports/presentation/pages/financial_report_page.dart';
 import '../../../reports/presentation/pages/monthly_report_page.dart';
 import '../../../visits/presentation/pages/exam_template_settings_page.dart';
 import 'activity_log_page.dart';
@@ -46,6 +48,7 @@ class AdminHomePage extends ConsumerWidget {
                 _SecuritySection(),
                 _ClinicsSection(),
                 _ExamFormSection(),
+                _ImportSection(),
                 _ReportsSection(),
                 _ActivityLogSection(),
                 _BackupSection(),
@@ -1237,6 +1240,37 @@ class _ExamFormSection extends StatelessWidget {
 
 // ============================== التقرير الشهري ==============================
 
+// ============================== استيراد المرضى ==============================
+
+class _ImportSection extends StatelessWidget {
+  const _ImportSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.upload_file_rounded,
+          title: 'استيراد المرضى',
+          subtitle:
+              'استوردي قائمة مرضى جاهزة من ملف Excel أو CSV بدل إدخالها '
+              'يدويًا واحدًا تلو الآخر',
+        ),
+        _SectionCard(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PatientImportPage()),
+            ),
+            icon: const Icon(Icons.upload_file_rounded, size: 18),
+            label: const Text('استيراد من ملف'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ReportsSection extends StatelessWidget {
   const _ReportsSection();
 
@@ -1258,6 +1292,23 @@ class _ReportsSection extends StatelessWidget {
             ),
             icon: const Icon(Icons.bar_chart_rounded, size: 18),
             label: const Text('عرض التقرير'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const _SectionHeader(
+          icon: Icons.payments_rounded,
+          title: 'التقرير المالي',
+          subtitle:
+              'إجمالي الكشفيات والمبالغ المُحصَّلة فعليًا لكل شهر — '
+              'بمبالغ حقيقية لا أعداد فقط',
+        ),
+        _SectionCard(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FinancialReportPage()),
+            ),
+            icon: const Icon(Icons.payments_rounded, size: 18),
+            label: const Text('عرض التقرير المالي'),
           ),
         ),
       ],

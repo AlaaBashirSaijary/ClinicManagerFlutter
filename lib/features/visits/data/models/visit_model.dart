@@ -8,6 +8,8 @@ class VisitModel extends Visit {
     super.notes,
     super.needsFollowUp,
     super.followUpBy,
+    super.feeAmount,
+    super.amountPaid,
     super.createdAt,
   });
 
@@ -18,6 +20,8 @@ class VisitModel extends Visit {
     notes: v.notes,
     needsFollowUp: v.needsFollowUp,
     followUpBy: v.followUpBy,
+    feeAmount: v.feeAmount,
+    amountPaid: v.amountPaid,
     createdAt: v.createdAt,
   );
 
@@ -30,6 +34,8 @@ class VisitModel extends Visit {
     followUpBy: map['follow_up_by'] == null
         ? null
         : DateTime.parse(map['follow_up_by']! as String),
+    feeAmount: (map['fee_amount'] as num?)?.toDouble(),
+    amountPaid: (map['amount_paid'] as num?)?.toDouble(),
     createdAt: map['created_at'] == null
         ? null
         : DateTime.parse(map['created_at']! as String),
@@ -43,6 +49,8 @@ class VisitModel extends Visit {
       'notes': notes,
       'needs_follow_up': needsFollowUp ? 1 : 0,
       'follow_up_by': followUpBy?.toIso8601String().split('T').first,
+      'fee_amount': feeAmount,
+      'amount_paid': amountPaid,
       'created_at': createdAt?.toIso8601String() ?? now,
       'updated_at': now,
     };

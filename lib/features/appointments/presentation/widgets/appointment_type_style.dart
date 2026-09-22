@@ -11,7 +11,9 @@ import '../../domain/entities/appointment.dart';
 extension AppointmentTypeStyle on AppointmentType {
   IconData get icon => switch (this) {
     AppointmentType.consultation => Icons.payments_rounded,
-    AppointmentType.halfConsultation => Icons.percent_rounded,
+    // A half-filled circle reads as "half" on sight — a percent sign reads
+    // as a discount/rate, which isn't what a half-price visit type means.
+    AppointmentType.halfConsultation => Icons.incomplete_circle_rounded,
     AppointmentType.followUp => Icons.volunteer_activism_rounded,
   };
 

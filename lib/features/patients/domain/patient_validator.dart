@@ -22,6 +22,11 @@ class PatientValidator {
       errors['age'] = 'العمر غير صحيح.';
     }
 
+    if (patient.followUpPlanMonths != null &&
+        (patient.followUpPlanMonths! < 1 || patient.followUpPlanMonths! > 24)) {
+      errors['follow_up_plan_months'] = 'مدة خطة المتابعة غير صحيحة.';
+    }
+
     if (patient.birthDate != null &&
         patient.birthDate!.isAfter(DateTime.now())) {
       errors['birth_date'] = 'تاريخ الميلاد لا يمكن أن يكون في المستقبل.';

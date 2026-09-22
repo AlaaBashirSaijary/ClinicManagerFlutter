@@ -21,6 +21,7 @@ class PatientModel extends Patient {
     super.surgeriesHistory,
     super.notes,
     super.isActive,
+    super.followUpPlanMonths,
     super.createdAt,
     super.updatedAt,
   });
@@ -42,6 +43,7 @@ class PatientModel extends Patient {
     surgeriesHistory: patient.surgeriesHistory,
     notes: patient.notes,
     isActive: patient.isActive,
+    followUpPlanMonths: patient.followUpPlanMonths,
     createdAt: patient.createdAt,
     updatedAt: patient.updatedAt,
   );
@@ -69,6 +71,7 @@ class PatientModel extends Patient {
     surgeriesHistory: map['surgeries_history'] as String?,
     notes: map['notes'] as String?,
     isActive: (map['is_active']! as int) == 1,
+    followUpPlanMonths: map['follow_up_plan_months'] as int?,
     createdAt: map['created_at'] == null
         ? null
         : DateTime.parse(map['created_at']! as String),
@@ -101,6 +104,7 @@ class PatientModel extends Patient {
       'surgeries_history': surgeriesHistory,
       'notes': notes,
       'is_active': isActive ? 1 : 0,
+      'follow_up_plan_months': followUpPlanMonths,
       'created_at': createdAt?.toIso8601String() ?? now,
       'updated_at': now,
     };

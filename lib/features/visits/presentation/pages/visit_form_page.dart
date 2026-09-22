@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../patients/domain/usecases/get_patient.dart';
 import '../../domain/entities/exam_field_template.dart';
 import '../../domain/entities/visit.dart';
 import '../../domain/entities/visit_field_value.dart';
@@ -40,6 +41,9 @@ class _VisitFormPageState extends State<VisitFormPage> {
   final _notesController = TextEditingController();
   late bool _needsFollowUp = widget.visit?.needsFollowUp ?? false;
   late DateTime? _followUpBy = widget.visit?.followUpBy;
+  bool _followUpFromPlan = false;
+  final _feeController = TextEditingController();
+  final _paidController = TextEditingController();
 
   bool _loadingTemplates = true;
   List<ExamFieldTemplate> _templates = [];
@@ -60,7 +64,40 @@ class _VisitFormPageState extends State<VisitFormPage> {
   void initState() {
     super.initState();
     _notesController.text = widget.visit?.notes ?? '';
+    _feeController.text = _formatAmount(widget.visit?.feeAmount);
+    final visitPaid = widget.visit?.amountPaid;
+    final visitFee = widget.visit?.feeAmount;
+    _paidController.text = (visitPaid != null && visitPaid != visitFee)
+        ? _formatAmount(visitPaid)
+        : '';
     _load();
+    if (!_isEdit) _applyFollowUpPlanDefault();
+  }
+
+  /// A brand-new visit for a patient on a standing "خطة متابعة دورية"
+  /// (see PatientDetailPage's _FollowUpPlanCard) starts pre-flagged
+  /// "يحتاج متابعة" with a target date N months out, instead of the doctor
+  /// re-entering the same follow-up by hand every time. Only applies while
+  /// the doctor hasn't already touched these fields, so a fetch that
+  /// resolves after manual edits never clobbers them.
+  Future<void> _applyFollowUpPlanDefault() async {
+    final result = await sl<GetPatient>().call(
+      GetPatientParams(id: widget.patientId),
+    );
+    if (!mounted || _needsFollowUp || _followUpBy != null) return;
+    result.fold((_) {}, (patient) {
+      final months = patient.followUpPlanMonths;
+      if (months == null) return;
+      setState(() {
+        _needsFollowUp = true;
+        _followUpFromPlan = true;
+        _followUpBy = DateTime(
+          _visitDate.year,
+          _visitDate.month + months,
+          _visitDate.day,
+        );
+      });
+    });
   }
 
   Future<void> _load() async {
@@ -101,9 +138,24 @@ class _VisitFormPageState extends State<VisitFormPage> {
     });
   }
 
+  static String _formatAmount(double? value) {
+    if (value == null) return '';
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  static double? _parseAmount(String text) {
+    final trimmed = text.trim().replaceAll(',', '.');
+    if (trimmed.isEmpty) return null;
+    return double.tryParse(trimmed);
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
+    _feeController.dispose();
+    _paidController.dispose();
     for (final c in _singleControllers.values) {
       c.dispose();
     }
@@ -149,6 +201,9 @@ class _VisitFormPageState extends State<VisitFormPage> {
   Future<void> _submit() async {
     setState(() => _saving = true);
 
+    final fee = _parseAmount(_feeController.text);
+    final enteredPaid = _parseAmount(_paidController.text);
+
     final visit = Visit(
       id: widget.visit?.id,
       patientId: widget.patientId,
@@ -158,6 +213,11 @@ class _VisitFormPageState extends State<VisitFormPage> {
           : _notesController.text.trim(),
       needsFollowUp: _needsFollowUp,
       followUpBy: _needsFollowUp ? _followUpBy : null,
+      // No amount typed in "المدفوع فعليًا" means "دُفعت الكشفية كاملة" —
+      // the common case — rather than making every visit type the same
+      // number twice.
+      feeAmount: fee,
+      amountPaid: fee == null ? null : (enteredPaid ?? fee),
       createdAt: widget.visit?.createdAt,
     );
 
@@ -336,21 +396,67 @@ class _VisitFormPageState extends State<VisitFormPage> {
                           boxShadow: AppShadows.card,
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'الكشفية',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            TextField(
+                              controller: _feeController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText: 'المبلغ (اختياري)',
+                                suffixText: 'ل.س',
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            TextField(
+                              controller: _paidController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText:
+                                    'المبلغ المدفوع فعليًا (اتركيه فارغًا إذا دُفعت الكشفية كاملة)',
+                                suffixText: 'ل.س',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: AppShadows.card,
+                        ),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             CheckboxListTile(
                               value: _needsFollowUp,
-                              onChanged: (v) =>
-                                  setState(() => _needsFollowUp = v ?? false),
+                              onChanged: (v) => setState(() {
+                                _needsFollowUp = v ?? false;
+                                _followUpFromPlan = false;
+                              }),
                               controlAffinity: ListTileControlAffinity.leading,
                               contentPadding: EdgeInsets.zero,
                               title: const Text(
                                 'هذا المريض يحتاج متابعة',
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
-                              subtitle: const Text(
-                                'يظهر ضمن "متابعات مستحقة" حتى تُسجَّل له زيارة جديدة',
-                                style: TextStyle(fontSize: 11.5),
+                              subtitle: Text(
+                                _followUpFromPlan
+                                    ? 'مُقترح تلقائيًا حسب خطة المتابعة الدورية — يمكن تعديله'
+                                    : 'يظهر ضمن "متابعات مستحقة" حتى تُسجَّل له زيارة جديدة',
+                                style: const TextStyle(fontSize: 11.5),
                               ),
                             ),
                             if (_needsFollowUp) ...[

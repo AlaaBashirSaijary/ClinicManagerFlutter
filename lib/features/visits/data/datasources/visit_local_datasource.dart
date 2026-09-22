@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../../core/database/clinic_data_database.dart';
+import '../../domain/entities/financial_report.dart';
 import '../../domain/entities/follow_up_due.dart';
 import '../../domain/entities/patient_photo.dart';
 import '../../domain/entities/visit_photo.dart';
@@ -103,6 +104,45 @@ class VisitLocalDataSource {
               : DateTime.parse(row['follow_up_by']! as String),
         ),
     ];
+  }
+
+  /// Every visit with a recorded fee whose date falls in [start, end) —
+  /// backs the real financial report (actual amounts, not appointment-type
+  /// counts). [end] is exclusive, matching the convention used elsewhere
+  /// (e.g. GetNewPatientsCount's DateRangeParams).
+  Future<FinancialReport> financialReport(DateTime start, DateTime end) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT v.id AS visit_id, v.patient_id, p.full_name AS patient_name,
+             v.visit_date, v.fee_amount, v.amount_paid
+      FROM visits v
+      JOIN patients p ON p.id = v.patient_id
+      WHERE v.fee_amount IS NOT NULL
+        AND v.visit_date >= ? AND v.visit_date < ?
+      ORDER BY v.visit_date DESC, v.id DESC
+    ''',
+      [
+        start.toIso8601String().split('T').first,
+        end.toIso8601String().split('T').first,
+      ],
+    );
+
+    return FinancialReport(
+      rows: [
+        for (final row in rows)
+          FinancialVisitRow(
+            visitId: row['visit_id']! as int,
+            patientId: row['patient_id']! as int,
+            patientName: row['patient_name']! as String,
+            visitDate: DateTime.parse(row['visit_date']! as String),
+            feeAmount: (row['fee_amount']! as num).toDouble(),
+            amountPaid:
+                (row['amount_paid'] as num?)?.toDouble() ??
+                (row['fee_amount']! as num).toDouble(),
+          ),
+      ],
+    );
   }
 
   // ============================== الصور المرفقة ==============================

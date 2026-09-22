@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/database/activity_log_service.dart';
 import '../../../../core/error/failures.dart';
+import '../../domain/entities/financial_report.dart';
 import '../../domain/entities/follow_up_due.dart';
 import '../../domain/entities/patient_photo.dart';
 import '../../domain/entities/visit.dart';
@@ -82,6 +83,18 @@ class VisitRepositoryImpl implements VisitRepository {
       return Right(await _local.listDueForFollowUp());
     } catch (e) {
       return Left(StorageFailure('تعذّرت قراءة المتابعات المستحقة: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, FinancialReport>> financialReport(
+    DateTime start,
+    DateTime end,
+  ) async {
+    try {
+      return Right(await _local.financialReport(start, end));
+    } catch (e) {
+      return Left(StorageFailure('تعذّرت قراءة التقرير المالي: $e'));
     }
   }
 

@@ -18,7 +18,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   List<ActivityLogEntry> _entries = [];
   bool _loading = true;
 
-  static final _dateFormat = DateFormat('yyyy/MM/dd - h:mm a');
+  static final _dateFormat = DateFormat('yyyy/MM/dd - h:mm a', 'ar');
 
   @override
   void initState() {

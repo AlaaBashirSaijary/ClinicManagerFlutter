@@ -16,6 +16,8 @@ class Visit extends Equatable {
     this.notes,
     this.needsFollowUp = false,
     this.followUpBy,
+    this.feeAmount,
+    this.amountPaid,
     this.createdAt,
   });
 
@@ -37,7 +39,26 @@ class Visit extends Equatable {
   /// means "needs to come back at some point" with no specific deadline.
   final DateTime? followUpBy;
 
+  /// What the visit costs — entered by hand each time rather than derived
+  /// from a price list, since fees vary clinic to clinic and case to case.
+  /// Null means no fee was recorded for this visit (e.g. a free follow-up).
+  final double? feeAmount;
+
+  /// What was actually collected. Equal to [feeAmount] for the common
+  /// "كشفية تُدفع قبل الدخول" case; only falls below it for the rare
+  /// surgical case paid in installments, in which case [remainingAmount]
+  /// surfaces the difference instead of the app tracking a running debt.
+  final double? amountPaid;
+
   final DateTime? createdAt;
+
+  /// Null when there's nothing owed to track — either no fee was recorded,
+  /// or it was paid in full (the default the visit form assumes).
+  double? get remainingAmount {
+    if (feeAmount == null) return null;
+    final remaining = feeAmount! - (amountPaid ?? feeAmount!);
+    return remaining > 0 ? remaining : null;
+  }
 
   Visit copyWith({
     int? id,
@@ -47,6 +68,10 @@ class Visit extends Equatable {
     bool? needsFollowUp,
     DateTime? followUpBy,
     bool clearFollowUpBy = false,
+    double? feeAmount,
+    bool clearFeeAmount = false,
+    double? amountPaid,
+    bool clearAmountPaid = false,
     DateTime? createdAt,
   }) {
     return Visit(
@@ -56,6 +81,8 @@ class Visit extends Equatable {
       notes: notes ?? this.notes,
       needsFollowUp: needsFollowUp ?? this.needsFollowUp,
       followUpBy: clearFollowUpBy ? null : (followUpBy ?? this.followUpBy),
+      feeAmount: clearFeeAmount ? null : (feeAmount ?? this.feeAmount),
+      amountPaid: clearAmountPaid ? null : (amountPaid ?? this.amountPaid),
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -68,5 +95,7 @@ class Visit extends Equatable {
     notes,
     needsFollowUp,
     followUpBy,
+    feeAmount,
+    amountPaid,
   ];
 }

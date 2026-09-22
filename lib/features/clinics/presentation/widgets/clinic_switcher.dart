@@ -32,15 +32,17 @@ class ClinicSwitcher extends ConsumerWidget {
     final child = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (onDark)
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Icon(
-              Icons.local_hospital_rounded,
-              size: 13,
-              color: iconColor,
-            ),
-          ),
+        if (onDark) ...[
+          Icon(Icons.local_hospital_rounded, size: 13, color: iconColor),
+          const SizedBox(width: 4),
+          // Spelled out, not just an icon — this line sits directly under
+          // the doctor's own name in the greeting, and when the clinic
+          // happens to be named after the doctor the two lines can
+          // otherwise read as an accidental repeat instead of two
+          // different pieces of information.
+          Text('العيادة:', style: TextStyle(fontSize: 11, color: iconColor)),
+          const SizedBox(width: 4),
+        ],
         Flexible(
           child: Text(
             active.name,

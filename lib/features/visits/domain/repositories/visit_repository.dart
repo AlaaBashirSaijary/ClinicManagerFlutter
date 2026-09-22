@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
+import '../entities/financial_report.dart';
 import '../entities/follow_up_due.dart';
 import '../entities/patient_photo.dart';
 import '../entities/visit.dart';
@@ -15,6 +16,13 @@ abstract class VisitRepository {
   /// Active patients whose most recent visit is flagged as needing
   /// follow-up — backs the "متابعات مستحقة" list.
   Future<Either<Failure, List<FollowUpDue>>> listDueForFollowUp();
+
+  /// Real fee/payment totals for every visit dated in [start, end) —
+  /// backs the financial report.
+  Future<Either<Failure, FinancialReport>> financialReport(
+    DateTime start,
+    DateTime end,
+  );
 
   Future<Either<Failure, Visit>> create(Visit visit);
 

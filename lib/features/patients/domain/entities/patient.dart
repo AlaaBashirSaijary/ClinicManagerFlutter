@@ -31,6 +31,7 @@ class Patient extends Equatable {
     this.surgeriesHistory,
     this.notes,
     this.isActive = true,
+    this.followUpPlanMonths,
     this.createdAt,
     this.updatedAt,
   });
@@ -51,6 +52,14 @@ class Patient extends Equatable {
   final String? surgeriesHistory;
   final String? notes;
   final bool isActive;
+
+  /// A recurring care-plan interval in months (e.g. 3, 6, 12) — for a
+  /// chronic-condition patient who needs checking every N months as a
+  /// matter of course. When set, a new visit for this patient defaults to
+  /// "يحتاج متابعة" with a target date N months out, instead of the doctor
+  /// re-flagging it by hand every single time. Null means no standing plan.
+  final int? followUpPlanMonths;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -89,6 +98,8 @@ class Patient extends Equatable {
     String? surgeriesHistory,
     String? notes,
     bool? isActive,
+    int? followUpPlanMonths,
+    bool clearFollowUpPlanMonths = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -109,6 +120,9 @@ class Patient extends Equatable {
       surgeriesHistory: surgeriesHistory ?? this.surgeriesHistory,
       notes: notes ?? this.notes,
       isActive: isActive ?? this.isActive,
+      followUpPlanMonths: clearFollowUpPlanMonths
+          ? null
+          : (followUpPlanMonths ?? this.followUpPlanMonths),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -132,6 +146,7 @@ class Patient extends Equatable {
     surgeriesHistory,
     notes,
     isActive,
+    followUpPlanMonths,
   ];
 }
 

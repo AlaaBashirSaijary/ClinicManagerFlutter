@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 9;
+  static const _schemaVersion = 11;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -117,6 +117,7 @@ class ClinicDataDatabase {
         surgeries_history TEXT,
         notes TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
+        follow_up_plan_months INTEGER,
         created_at TEXT,
         updated_at TEXT,
         UNIQUE(patient_number)
@@ -158,6 +159,8 @@ class ClinicDataDatabase {
         notes TEXT,
         needs_follow_up INTEGER NOT NULL DEFAULT 0,
         follow_up_by TEXT,
+        fee_amount REAL,
+        amount_paid REAL,
         created_at TEXT,
         updated_at TEXT
       )
@@ -454,6 +457,15 @@ class ClinicDataDatabase {
       await db.execute('ALTER TABLE visits ADD COLUMN follow_up_by TEXT');
       await db.execute(
         'CREATE INDEX visits_needs_follow_up_index ON visits (needs_follow_up)',
+      );
+    }
+    if (oldVersion < 10) {
+      await db.execute('ALTER TABLE visits ADD COLUMN fee_amount REAL');
+      await db.execute('ALTER TABLE visits ADD COLUMN amount_paid REAL');
+    }
+    if (oldVersion < 11) {
+      await db.execute(
+        'ALTER TABLE patients ADD COLUMN follow_up_plan_months INTEGER',
       );
     }
   }
