@@ -9,6 +9,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/security/app_lock_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/update/update_provider.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -1921,17 +1922,18 @@ class _LegalSection extends StatelessWidget {
 /// to the vendor, and a version number visible without digging through
 /// device settings, so a support visit can confirm what's installed at a
 /// glance before deciding whether to bring an update.
-class _SupportSection extends StatefulWidget {
+class _SupportSection extends ConsumerStatefulWidget {
   const _SupportSection();
 
   @override
-  State<_SupportSection> createState() => _SupportSectionState();
+  ConsumerState<_SupportSection> createState() => _SupportSectionState();
 }
 
-class _SupportSectionState extends State<_SupportSection> {
+class _SupportSectionState extends ConsumerState<_SupportSection> {
   static const _supportWhatsAppNumber = '963984668063';
 
   PackageInfo? _info;
+  bool _checkingUpdate = false;
 
   @override
   void initState() {
@@ -1939,6 +1941,24 @@ class _SupportSectionState extends State<_SupportSection> {
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _info = info);
     });
+  }
+
+  Future<void> _checkForUpdate() async {
+    setState(() => _checkingUpdate = true);
+    await ref.read(updateAvailableProvider.notifier).check(force: true);
+    if (!mounted) return;
+    setState(() => _checkingUpdate = false);
+
+    final info = ref.read(updateAvailableProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          info == null
+              ? 'أنتِ على آخر إصدار.'
+              : 'يتوفر إصدار جديد (${info.version}) — راجعي الشريط أعلى الشاشة الرئيسية.',
+        ),
+      ),
+    );
   }
 
   Future<void> _openSupport() async {
@@ -1983,6 +2003,18 @@ class _SupportSectionState extends State<_SupportSection> {
                     ? 'جارٍ التحقق من رقم الإصدار...'
                     : 'الإصدار ${_info!.version} (رقم البناء ${_info!.buildNumber})',
                 style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: _checkingUpdate ? null : _checkForUpdate,
+                icon: _checkingUpdate
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.system_update_alt_rounded, size: 18),
+                label: const Text('التحقق من وجود تحديث'),
               ),
             ],
           ),

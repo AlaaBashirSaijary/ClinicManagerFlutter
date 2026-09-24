@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
 
+# Lets GITHUB_TOKEN (already provided free by Actions, no new secret needed)
+# create the GitHub Release below — the default token is read-only unless a
+# job says otherwise.
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -47,8 +53,25 @@ jobs:
       - run: flutter pub get
       - run: flutter build apk --release
 
-      - uses: actions/upload-artifact@v4
+      # pubspec's version (e.g. 1.4.0+6) becomes the release tag verbatim —
+      # the app's own in-app update check (UpdateCheckService) parses the
+      # part after "+" back out as an integer build number to compare
+      # against PackageInfo, so this format is load-bearing, not cosmetic.
+      - name: Extract version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # A permanent, publicly downloadable release replaces the old 30-day
+      # workflow artifact — it's what UpdateCheckService polls
+      # (api.github.com/.../releases/latest, no auth needed on this public
+      # repo) and what its download link points a doctor's device at
+      # directly, with no GitHub sign-in in the way.
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: clinic-manager-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "عيادتي ${{ steps.version.outputs.version }}"
+          generate_release_notes: true
+          files: build/app/outputs/flutter-apk/app-release.apk

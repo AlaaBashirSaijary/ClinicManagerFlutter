@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/database/backup_reminder_service.dart';
 import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/update/update_check_service.dart';
+import '../../../../core/update/update_provider.dart';
 import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/pressable_scale.dart';
@@ -114,6 +117,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final stats = ref.watch(dashboardStatsProvider);
     final userName = ref.watch(authProvider).user?.name;
     final followUps = ref.watch(followUpsProvider);
+    final updateInfo = ref.watch(updateAvailableProvider);
 
     return Scaffold(
       body: Column(
@@ -146,6 +150,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     AppSpacing.xl,
                   ),
                   children: [
+                    if (updateInfo != null) ...[
+                      FadeSlideIn(
+                        child: _UpdateAvailableBanner(
+                          info: updateInfo,
+                          onDismiss: () => ref
+                              .read(updateAvailableProvider.notifier)
+                              .dismiss(),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                     if (_backupReminder != null) ...[
                       FadeSlideIn(
                         child: _BackupReminderBanner(
@@ -571,6 +586,79 @@ class _SearchCard extends StatelessWidget {
                   child: const Text('مسح الفلاتر'),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A newer .apk exists on GitHub — see UpdateCheckService for how this is
+/// found (a single best-effort request, throttled to once a day) and why
+/// it's a plain download link rather than any kind of silent auto-install.
+class _UpdateAvailableBanner extends StatelessWidget {
+  const _UpdateAvailableBanner({required this.info, required this.onDismiss});
+
+  final UpdateInfo info;
+  final VoidCallback onDismiss;
+
+  Future<void> _download(BuildContext context) async {
+    final uri = Uri.tryParse(info.downloadUrl);
+    final opened =
+        uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح رابط التحديث.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.ok.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.ok.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.system_update_alt_rounded,
+            color: AppColors.ok,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'يتوفر إصدار جديد (${info.version}) من عيادتي.',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: onDismiss,
+                      child: const Text('لاحقًا'),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    FilledButton(
+                      onPressed: () => _download(context),
+                      child: const Text('تنزيل التحديث'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

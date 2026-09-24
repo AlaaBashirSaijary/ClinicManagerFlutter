@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.4.0+6
+version: 1.5.0+7
 
 environment:
   sdk: ^3.10.8
@@ -82,15 +82,21 @@ dependencies:
   # lets a support visit confirm which build is on the device at a glance.
   package_info_plus: ^9.0.1
 
-  # Opens the vendor's WhatsApp chat for the "تواصل مع الدعم" button —
-  # the direct-support channel this offline app relies on instead of any
-  # in-app licensing/update service.
+  # Opens the vendor's WhatsApp chat for the "تواصل مع الدعم" button, and
+  # opens the browser on a new APK's direct download link when one is
+  # available (see UpdateCheckService) — this app still has no in-app
+  # licensing/activation service, by design (see the direct-sale model).
   url_launcher: ^6.3.2
 
   # Parses .xlsx workbooks for the patient-import tool — lets a doctor
   # migrating from a paper ledger's spreadsheet bring their patient list in
   # instead of retyping it by hand.
   excel: ^4.0.6
+
+  # A single best-effort GET to GitHub's public release API — the only
+  # network call this otherwise fully offline app ever makes, and it's
+  # allowed to fail silently (see UpdateCheckService).
+  http: ^1.2.2
 
   # Parses .csv exports for the same import tool.
   csv: ^6.0.0

@@ -8,6 +8,7 @@ import '../../features/clinics/presentation/providers/active_clinic_provider.dar
 import '../../features/clinics/presentation/widgets/clinic_switcher.dart';
 import '../../features/patients/presentation/pages/dashboard_page.dart';
 import '../theme/app_theme.dart';
+import '../update/update_provider.dart';
 import 'brand_mark.dart';
 
 /// The app's top-level structure: patient management and system
@@ -43,6 +44,17 @@ class _ShellDestination {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fire-and-forget, once per real session (not per clinic switch) — the
+    // check itself throttles to once a day and fails silently, so this
+    // never delays or blocks getting into the app.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => ref.read(updateAvailableProvider.notifier).check(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
