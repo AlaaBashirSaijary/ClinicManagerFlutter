@@ -7,6 +7,8 @@ import 'core/di/injection.dart';
 import 'core/security/app_lock_provider.dart';
 import 'core/security/pin_lock_page.dart';
 import 'core/theme/app_theme.dart';
+import 'core/trial/trial_gate_page.dart';
+import 'core/trial/trial_service.dart';
 import 'core/widgets/app_shell.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/onboarding_page.dart';
@@ -61,8 +63,46 @@ class ClinicManagerApp extends StatelessWidget {
           },
         ),
       ),
-      home: const AppLockGate(),
+      home: const TrialGate(),
     );
+  }
+}
+
+/// The very first gate the app hits, before even the PIN lock — a device
+/// past its 14-day trial with no activation code entered never reaches
+/// anything else, onboarding included, until it does. See TrialService for
+/// how the trial clock and the activation code are computed, both fully
+/// offline.
+class TrialGate extends StatefulWidget {
+  const TrialGate({super.key});
+
+  @override
+  State<TrialGate> createState() => _TrialGateState();
+}
+
+class _TrialGateState extends State<TrialGate> {
+  bool? _expired;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final expired = await TrialService.instance.isTrialExpired();
+    if (mounted) setState(() => _expired = expired);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_expired == null) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
+    if (_expired!) {
+      return TrialGatePage(onActivated: () => setState(() => _expired = false));
+    }
+    return const AppLockGate();
   }
 }
 

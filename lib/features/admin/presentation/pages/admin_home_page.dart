@@ -9,6 +9,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/security/app_lock_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/trial/trial_service.dart';
 import '../../../../core/update/update_provider.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
@@ -55,6 +56,7 @@ class AdminHomePage extends ConsumerWidget {
                 _BackupSection(),
                 _StorageSection(),
                 _LegalSection(),
+                _TrialStatusSection(),
                 _SupportSection(),
                 _AboutFooter(),
               ],
@@ -1913,6 +1915,170 @@ class _LegalSection extends StatelessWidget {
 /// Required by the license of the onboarding illustrations
 /// (assets/images/Doctor-pana.svg, Insurance-pana.svg — Storyset/Freepik,
 /// "free for personal and commercial purpose with attribution").
+// ============================== الفترة التجريبية ==============================
+
+/// Lets a doctor still inside the 14-day trial activate early — same
+/// device code / activation code pairing TrialGatePage uses once the trial
+/// actually runs out (see TrialService), just reachable before that wall
+/// instead of only after it.
+class _TrialStatusSection extends StatefulWidget {
+  const _TrialStatusSection();
+
+  @override
+  State<_TrialStatusSection> createState() => _TrialStatusSectionState();
+}
+
+class _TrialStatusSectionState extends State<_TrialStatusSection> {
+  final _codeController = TextEditingController();
+  bool? _activated;
+  String? _deviceCode;
+  int? _daysRemaining;
+  bool _activating = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final activated = await TrialService.instance.isActivated();
+    if (!mounted) return;
+    if (activated) {
+      setState(() => _activated = true);
+      return;
+    }
+    final code = await TrialService.instance.deviceCode();
+    final days = await TrialService.instance.daysRemaining();
+    if (!mounted) return;
+    setState(() {
+      _activated = false;
+      _deviceCode = code;
+      _daysRemaining = days;
+    });
+  }
+
+  Future<void> _activate() async {
+    setState(() {
+      _activating = true;
+      _error = null;
+    });
+    final ok = await TrialService.instance.activate(_codeController.text);
+    if (!mounted) return;
+    setState(() => _activating = false);
+    if (ok) {
+      setState(() => _activated = true);
+    } else {
+      setState(() => _error = 'رمز التفعيل غير صحيح.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_activated == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.verified_rounded,
+          title: 'الترخيص',
+          subtitle: 'حالة التفعيل على هذا الجهاز',
+        ),
+        _SectionCard(
+          child: _activated!
+              ? const Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.ok,
+                      size: 20,
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'مُفعَّل بشكل دائم على هذا الجهاز.',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'الفترة التجريبية — متبقٍ ${_daysRemaining ?? 0} يوم.',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Text(
+                          'رمز الجهاز: ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                        Text(
+                          _deviceCode ?? '',
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: AppColors.aquaDeep,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const Divider(height: 1),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: _codeController,
+                      textDirection: TextDirection.ltr,
+                      textAlign: TextAlign.center,
+                      textCapitalization: TextCapitalization.characters,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      decoration: const InputDecoration(
+                        labelText: 'رمز التفعيل (إن توفر)',
+                        hintText: 'XXXXX-XXXXX',
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _error!,
+                        style: const TextStyle(
+                          color: AppColors.danger,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    OutlinedButton(
+                      onPressed: _activating ? null : _activate,
+                      child: _activating
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('تفعيل'),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
 // ============================== الدعم والإصدار ==============================
 
 /// The technical side of "بيع مباشر + دعم شخصي": no in-app license key or
