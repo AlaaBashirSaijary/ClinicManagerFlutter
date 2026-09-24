@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="نظرة شاملة على كل مزايا تطبيق عيادتي — مرتّبة حسب أقسام التطبيق.">
+<title>لمحة عن عيادتي</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#F5F7F8;
+    --paper-raised:#FFFFFF;
+    --ink:#11212E;
+    --ink-soft:#4A5C68;
+    --ink-faint:#7C8C96;
+    --teal:#0E7490;
+    --teal-deep:#0B5563;
+    --teal-wash:#E4F1F3;
+    --gold:#A9701D;
+    --gold-wash:#F6ECDA;
+    --ok:#157A4C;
+    --ok-wash:#E3F3EA;
+    --line:#DCE4E7;
+    --line-strong:#C3D0D4;
+    --shadow: 0 16px 40px -28px rgba(17,33,46,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0E161C;
+      --paper-raised:#152229;
+      --ink:#E8EEF1;
+      --ink-soft:#AEC0C8;
+      --ink-faint:#7E939C;
+      --teal:#4FC1DD;
+      --teal-deep:#7FD4E8;
+      --teal-wash:#123039;
+      --gold:#E3B166;
+      --gold-wash:#33270F;
+      --ok:#4ED08A;
+      --ok-wash:#0F2A1E;
+      --line:#243138;
+      --line-strong:#324450;
+      --shadow: 0 16px 40px -28px rgba(0,0,0,.6);
+      color-scheme: dark;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+    line-height:1.7;
+    padding-inline:20px;
+    padding-block:48px 80px;
+  }
+  img{max-width:100%;}
+  h1,h2,h3{
+    font-family:'Markazi Text','Traditional Arabic',serif;
+    font-weight:700;
+    color:var(--ink);
+    text-wrap:balance;
+    line-height:1.2;
+  }
+  .wrap{max-width:960px;margin-inline:auto;}
+
+  /* Masthead */
+  .masthead{display:flex;flex-direction:column;gap:14px;padding-block:0 36px;border-bottom:1px solid var(--line);margin-bottom:40px;}
+  .eyebrow{font-size:13px;font-weight:600;color:var(--teal);letter-spacing:.04em;}
+  .masthead h1{font-size:clamp(32px,4.6vw,48px);margin:0;}
+  .masthead .sub{font-size:17px;color:var(--ink-soft);max-width:66ch;}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+  .meta-chip{font-size:12.5px;font-weight:600;color:var(--teal-deep);background:var(--teal-wash);padding:5px 12px;border-radius:999px;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px;}
+  .stat-tile{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;padding:16px 14px;box-shadow:var(--shadow);}
+  .stat-tile .n{font-family:'Markazi Text',serif;font-size:32px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;}
+  .stat-tile .l{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  @media (max-width:640px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+
+  /* Sections */
+  section{padding-block:40px;}
+  section + section{border-top:1px solid var(--line);}
+  .section-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .section-icon{
+    flex:none;width:38px;height:38px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--teal-wash);color:var(--teal-deep);
+    font-size:18px;
+  }
+  .section-head h2{font-size:24px;margin:0;}
+  .lede{color:var(--ink-soft);max-width:70ch;font-size:14.5px;margin:0 0 22px;}
+
+  .feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media (max-width:700px){.feature-grid{grid-template-columns:1fr;}}
+
+  .feature{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .feature .dot{
+    flex:none;width:8px;height:8px;border-radius:50%;
+    background:var(--teal);margin-top:7px;
+  }
+  .feature b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:2px;}
+  .feature span{font-size:13px;color:var(--ink-soft);}
+
+  .feature.new .dot{background:var(--gold);}
+  .badge-new{
+    display:inline-block;font-size:10px;font-weight:700;color:var(--gold);
+    background:var(--gold-wash);padding:1px 7px;border-radius:999px;
+    margin-inline-start:6px;vertical-align:middle;
+  }
+
+  /* Closing highlight */
+  .highlight{
+    background:var(--teal-wash);
+    border:1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+    border-radius:20px;
+    padding:28px 30px;
+    margin-top:8px;
+  }
+  .highlight h3{font-size:19px;margin:0 0 8px;color:var(--teal-deep);}
+  .highlight p{margin:0;font-size:14px;color:var(--ink-soft);max-width:70ch;}
+
+  footer{max-width:960px;margin:56px auto 0;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div class="wrap masthead">
+  <div class="eyebrow">لمحة شاملة عن التطبيق</div>
+  <h1>عيادتي</h1>
+  <p class="sub">تطبيق إدارة عيادة متكامل يعمل بلا إنترنت إطلاقًا — لأي تخصص طبي، على آيباد أو أندرويد، بواجهة عربية كاملة.</p>
+  <div class="meta">
+    <span class="meta-chip">يعمل دون إنترنت بالكامل</span>
+    <span class="meta-chip">عربي ١٠٠٪ (RTL)</span>
+    <span class="meta-chip">لأي تخصص طبي</span>
+    <span class="meta-chip">آيباد وأندرويد</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat-tile"><div class="n">٦</div><div class="l">أقسام رئيسية</div></div>
+    <div class="stat-tile"><div class="n">+٣٠</div><div class="l">ميزة فعلية</div></div>
+    <div class="stat-tile"><div class="n">٠</div><div class="l">اعتماد على الإنترنت</div></div>
+    <div class="stat-tile"><div class="n">١٤</div><div class="l">يوم تجربة مجانية</div></div>
+  </div>
+</div>
+
+<section class="wrap" id="patients">
+  <div class="section-head">
+    <div class="section-icon">🗂️</div>
+    <h2>سجلات المرضى</h2>
+  </div>
+  <p class="lede">إضبارة كل مريض كاملة في مكان واحد — بحث فوري، تاريخ طبي، وأدوات لا تتوفر بالدفتر الورقي.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>إضافة وتعديل سريع</b><span>الاسم الكامل وحده مطلوب، كل حقل آخر اختياري ويُكمَّل لاحقًا.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>بحث فوري</b><span>بالاسم أو رقم الهاتف أو رقم الملف، مع تصفية نشط/غير نشط.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>تاريخ طبي وأدوية</b><span>الشكاية، الأدوية السابقة والحالية، الحساسية، العمليات السابقة.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>تصدير PDF</b><span>إضبارة المريض كاملة، جاهزة للطباعة أو المشاركة.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>استيراد من إكسل/CSV <span class="badge-new">جديد</span></b><span>نقل قائمة مرضى جاهزة دفعة واحدة بدل إدخالها يدويًا.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>مقارنة صور قبل/بعد <span class="badge-new">جديد</span></b><span>عرض صورتين من زيارتين مختلفتين جنبًا إلى جنب.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>خطة متابعة دورية <span class="badge-new">جديد</span></b><span>لمريض مزمن — كل زيارة جديدة تُعلَّم "يحتاج متابعة" تلقائيًا.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="visits">
+  <div class="section-head">
+    <div class="section-icon">🩺</div>
+    <h2>زيارات الفحص</h2>
+  </div>
+  <p class="lede">السجل الطبي التفصيلي لكل زيارة — نموذج الفحص نفسه يُبنى من الصفر ليناسب أي تخصص، لا عيادة عيون فقط.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>نموذج فحص قابل للتخصيص الكامل</b><span>كل عيادة تضيف حقولها الخاصة — رقم واحد أو قيمتين (يمين/يسار).</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>صور مرفقة بالزيارة</b><span>من الكاميرا أو المعرض، حتى قبل حفظ الزيارة لأول مرة.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>علامة "يحتاج متابعة"</b><span>بتاريخ مستهدف اختياري — تظهر بقائمة مركزية وتختفي تلقائيًا بعد الزيارة التالية.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>الكشفية لكل زيارة <span class="badge-new">جديد</span></b><span>المبلغ والمدفوع فعليًا — يغذّي التقرير المالي الحقيقي.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="followups">
+  <div class="section-head">
+    <div class="section-icon">📋</div>
+    <h2>متابعة المرضى</h2>
+  </div>
+  <p class="lede">تحويل "يحتاج متابعة" من ملاحظة تُنسى إلى قائمة عمل فعلية بيد الطبيب.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>قائمة متابعات مستحقة</b><span>كل مريض بحاجة متابعة، مرتّبين حسب الأقرب موعدًا أو المتأخرين.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>تذكير بالشاشة الرئيسية</b><span>شريط تنبيه يظهر تلقائيًا كلما وُجد مريض بحاجة متابعة.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>اتصال مباشر <span class="badge-new">جديد</span></b><span>زر يفتح تطبيق الهاتف برقم المريض مباشرة من القائمة.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>تذكير واتساب <span class="badge-new">جديد</span></b><span>رسالة تذكير جاهزة تتضمن اسم المريض وتاريخ المتابعة.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="appointments">
+  <div class="section-head">
+    <div class="section-icon">📅</div>
+    <h2>المواعيد وصالة الانتظار</h2>
+  </div>
+  <p class="lede">حجز يومي منظّم، مع تصنيف تلقائي للتسعير حسب توقيت آخر كشفية.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>عرض يومي بالتنقل بين الأيام</b><span>كشفية، نصف معاينة، أو متابعة مجانية — يُحدَّد تلقائيًا.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>منع تعارض الحجز</b><span>تنبيه فوري عند محاولة حجز نفس الموعد لمريضين.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>إجراءات سريعة من البطاقة</b><span>"بدء الفحص" و"تمت الزيارة" بضغطة واحدة، دون فتح شاشة إضافية.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>شاشة انتظار لصالة الاستقبال</b><span>عرض قائمة الدور يشاهده المرضى، يتحدّث تلقائيًا كل ٢٠ ثانية.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="reports">
+  <div class="section-head">
+    <div class="section-icon">📊</div>
+    <h2>التقارير والمالية</h2>
+  </div>
+  <p class="lede">أرقام حقيقية بدل التخمين — سواء عن نشاط العيادة أو عن الدخل الفعلي.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>التقرير الشهري</b><span>عدد الكشفيات، نصف المعاينات، المتابعات المجانية، والمرضى الجدد.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>التقرير المالي الحقيقي <span class="badge-new">جديد</span></b><span>إجمالي الكشفيات، المُحصَّل فعليًا، والمتبقي — بمبالغ حقيقية لا أعداد.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>تصدير PDF لكل تقرير</b><span>جاهز للطباعة أو الأرشفة أو المحاسب.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>سجل النشاط</b><span>من فعل ماذا ومتى — مهم بمجرد وجود أكثر من مستخدم بالعيادة.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="admin">
+  <div class="section-head">
+    <div class="section-icon">⚙️</div>
+    <h2>الإدارة والأمان</h2>
+  </div>
+  <p class="lede">التحكم الكامل بالعيادة، وبمن يدخل إليها.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>حسابات متعددة بأدوار</b><span>مدير أو ممرضة، كل حساب بصلاحياته الخاصة.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>عيادات متعددة على نفس الجهاز</b><span>كل عيادة بقاعدة بيانات منفصلة تمامًا — فصل حقيقي، لا مجرد فلترة.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>قفل بالرمز (PIN)</b><span>اختياري، مع رمز استرداد بلا حاجة لبريد إلكتروني فعلي.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>تخصيص نموذج الفحص</b><span>إضافة أو حذف أو إعادة ترتيب الحقول متى شاءت العيادة.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="reliability">
+  <div class="section-head">
+    <div class="section-icon">🔄</div>
+    <h2>النسخ الاحتياطي والتحديثات</h2>
+  </div>
+  <p class="lede">حماية البيانات ليست مجرد زر — هي طبقة كاملة تعمل بصمت في الخلفية.</p>
+  <div class="feature-grid">
+    <div class="feature"><div class="dot"></div><div><b>نسخ احتياطي يدوي + تذكير دوري</b><span>مع خيار استعادة "كعيادة جديدة" بدل استبدال البيانات الحالية.</span></div></div>
+    <div class="feature"><div class="dot"></div><div><b>نسخة أمان تلقائية عند التحديث</b><span>كل تحديث إصدار يأخذ نسخة احتياطية تلقائيًا قبل أي تغيير.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>آلية تحديث فعلية <span class="badge-new">جديد</span></b><span>تنبيه تلقائي عند توفر إصدار أحدث، بزر تنزيل مباشر.</span></div></div>
+    <div class="feature new"><div class="dot"></div><div><b>فترة تجربة ١٤ يومًا <span class="badge-new">جديد</span></b><span>كل عيادة تجرّب كامل المزايا قبل الشراء، بلا أي قيد.</span></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="offline">
+  <div class="highlight">
+    <h3>الميزة التي تبني عليها كل ميزة أخرى</h3>
+    <p>كل بيانات العيادة محفوظة محليًا على الجهاز نفسه — لا خادم، لا اشتراك إنترنت مطلوب، ولا قلق من انقطاع الشبكة أثناء يوم عمل كامل. التحديثات والفحوصات الاختيارية (مثل التحقق من إصدار جديد) هي الاستثناء الوحيد، وحتى هذه تفشل بصمت دون التأثير على عمل التطبيق.</p>
+  </div>
+</section>
+
+<footer class="wrap">عيادتي · لمحة شاملة عن مزايا التطبيق · مبنية على حالة الكود الفعلية.</footer>
+
+</body>
+</html>
