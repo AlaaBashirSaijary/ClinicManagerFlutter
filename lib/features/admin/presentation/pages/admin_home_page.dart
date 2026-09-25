@@ -17,6 +17,8 @@ import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinics/domain/entities/clinic.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
+import '../../../doctors/domain/entities/doctor.dart';
+import '../../../doctors/presentation/providers/doctors_provider.dart';
 import '../../../help/presentation/pages/help_guide_page.dart';
 import '../../../legal/presentation/pages/privacy_policy_page.dart';
 import '../../../legal/presentation/pages/terms_of_use_page.dart';
@@ -49,6 +51,7 @@ class AdminHomePage extends ConsumerWidget {
                 _UsersSection(),
                 _SecuritySection(),
                 _ClinicsSection(),
+                _DoctorsSection(),
                 _ExamFormSection(),
                 _ImportSection(),
                 _ReportsSection(),
@@ -1200,6 +1203,135 @@ class _ClinicsSection extends ConsumerWidget {
                 onPressed: () => _addClinic(context, ref),
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('إضافة عيادة جديدة'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================== الأطباء ==============================
+
+/// Lets a group practice tell its doctors apart on one shared
+/// appointments/visits board — see the doctors table's doc comment in
+/// ClinicDataDatabase for why this is separate from `users` login accounts.
+class _DoctorsSection extends ConsumerWidget {
+  const _DoctorsSection();
+
+  Future<void> _addOrRename(
+    BuildContext context,
+    WidgetRef ref, {
+    Doctor? doctor,
+  }) async {
+    final controller = TextEditingController(text: doctor?.name ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(doctor == null ? 'إضافة طبيب' : 'تعديل اسم الطبيب'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'اسم الطبيب'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: Text(doctor == null ? 'إضافة' : 'حفظ'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result.trim().isEmpty || !context.mounted) return;
+    final error = await ref
+        .read(doctorsProvider.notifier)
+        .save((doctor ?? const Doctor(name: '')).copyWith(name: result.trim()));
+    if (error != null && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(doctorsProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.badge_outlined,
+          title: 'الأطباء',
+          subtitle: 'لعيادة فيها أكثر من طبيب — يُسندون للمواعيد والزيارات',
+        ),
+        _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (state.items.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'لا يوجد أطباء مضافون بعد — إن كانت العيادة لطبيب واحد '
+                    'فلا حاجة لهذا القسم إطلاقًا.',
+                    style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5),
+                  ),
+                )
+              else
+                for (final doctor in state.items) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.badge_outlined,
+                        size: 18,
+                        color: doctor.isActive
+                            ? AppColors.aqua
+                            : AppColors.inkSoft,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          doctor.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: doctor.isActive
+                                ? AppColors.ink
+                                : AppColors.inkSoft,
+                            decoration: doctor.isActive
+                                ? null
+                                : TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(doctorsProvider.notifier)
+                            .toggleStatus(doctor.id!),
+                        child: Text(doctor.isActive ? 'إيقاف' : 'تفعيل'),
+                      ),
+                      IconButton(
+                        tooltip: 'تعديل الاسم',
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        onPressed: () =>
+                            _addOrRename(context, ref, doctor: doctor),
+                      ),
+                    ],
+                  ),
+                  if (doctor != state.items.last)
+                    const Divider(height: AppSpacing.lg),
+                ],
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: () => _addOrRename(context, ref),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('إضافة طبيب'),
               ),
             ],
           ),

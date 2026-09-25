@@ -24,6 +24,22 @@ import '../../features/auth/domain/usecases/login.dart';
 import '../../features/clinics/data/datasources/clinic_local_datasource.dart';
 import '../../features/clinics/data/repositories/clinic_repository_impl.dart';
 import '../../features/clinics/domain/repositories/clinic_repository.dart';
+import '../../features/doctors/data/datasources/doctor_local_datasource.dart';
+import '../../features/doctors/data/repositories/doctor_repository_impl.dart';
+import '../../features/doctors/domain/repositories/doctor_repository.dart';
+import '../../features/doctors/domain/usecases/get_doctors.dart';
+import '../../features/doctors/domain/usecases/save_doctor.dart';
+import '../../features/doctors/domain/usecases/toggle_doctor_status.dart';
+import '../../features/medical_certificates/data/datasources/medical_certificate_local_datasource.dart';
+import '../../features/medical_certificates/data/repositories/medical_certificate_repository_impl.dart';
+import '../../features/medical_certificates/domain/repositories/medical_certificate_repository.dart';
+import '../../features/medical_certificates/domain/usecases/get_medical_certificates.dart';
+import '../../features/medical_certificates/domain/usecases/save_medical_certificate.dart';
+import '../../features/prescriptions/data/datasources/prescription_local_datasource.dart';
+import '../../features/prescriptions/data/repositories/prescription_repository_impl.dart';
+import '../../features/prescriptions/domain/repositories/prescription_repository.dart';
+import '../../features/prescriptions/domain/usecases/get_prescriptions.dart';
+import '../../features/prescriptions/domain/usecases/save_prescription.dart';
 import '../../features/patients/data/datasources/patient_local_datasource.dart';
 import '../../features/patients/data/repositories/patient_repository_impl.dart';
 import '../../features/patients/domain/repositories/patient_repository.dart';
@@ -79,6 +95,30 @@ void setupDependencyInjection() {
   sl.registerLazySingleton(() => AuthLocalDataSource(sl(), sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
   sl.registerFactory(() => Login(sl()));
+
+  // Doctors (per active clinic — a scheduling/attribution label, not a
+  // login account; see doctors table doc comment)
+  sl.registerLazySingleton(() => DoctorLocalDataSource(sl()));
+  sl.registerLazySingleton<DoctorRepository>(() => DoctorRepositoryImpl(sl()));
+  sl.registerFactory(() => GetDoctors(sl()));
+  sl.registerFactory(() => SaveDoctor(sl()));
+  sl.registerFactory(() => ToggleDoctorStatus(sl()));
+
+  // Prescriptions
+  sl.registerLazySingleton(() => PrescriptionLocalDataSource(sl()));
+  sl.registerLazySingleton<PrescriptionRepository>(
+    () => PrescriptionRepositoryImpl(sl()),
+  );
+  sl.registerFactory(() => GetPrescriptions(sl()));
+  sl.registerFactory(() => SavePrescription(sl()));
+
+  // Medical certificates (sick leave / general reports)
+  sl.registerLazySingleton(() => MedicalCertificateLocalDataSource(sl()));
+  sl.registerLazySingleton<MedicalCertificateRepository>(
+    () => MedicalCertificateRepositoryImpl(sl()),
+  );
+  sl.registerFactory(() => GetMedicalCertificates(sl()));
+  sl.registerFactory(() => SaveMedicalCertificate(sl()));
 
   // Patients (always against whichever clinic is currently active)
   sl.registerLazySingleton(() => PatientLocalDataSource(sl()));

@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
+import '../../../medical_certificates/domain/entities/medical_certificate.dart';
+import '../../../medical_certificates/domain/usecases/get_medical_certificates.dart';
+import '../../../medical_certificates/presentation/pages/medical_certificate_form_page.dart';
+import '../../../medical_certificates/presentation/pdf/medical_certificate_pdf_export.dart';
+import '../../../prescriptions/domain/entities/prescription.dart';
+import '../../../prescriptions/domain/usecases/get_prescriptions.dart';
+import '../../../prescriptions/presentation/pages/prescription_form_page.dart';
+import '../../../prescriptions/presentation/pdf/prescription_pdf_export.dart';
 import '../../../visits/domain/entities/visit.dart';
 import '../../../visits/presentation/pages/photo_comparison_page.dart';
 import '../../../visits/presentation/pages/visit_form_page.dart';
@@ -351,6 +361,16 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
                           setState(() => _patient = updated),
                     ),
                     _VisitsSection(patientId: widget.patientId),
+                    _PrescriptionsSection(
+                      patientId: widget.patientId,
+                      patientName: patient.fullName,
+                      patientAge: patient.displayAge,
+                    ),
+                    _MedicalCertificatesSection(
+                      patientId: widget.patientId,
+                      patientName: patient.fullName,
+                      patientAge: patient.displayAge,
+                    ),
                     GradientButton(
                       label: 'تعديل الإضبارة',
                       icon: Icons.edit_rounded,
@@ -767,6 +787,298 @@ class _VisitsSectionState extends ConsumerState<_VisitsSection> {
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Lets a doctor reprint any past prescription without retyping it — see
+/// Prescription's own doc comment for why it's kept as a standalone record
+/// instead of folded into the visit it may have come from.
+class _PrescriptionsSection extends ConsumerStatefulWidget {
+  const _PrescriptionsSection({
+    required this.patientId,
+    required this.patientName,
+    required this.patientAge,
+  });
+
+  final int patientId;
+  final String patientName;
+  final int? patientAge;
+
+  @override
+  ConsumerState<_PrescriptionsSection> createState() =>
+      _PrescriptionsSectionState();
+}
+
+class _PrescriptionsSectionState extends ConsumerState<_PrescriptionsSection> {
+  static final _dateFormat = DateFormat('yyyy/MM/dd');
+
+  bool _loading = true;
+  List<Prescription> _prescriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final result = await sl<GetPrescriptions>().call(widget.patientId);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      result.fold((_) {}, (list) => _prescriptions = list);
+    });
+  }
+
+  Future<void> _addNew() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PrescriptionFormPage(
+          patientId: widget.patientId,
+          patientName: widget.patientName,
+          patientAge: widget.patientAge,
+        ),
+      ),
+    );
+    if (saved == true) _load();
+  }
+
+  Future<void> _reprint(Prescription prescription) async {
+    await PrescriptionPdfExport.export(
+      clinicName: ref.read(activeClinicProvider).active?.name ?? '',
+      doctorName: ref.read(authProvider).user?.name ?? '',
+      patientName: widget.patientName,
+      patientAge: widget.patientAge,
+      prescription: prescription,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'الوصفات الطبية',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _addNew,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('وصفة جديدة'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else if (_prescriptions.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'لا توجد وصفات طبية بعد.',
+                style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+              ),
+            )
+          else
+            for (final prescription in _prescriptions)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_rounded,
+                      color: AppColors.aqua,
+                      size: 18,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        '${_dateFormat.format(prescription.createdAt!)} — '
+                        '${prescription.items.length} دواء',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _reprint(prescription),
+                      child: const Text('طباعة'),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sick-leave notes and general medical reports — same reprint-history
+/// shape as _PrescriptionsSection, for the same reason (see
+/// MedicalCertificate's own doc comment).
+class _MedicalCertificatesSection extends ConsumerStatefulWidget {
+  const _MedicalCertificatesSection({
+    required this.patientId,
+    required this.patientName,
+    required this.patientAge,
+  });
+
+  final int patientId;
+  final String patientName;
+  final int? patientAge;
+
+  @override
+  ConsumerState<_MedicalCertificatesSection> createState() =>
+      _MedicalCertificatesSectionState();
+}
+
+class _MedicalCertificatesSectionState
+    extends ConsumerState<_MedicalCertificatesSection> {
+  static final _dateFormat = DateFormat('yyyy/MM/dd');
+
+  bool _loading = true;
+  List<MedicalCertificate> _certificates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final result = await sl<GetMedicalCertificates>().call(widget.patientId);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      result.fold((_) {}, (list) => _certificates = list);
+    });
+  }
+
+  Future<void> _addNew() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => MedicalCertificateFormPage(
+          patientId: widget.patientId,
+          patientName: widget.patientName,
+          patientAge: widget.patientAge,
+        ),
+      ),
+    );
+    if (saved == true) _load();
+  }
+
+  Future<void> _reprint(MedicalCertificate certificate) async {
+    await MedicalCertificatePdfExport.export(
+      clinicName: ref.read(activeClinicProvider).active?.name ?? '',
+      doctorName: ref.read(authProvider).user?.name ?? '',
+      patientName: widget.patientName,
+      patientAge: widget.patientAge,
+      certificate: certificate,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'تقارير طبية وإجازات مرضية',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _addNew,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('تقرير جديد'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else if (_certificates.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'لا توجد تقارير أو إجازات مرضية بعد.',
+                style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+              ),
+            )
+          else
+            for (final certificate in _certificates)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      color: AppColors.aqua,
+                      size: 18,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        '${_dateFormat.format(certificate.createdAt!)} — '
+                        '${certificate.type.label}'
+                        '${certificate.restDays != null ? ' (${certificate.restDays} يوم)' : ''}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _reprint(certificate),
+                      child: const Text('طباعة'),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );

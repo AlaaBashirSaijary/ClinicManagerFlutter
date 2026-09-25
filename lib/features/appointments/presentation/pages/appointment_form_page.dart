@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../doctors/presentation/providers/doctors_provider.dart';
 import '../../../patients/domain/entities/patient.dart';
 import '../../../patients/domain/usecases/get_patients.dart';
 import '../../domain/entities/appointment.dart';
@@ -51,6 +52,7 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
   late TimeOfDay _time;
   AppointmentStatus _status = AppointmentStatus.scheduled;
   AppointmentType _type = AppointmentType.consultation;
+  int? _doctorId;
   bool _saving = false;
   String? _error;
 
@@ -72,6 +74,7 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       _time = TimeOfDay.fromDateTime(existing.scheduledAt);
       _status = existing.status;
       _type = existing.type;
+      _doctorId = existing.doctorId;
       _notesController.text = existing.notes ?? '';
       _selectedPatient = Patient(
         id: existing.patientId,
@@ -214,6 +217,7 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       scheduledAt: scheduledAt,
       status: _status,
       type: _type,
+      doctorId: _doctorId,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
@@ -266,6 +270,11 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy/MM/dd');
+    final doctors = ref
+        .watch(doctorsProvider)
+        .items
+        .where((d) => d.isActive)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(_isEditing ? 'تعديل الموعد' : 'موعد جديد')),
@@ -427,6 +436,32 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
               Text(
                 _suggestionHint()!,
                 style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
+              ),
+            ],
+            // Hidden entirely for a single-doctor clinic — there's nothing
+            // to disambiguate yet (see Admin > الأطباء).
+            if (doctors.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              const Text(
+                'الطبيب',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('بلا تحديد'),
+                    selected: _doctorId == null,
+                    onSelected: (_) => setState(() => _doctorId = null),
+                  ),
+                  for (final doctor in doctors)
+                    ChoiceChip(
+                      label: Text(doctor.name),
+                      selected: _doctorId == doctor.id,
+                      onSelected: (_) => setState(() => _doctorId = doctor.id),
+                    ),
+                ],
               ),
             ],
             const SizedBox(height: AppSpacing.lg),

@@ -13,6 +13,7 @@ class AppointmentsState {
     this.appointments = const [],
     this.isLoading = true,
     this.error,
+    this.selectedDoctorId,
   });
 
   final DateTime? day;
@@ -20,17 +21,31 @@ class AppointmentsState {
   final bool isLoading;
   final String? error;
 
+  /// A display-only filter for a group practice's shared day view — null
+  /// means "الكل". Never sent to storage; [appointments] itself always
+  /// holds the whole day, filtered client-side (see visibleAppointments).
+  final int? selectedDoctorId;
+
+  List<Appointment> get visibleAppointments => selectedDoctorId == null
+      ? appointments
+      : appointments.where((a) => a.doctorId == selectedDoctorId).toList();
+
   AppointmentsState copyWith({
     DateTime? day,
     List<Appointment>? appointments,
     bool? isLoading,
     String? error,
+    int? selectedDoctorId,
+    bool clearSelectedDoctorId = false,
   }) {
     return AppointmentsState(
       day: day ?? this.day,
       appointments: appointments ?? this.appointments,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      selectedDoctorId: clearSelectedDoctorId
+          ? null
+          : (selectedDoctorId ?? this.selectedDoctorId),
     );
   }
 }
@@ -90,6 +105,13 @@ class AppointmentsNotifier extends Notifier<AppointmentsState> {
       if (day != null) loadDay(day);
       return null;
     });
+  }
+
+  void filterByDoctor(int? doctorId) {
+    state = state.copyWith(
+      selectedDoctorId: doctorId,
+      clearSelectedDoctorId: doctorId == null,
+    );
   }
 
   Future<void> delete(int id) async {

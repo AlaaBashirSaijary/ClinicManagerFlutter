@@ -22,6 +22,14 @@ import '../../domain/usecases/save_visit.dart';
 import '../../domain/usecases/save_visit_field_values.dart';
 import 'exam_template_settings_page.dart';
 
+/// A visit's photos live as BLOBs inside the clinic's own SQLite file (see
+/// ClinicDataDatabase) — nothing prunes them, so an unbounded photo count
+/// per visit is what actually grows that file large over years of use,
+/// long before patient/visit *counts* alone would ever matter. Capping
+/// here is cheap insurance against that, not a response to any real
+/// clinic having hit it yet.
+const _maxPhotosPerVisit = 8;
+
 /// One exam visit's form — a digital copy of one filled page from the
 /// clinic's paper "إضبارة" chart, except the rows themselves are the
 /// clinic's own exam form (see ExamFieldTemplate) rather than a fixed
@@ -813,6 +821,7 @@ class _PhotosSectionState extends State<_PhotosSection> {
 
   Future<void> _pickAndAdd(ImageSource source) async {
     Navigator.of(context).pop(); // close the source-picker sheet
+    if (_photos.length >= _maxPhotosPerVisit) return;
     final picker = ImagePicker();
     final file = await picker.pickImage(
       source: source,
@@ -938,9 +947,15 @@ class _PhotosSectionState extends State<_PhotosSection> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : TextButton.icon(
-                      onPressed: _showSourcePicker,
+                      onPressed: _photos.length >= _maxPhotosPerVisit
+                          ? null
+                          : _showSourcePicker,
                       icon: const Icon(Icons.add_a_photo_rounded, size: 18),
-                      label: const Text('إضافة صورة'),
+                      label: Text(
+                        _photos.length >= _maxPhotosPerVisit
+                            ? 'الحد الأقصى $_maxPhotosPerVisit صور'
+                            : 'إضافة صورة',
+                      ),
                     ),
             ],
           ),
@@ -1043,6 +1058,7 @@ class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
 
   Future<void> _pickAndAdd(ImageSource source) async {
     Navigator.of(context).pop(); // close the source-picker sheet
+    if (widget.photos.length >= _maxPhotosPerVisit) return;
     final picker = ImagePicker();
     final file = await picker.pickImage(
       source: source,
@@ -1127,9 +1143,15 @@ class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : TextButton.icon(
-                      onPressed: _showSourcePicker,
+                      onPressed: widget.photos.length >= _maxPhotosPerVisit
+                          ? null
+                          : _showSourcePicker,
                       icon: const Icon(Icons.add_a_photo_rounded, size: 18),
-                      label: const Text('إضافة صورة'),
+                      label: Text(
+                        widget.photos.length >= _maxPhotosPerVisit
+                            ? 'الحد الأقصى $_maxPhotosPerVisit صور'
+                            : 'إضافة صورة',
+                      ),
                     ),
             ],
           ),

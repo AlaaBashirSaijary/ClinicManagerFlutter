@@ -8,9 +8,11 @@ class AppointmentModel extends Appointment {
     super.status,
     super.type,
     super.notes,
+    super.doctorId,
     super.createdAt,
     super.patientName,
     super.patientPhone,
+    super.doctorName,
   });
 
   factory AppointmentModel.fromEntity(Appointment a) => AppointmentModel(
@@ -20,12 +22,14 @@ class AppointmentModel extends Appointment {
     status: a.status,
     type: a.type,
     notes: a.notes,
+    doctorId: a.doctorId,
     createdAt: a.createdAt,
   );
 
-  /// Expects a row from a query joined against `patients` (see
-  /// AppointmentLocalDataSource) — `patient_name`/`patient_phone` come from
-  /// that join and are null only if the caller queried `appointments` alone.
+  /// Expects a row from a query joined against `patients`/`doctors` (see
+  /// AppointmentLocalDataSource) — `patient_name`/`patient_phone`/
+  /// `doctor_name` come from that join and are null only if the caller
+  /// queried `appointments` alone.
   factory AppointmentModel.fromMap(Map<String, Object?> map) =>
       AppointmentModel(
         id: map['id']! as int,
@@ -36,11 +40,13 @@ class AppointmentModel extends Appointment {
           (map['type'] as String?) ?? AppointmentType.consultation.name,
         ),
         notes: map['notes'] as String?,
+        doctorId: map['doctor_id'] as int?,
         createdAt: map['created_at'] == null
             ? null
             : DateTime.parse(map['created_at']! as String),
         patientName: map['patient_name'] as String?,
         patientPhone: map['patient_phone'] as String?,
+        doctorName: map['doctor_name'] as String?,
       );
 
   Map<String, Object?> toMap() {
@@ -51,6 +57,7 @@ class AppointmentModel extends Appointment {
       'status': status.name,
       'type': type.name,
       'notes': notes,
+      'doctor_id': doctorId,
       'created_at': createdAt?.toIso8601String() ?? now,
       'updated_at': now,
     };

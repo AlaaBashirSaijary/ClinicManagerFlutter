@@ -60,9 +60,11 @@ class Appointment extends Equatable {
     this.status = AppointmentStatus.scheduled,
     this.type = AppointmentType.consultation,
     this.notes,
+    this.doctorId,
     this.createdAt,
     this.patientName,
     this.patientPhone,
+    this.doctorName,
   });
 
   final int? id;
@@ -71,12 +73,19 @@ class Appointment extends Equatable {
   final AppointmentStatus status;
   final AppointmentType type;
   final String? notes;
+
+  /// Which doctor this booking is for — null means "unassigned", the only
+  /// state a single-doctor clinic ever needs (see Doctor).
+  final int? doctorId;
+
   final DateTime? createdAt;
 
-  /// Populated only by list/lookup queries that join against `patients` —
-  /// never sent back to storage (see AppointmentModel.toMap).
+  /// Populated only by list/lookup queries that join against
+  /// `patients`/`doctors` — never sent back to storage (see
+  /// AppointmentModel.toMap).
   final String? patientName;
   final String? patientPhone;
+  final String? doctorName;
 
   Appointment copyWith({
     int? id,
@@ -85,9 +94,12 @@ class Appointment extends Equatable {
     AppointmentStatus? status,
     AppointmentType? type,
     String? notes,
+    int? doctorId,
+    bool clearDoctorId = false,
     DateTime? createdAt,
     String? patientName,
     String? patientPhone,
+    String? doctorName,
   }) {
     return Appointment(
       id: id ?? this.id,
@@ -96,9 +108,11 @@ class Appointment extends Equatable {
       status: status ?? this.status,
       type: type ?? this.type,
       notes: notes ?? this.notes,
+      doctorId: clearDoctorId ? null : (doctorId ?? this.doctorId),
       createdAt: createdAt ?? this.createdAt,
       patientName: patientName ?? this.patientName,
       patientPhone: patientPhone ?? this.patientPhone,
+      doctorName: doctorName ?? this.doctorName,
     );
   }
 
@@ -110,7 +124,9 @@ class Appointment extends Equatable {
     status,
     type,
     notes,
+    doctorId,
     patientName,
     patientPhone,
+    doctorName,
   ];
 }

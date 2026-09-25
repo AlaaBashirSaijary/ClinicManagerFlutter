@@ -8,6 +8,7 @@ import '../../../../core/usecases/usecase.dart';
 import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../doctors/presentation/providers/doctors_provider.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/usecases/get_follow_up_days.dart';
 import '../../domain/usecases/get_half_price_days.dart';
@@ -152,14 +153,20 @@ class AppointmentsPage extends ConsumerWidget {
     final state = ref.watch(appointmentsProvider);
     final notifier = ref.read(appointmentsProvider.notifier);
     final day = state.day ?? DateTime.now();
+    final doctors = ref
+        .watch(doctorsProvider)
+        .items
+        .where((d) => d.isActive)
+        .toList();
+    final visible = state.visibleAppointments;
 
-    final fullCount = state.appointments
+    final fullCount = visible
         .where((a) => a.type == AppointmentType.consultation)
         .length;
-    final halfCount = state.appointments
+    final halfCount = visible
         .where((a) => a.type == AppointmentType.halfConsultation)
         .length;
-    final freeCount = state.appointments
+    final freeCount = visible
         .where((a) => a.type == AppointmentType.followUp)
         .length;
 
@@ -171,7 +178,7 @@ class AppointmentsPage extends ConsumerWidget {
             onQueueDisplay: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const QueueDisplayPage())),
-            total: state.appointments.length,
+            total: visible.length,
             full: fullCount,
             half: halfCount,
             free: freeCount,
@@ -195,10 +202,40 @@ class AppointmentsPage extends ConsumerWidget {
               ),
             ),
           ),
+          if (doctors.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('كل الأطباء'),
+                      selected: state.selectedDoctorId == null,
+                      onSelected: (_) => notifier.filterByDoctor(null),
+                    ),
+                    for (final doctor in doctors) ...[
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: Text(doctor.name),
+                        selected: state.selectedDoctorId == doctor.id,
+                        onSelected: (_) => notifier.filterByDoctor(doctor.id),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : state.appointments.isEmpty
+                : visible.isEmpty
                 ? const _EmptyDay()
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(
@@ -207,9 +244,9 @@ class AppointmentsPage extends ConsumerWidget {
                       AppSpacing.lg,
                       AppSpacing.xl,
                     ),
-                    itemCount: state.appointments.length,
+                    itemCount: visible.length,
                     itemBuilder: (context, index) {
-                      final appointment = state.appointments[index];
+                      final appointment = visible[index];
                       return FadeSlideIn(
                         delay: Duration(milliseconds: 40 * index),
                         child: _AppointmentCard(
@@ -672,6 +709,22 @@ class _AppointmentCard extends StatelessWidget {
                               color: appointment.type.color,
                             ),
                           ),
+                          if (appointment.doctorName != null) ...[
+                            const Text(
+                              ' · ',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                            Text(
+                              appointment.doctorName!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       if (appointment.notes != null &&

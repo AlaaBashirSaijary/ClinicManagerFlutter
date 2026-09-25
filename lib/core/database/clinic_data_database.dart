@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 11;
+  static const _schemaVersion = 12;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -135,6 +135,8 @@ class ClinicDataDatabase {
       'CREATE INDEX patients_is_active_created_index ON patients (is_active, created_at)',
     );
 
+    await _createDoctorsTable(db);
+
     await db.execute('''
       CREATE TABLE visits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,6 +163,7 @@ class ClinicDataDatabase {
         follow_up_by TEXT,
         fee_amount REAL,
         amount_paid REAL,
+        doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL,
         created_at TEXT,
         updated_at TEXT
       )
@@ -179,6 +182,72 @@ class ClinicDataDatabase {
     await _createExamFieldTables(db);
     await _seedDefaultExamFields(db);
     await _createActivityLogTable(db);
+    await _createPrescriptionsTable(db);
+    await _createMedicalCertificatesTable(db);
+  }
+
+  /// A named doctor within this clinic — distinct from `users` (the
+  /// app-level database's login accounts, see AppDatabase): a group
+  /// practice has one shared login per staff member but several doctors
+  /// whose own schedules and patients still need telling apart on the same
+  /// appointments board. Not a foreign key into `users` for the same
+  /// reason activity_log snapshots names instead of joining — a doctor's
+  /// own login (if they have one at all) can change or be removed without
+  /// orphaning every appointment/visit/prescription already assigned to
+  /// them.
+  Future<void> _createDoctorsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE doctors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT
+      )
+    ''');
+  }
+
+  /// A doctor's own printed prescription — kept as its own record (not
+  /// folded into `visits`) so it can be reprinted later without re-opening
+  /// the exam form, and so a clinic that only occasionally prescribes
+  /// doesn't carry empty columns on every visit row. `items_json` holds the
+  /// medication lines as a small JSON array rather than a child table：the
+  /// list is only ever read or written whole with its prescription, never
+  /// queried medication-by-medication across prescriptions.
+  Future<void> _createPrescriptionsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE prescriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+        visit_id INTEGER REFERENCES visits(id) ON DELETE SET NULL,
+        doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL,
+        items_json TEXT NOT NULL,
+        notes TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX prescriptions_patient_index ON prescriptions (patient_id, created_at)',
+    );
+  }
+
+  /// A sick-leave note or a general medical report handed to the patient —
+  /// bureaucratic paperwork (work, school, insurance) a doctor is asked for
+  /// constantly, kept for reprints the same way prescriptions are.
+  Future<void> _createMedicalCertificatesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE medical_certificates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+        doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL,
+        type TEXT NOT NULL DEFAULT 'sick_leave',
+        rest_days INTEGER,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX medical_certificates_patient_index ON medical_certificates (patient_id, created_at)',
+    );
   }
 
   /// Who did what and when — the accountability multiple staff accounts
@@ -353,6 +422,7 @@ class ClinicDataDatabase {
         status TEXT NOT NULL DEFAULT 'scheduled',
         type TEXT NOT NULL DEFAULT 'consultation',
         notes TEXT,
+        doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL,
         created_at TEXT,
         updated_at TEXT
       )
@@ -366,6 +436,9 @@ class ClinicDataDatabase {
     );
     await db.execute(
       'CREATE INDEX appointments_patient_type_index ON appointments (patient_id, type, scheduled_at)',
+    );
+    await db.execute(
+      'CREATE INDEX appointments_doctor_index ON appointments (doctor_id, scheduled_at)',
     );
   }
 
@@ -467,6 +540,20 @@ class ClinicDataDatabase {
       await db.execute(
         'ALTER TABLE patients ADD COLUMN follow_up_plan_months INTEGER',
       );
+    }
+    if (oldVersion < 12) {
+      await _createDoctorsTable(db);
+      await db.execute(
+        'ALTER TABLE visits ADD COLUMN doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL',
+      );
+      await db.execute(
+        'ALTER TABLE appointments ADD COLUMN doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL',
+      );
+      await db.execute(
+        'CREATE INDEX appointments_doctor_index ON appointments (doctor_id, scheduled_at)',
+      );
+      await _createPrescriptionsTable(db);
+      await _createMedicalCertificatesTable(db);
     }
   }
 }

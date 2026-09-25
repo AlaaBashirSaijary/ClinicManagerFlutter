@@ -2,9 +2,11 @@ import '../../../../core/database/clinic_data_database.dart';
 import '../models/appointment_model.dart';
 
 const _joinedSelect = '''
-  SELECT appointments.*, patients.full_name AS patient_name, patients.phone AS patient_phone
+  SELECT appointments.*, patients.full_name AS patient_name, patients.phone AS patient_phone,
+         doctors.name AS doctor_name
   FROM appointments
   JOIN patients ON patients.id = appointments.patient_id
+  LEFT JOIN doctors ON doctors.id = appointments.doctor_id
 ''';
 
 class AppointmentLocalDataSource {
