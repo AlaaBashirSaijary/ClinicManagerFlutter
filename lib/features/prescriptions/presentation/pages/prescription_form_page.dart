@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ai/gemini_service.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -26,6 +29,10 @@ class _ItemControllers {
   final TextEditingController frequency;
   final TextEditingController duration;
   final TextEditingController notes;
+
+  /// Not persisted anywhere — just drives this row's own suggest-button
+  /// spinner while a Gemini call is in flight.
+  bool suggesting = false;
 
   void dispose() {
     drugName.dispose();
@@ -76,6 +83,65 @@ class _PrescriptionFormPageState extends ConsumerState<PrescriptionFormPage> {
     _items[index].dispose();
     _items.removeAt(index);
   });
+
+  /// A general-reference suggestion only — never patient-specific medical
+  /// advice, and always left in editable fields the doctor must review
+  /// before saving. Fills whichever of dosage/frequency/duration the model
+  /// returns; leaves the rest alone if it isn't sure.
+  Future<void> _suggestDosage(int index) async {
+    final controllers = _items[index];
+    final drugName = controllers.drugName.text.trim();
+    if (drugName.isEmpty) {
+      setState(() => _error = 'اكتبي اسم الدواء أولًا.');
+      return;
+    }
+
+    setState(() {
+      controllers.suggesting = true;
+      _error = null;
+    });
+
+    final ageSuffix = widget.patientAge != null
+        ? ' لمريض بالغ العمر ${widget.patientAge} سنة'
+        : ' لمريض بالغ';
+    final prompt =
+        'أنتِ مرجع معلومات دوائية عامة. لدواء اسمه "$drugName"$ageSuffix، '
+        'اقترحي جرعة اعتيادية وعدد مرات ومدة استخدام شائعة. أجيبي بصيغة '
+        'JSON فقط بدون أي نص إضافي وبهذا الشكل بالضبط: '
+        '{"dosage": "...", "frequency": "...", "duration": "..."}. '
+        'إن لم تكوني متأكدة من الدواء أو معلوماته، أعيدي قيمًا فارغة "".';
+
+    final result = await GeminiService.instance.generateText(prompt);
+    if (!mounted) return;
+
+    setState(() {
+      controllers.suggesting = false;
+      if (result == null) {
+        _error = 'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت.';
+        return;
+      }
+      try {
+        final cleaned = result
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+        final json = jsonDecode(cleaned) as Map<String, dynamic>;
+        final dosage = (json['dosage'] as String? ?? '').trim();
+        final frequency = (json['frequency'] as String? ?? '').trim();
+        final duration = (json['duration'] as String? ?? '').trim();
+        if (dosage.isEmpty && frequency.isEmpty && duration.isEmpty) {
+          _error =
+              'المساعد الذكي غير متأكد من هذا الدواء — أدخلي الجرعة يدويًا.';
+          return;
+        }
+        if (dosage.isNotEmpty) controllers.dosage.text = dosage;
+        if (frequency.isNotEmpty) controllers.frequency.text = frequency;
+        if (duration.isNotEmpty) controllers.duration.text = duration;
+      } catch (_) {
+        _error = 'تعذّر فهم اقتراح المساعد الذكي — أدخلي الجرعة يدويًا.';
+      }
+    });
+  }
 
   Future<void> _save() async {
     final items = [
@@ -197,6 +263,43 @@ class _PrescriptionFormPageState extends ConsumerState<PrescriptionFormPage> {
                         labelText: 'اسم الدواء',
                       ),
                     ),
+                    if (GeminiService.instance.isAvailable) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: TextButton.icon(
+                          onPressed: controllers.suggesting
+                              ? null
+                              : () => _suggestDosage(index),
+                          icon: controllers.suggesting
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 16,
+                                ),
+                          label: const Text(
+                            'اقتراح الجرعة',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          'اقتراح عام مرجعي فقط — تحققي دائمًا قبل الوصف.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [

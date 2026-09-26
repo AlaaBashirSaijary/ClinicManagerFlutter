@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ai/gemini_service.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -32,6 +33,7 @@ class _MedicalCertificateFormPageState
   final _bodyController = TextEditingController();
   MedicalCertificateType _type = MedicalCertificateType.sickLeave;
   bool _saving = false;
+  bool _drafting = false;
   String? _error;
 
   @override
@@ -39,6 +41,55 @@ class _MedicalCertificateFormPageState
     _restDaysController.dispose();
     _bodyController.dispose();
     super.dispose();
+  }
+
+  /// Turns whatever shorthand the doctor already typed into the body field
+  /// into formal wording — the doctor's own note is the only source of the
+  /// medical content; the AI only rephrases it, and the result still sits
+  /// in an editable field before anything is saved or printed.
+  Future<void> _draftWithAI() async {
+    final shorthand = _bodyController.text.trim();
+    if (shorthand.isEmpty) {
+      setState(
+        () => _error = 'اكتبي ملاحظة مختصرة أولًا (مثلًا: التهاب حلق، ٣ أيام).',
+      );
+      return;
+    }
+
+    setState(() {
+      _drafting = true;
+      _error = null;
+    });
+
+    final isSickLeave = _type == MedicalCertificateType.sickLeave;
+    final ageSuffix = widget.patientAge != null
+        ? '، العمر ${widget.patientAge} سنة'
+        : '';
+    final prompt = isSickLeave
+        ? 'أنتِ مساعدة كتابة لعيادة طبية سورية. اكتبي نص إجازة مرضية رسمي '
+              'مختصر بالعربية الفصحى لمريض اسمه "${widget.patientName}"'
+              '$ageSuffix، مدة الإجازة ${_restDaysController.text} يوم، '
+              'بناءً على ملاحظة الطبيب التالية: "$shorthand". اكتبي فقرة '
+              'واحدة رسمية فقط، بدون عنوان أو تحية أو توقيع، جاهزة للطباعة '
+              'مباشرة.'
+        : 'أنتِ مساعدة كتابة لعيادة طبية سورية. حوّلي ملاحظة الطبيب '
+              'المختصرة التالية إلى تقرير طبي رسمي بالعربية الفصحى لمريض '
+              'اسمه "${widget.patientName}"$ageSuffix: "$shorthand". اكتبي '
+              'التقرير كفقرة أو فقرتين رسميتين فقط، بدون عنوان أو تحية أو '
+              'توقيع، جاهز للطباعة مباشرة.';
+
+    final draft = await GeminiService.instance.generateText(prompt);
+    if (!mounted) return;
+    setState(() {
+      _drafting = false;
+      if (draft != null) {
+        _bodyController.text = draft;
+      } else {
+        _error =
+            'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت، أو '
+            'أكملي النص يدويًا.';
+      }
+    });
   }
 
   Future<void> _save() async {
@@ -139,6 +190,28 @@ class _MedicalCertificateFormPageState
                   alignLabelWithHint: true,
                 ),
               ),
+            if (GeminiService.instance.isAvailable) ...[
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: _drafting ? null : _draftWithAI,
+                icon: _drafting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded, size: 18),
+                label: const Text('صياغة رسمية بالذكاء الاصطناعي'),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text(
+                  'يعيد صياغة ملاحظتك أعلاه بشكل رسمي — راجعي النص دائمًا '
+                  'قبل الحفظ.',
+                  style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                ),
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: AppSpacing.md),
               Text(

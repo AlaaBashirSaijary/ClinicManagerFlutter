@@ -51,7 +51,13 @@ jobs:
           EOF
 
       - run: flutter pub get
-      - run: flutter build apk --release
+
+      # GEMINI_API_KEY is compiled in as a constant (see GeminiService) —
+      # never committed to source. Missing/empty just disables the
+      # AI-assist features gracefully (they're optional extras, not core
+      # functionality — see GeminiService's own doc comment), so a fork
+      # without this secret still gets a working build.
+      - run: flutter build apk --release --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
 
       # pubspec's version (e.g. 1.4.0+6) becomes the release tag verbatim —
       # the app's own in-app update check (UpdateCheckService) parses the

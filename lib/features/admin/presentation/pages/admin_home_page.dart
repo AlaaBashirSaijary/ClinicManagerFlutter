@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/ai/gemini_service.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/clinic_backup_service.dart';
 import '../../../../core/security/app_lock_provider.dart';
@@ -15,6 +16,7 @@ import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../clinic_assistant/presentation/pages/ask_clinic_page.dart';
 import '../../../clinics/domain/entities/clinic.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../doctors/domain/entities/doctor.dart';
@@ -55,6 +57,7 @@ class AdminHomePage extends ConsumerWidget {
                 _ExamFormSection(),
                 _ImportSection(),
                 _ReportsSection(),
+                _AskClinicSection(),
                 _ActivityLogSection(),
                 _BackupSection(),
                 _StorageSection(),
@@ -1444,6 +1447,39 @@ class _ReportsSection extends StatelessWidget {
             ),
             icon: const Icon(Icons.payments_rounded, size: 18),
             label: const Text('عرض التقرير المالي'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ========================== اسأل عن عيادتك (ذكاء اصطناعي) ==========================
+
+class _AskClinicSection extends StatelessWidget {
+  const _AskClinicSection();
+
+  @override
+  Widget build(BuildContext context) {
+    if (!GeminiService.instance.isAvailable) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          icon: Icons.auto_awesome_rounded,
+          title: 'اسأل عن عيادتك',
+          subtitle:
+              'اسألي بالعربية عن أرقام عيادتك، ويجيب المساعد الذكي '
+              'بالاعتماد على بياناتك المحلية فقط',
+        ),
+        _SectionCard(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const AskClinicPage())),
+            icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+            label: const Text('اسأل الآن'),
           ),
         ),
       ],
