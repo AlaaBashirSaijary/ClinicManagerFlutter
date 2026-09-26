@@ -117,7 +117,9 @@ class _PrescriptionFormPageState extends ConsumerState<PrescriptionFormPage> {
     setState(() {
       controllers.suggesting = false;
       if (result == null) {
-        _error = 'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت.';
+        _error =
+            'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت.\n'
+            '(${GeminiService.instance.lastError})';
         return;
       }
       try {

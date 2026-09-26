@@ -118,7 +118,9 @@ class _AskClinicPageState extends State<AskClinicPage> {
     setState(() {
       _asking = false;
       if (result == null) {
-        _error = 'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت.';
+        _error =
+            'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت.\n'
+            '(${GeminiService.instance.lastError})';
       } else {
         _answer = result;
       }

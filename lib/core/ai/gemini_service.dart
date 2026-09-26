@@ -24,15 +24,32 @@ class GeminiService {
   static final GeminiService instance = GeminiService._();
 
   static const _apiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const _model = 'gemini-2.0-flash';
+
+  /// The "-latest" alias is deliberate: Google regularly deprecates and
+  /// shuts down pinned model versions (e.g. gemini-2.0-flash was shut down
+  /// within about a year), which would otherwise silently break every AI
+  /// feature until someone notices and ships a new build. This alias always
+  /// resolves to whichever stable flash release Google currently
+  /// recommends, so the app keeps working without a code change.
+  static const _model = 'gemini-flash-latest';
 
   bool get isAvailable => _apiKey.isNotEmpty;
 
+  /// Set after every failed [generateText] call — the HTTP status/response
+  /// snippet or exception message, so a failure can be diagnosed (e.g. a
+  /// shut-down model, an invalid key, a quota limit) without needing device
+  /// logs. Null after a successful call.
+  String? lastError;
+
   /// Returns the model's reply, or null on any failure (no key, no
   /// internet, a rate limit, a malformed response) — callers show a plain
-  /// "تعذّر الاتصال بالمساعد الذكي" rather than a raw error either way.
+  /// "تعذّر الاتصال بالمساعد الذكي" rather than a raw error either way, but
+  /// may also surface [lastError] for troubleshooting.
   Future<String?> generateText(String prompt) async {
-    if (!isAvailable) return null;
+    if (!isAvailable) {
+      lastError = 'no API key compiled into this build';
+      return null;
+    }
 
     try {
       final uri = Uri.parse(
@@ -54,17 +71,31 @@ class GeminiService {
           )
           .timeout(const Duration(seconds: 20));
 
-      if (response.statusCode != 200) return null;
+      if (response.statusCode != 200) {
+        final body = utf8.decode(response.bodyBytes).trim();
+        final snippet = body.length > 200 ? body.substring(0, 200) : body;
+        lastError = 'HTTP ${response.statusCode}: $snippet';
+        return null;
+      }
 
       final json = jsonDecode(utf8.decode(response.bodyBytes));
       final candidates = json['candidates'] as List<dynamic>?;
-      if (candidates == null || candidates.isEmpty) return null;
+      if (candidates == null || candidates.isEmpty) {
+        lastError = 'empty candidates in response';
+        return null;
+      }
 
       final parts =
           (candidates.first['content']?['parts'] as List<dynamic>?) ?? [];
       final text = parts.map((p) => p['text'] as String? ?? '').join().trim();
-      return text.isEmpty ? null : text;
-    } catch (_) {
+      if (text.isEmpty) {
+        lastError = 'empty text in response';
+        return null;
+      }
+      lastError = null;
+      return text;
+    } catch (e) {
+      lastError = e.toString();
       return null;
     }
   }

@@ -87,7 +87,7 @@ class _MedicalCertificateFormPageState
       } else {
         _error =
             'تعذّر الاتصال بالمساعد الذكي — تأكدي من الإنترنت، أو '
-            'أكملي النص يدويًا.';
+            'أكملي النص يدويًا.\n(${GeminiService.instance.lastError})';
       }
     });
   }
