@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alaabashirsaijary.github.io/ClinicManagerFlutter/sitemap.xml

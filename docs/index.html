@@ -4,8 +4,50 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="نظرة شاملة على كل مزايا تطبيق عيادتي — مرتّبة حسب أقسام التطبيق.">
-<title>لمحة عن عيادتي</title>
+<meta name="theme-color" content="#0E7490">
+
+<title>عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت</title>
+<meta name="description" content="عيادتي: تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك شهري. جرّبيه مجانًا ١٤ يومًا وتواصلي معنا مباشرة.">
+<meta name="keywords" content="عيادتي, برنامج إدارة عيادات, تطبيق عيادات طبية, نظام إدارة مرضى, برنامج طبي بلا إنترنت, تطبيق طبي عربي, إدارة عيادة سوريا">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://alaabashirsaijary.github.io/ClinicManagerFlutter/">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_AR">
+<meta property="og:site_name" content="عيادتي">
+<meta property="og:title" content="عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت">
+<meta property="og:description" content="تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّبيه مجانًا ١٤ يومًا.">
+<meta property="og:image" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت">
+<meta name="twitter:description" content="يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّبيه مجانًا ١٤ يومًا.">
+<meta name="twitter:image" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/assets/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "عيادتي",
+  "applicationCategory": "MedicalApplication",
+  "operatingSystem": "iPadOS, Android",
+  "description": "نظام إدارة عيادات طبية يعمل بلا إنترنت بالكامل، بواجهة عربية كاملة، لأي تخصص طبي.",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "USD",
+    "price": "50",
+    "description": "دفعة واحدة بلا اشتراك شهري، مع فترة تجربة مجانية ١٤ يومًا."
+  },
+  "inLanguage": "ar",
+  "url": "https://alaabashirsaijary.github.io/ClinicManagerFlutter/"
+}
+</script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 
@@ -17,33 +59,28 @@
     --ink-faint:#7C8C96;
     --teal:#0E7490;
     --teal-deep:#0B5563;
+    --teal-bright:#14A3C7;
     --teal-wash:#E4F1F3;
     --gold:#A9701D;
     --gold-wash:#F6ECDA;
-    --ok:#157A4C;
-    --ok-wash:#E3F3EA;
     --line:#DCE4E7;
-    --line-strong:#C3D0D4;
-    --shadow: 0 16px 40px -28px rgba(17,33,46,.35);
+    --shadow: 0 20px 48px -28px rgba(17,33,46,.35);
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --paper:#0E161C;
-      --paper-raised:#152229;
+      --paper:#0B1319;
+      --paper-raised:#131F26;
       --ink:#E8EEF1;
       --ink-soft:#AEC0C8;
       --ink-faint:#7E939C;
       --teal:#4FC1DD;
       --teal-deep:#7FD4E8;
-      --teal-wash:#123039;
+      --teal-bright:#63D6F2;
+      --teal-wash:#102830;
       --gold:#E3B166;
       --gold-wash:#33270F;
-      --ok:#4ED08A;
-      --ok-wash:#0F2A1E;
-      --line:#243138;
-      --line-strong:#324450;
-      --shadow: 0 16px 40px -28px rgba(0,0,0,.6);
-      color-scheme: dark;
+      --line:#233039;
+      --shadow: 0 20px 48px -28px rgba(0,0,0,.65);
     }
   }
 
@@ -54,231 +91,473 @@
     color:var(--ink);
     font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
     line-height:1.7;
-    padding-inline:20px;
-    padding-block:48px 80px;
+    overflow-x:hidden;
   }
-  img{max-width:100%;}
+  img{max-width:100%;display:block;}
+  a{color:inherit;}
   h1,h2,h3{
     font-family:'Markazi Text','Traditional Arabic',serif;
     font-weight:700;
     color:var(--ink);
     text-wrap:balance;
-    line-height:1.2;
+    line-height:1.15;
+    margin:0;
   }
-  .wrap{max-width:960px;margin-inline:auto;}
+  .wrap{max-width:1120px;margin-inline:auto;padding-inline:20px;}
+  section{padding-block:64px;}
+  p{margin:0;}
+  .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
 
-  /* Masthead */
-  .masthead{display:flex;flex-direction:column;gap:14px;padding-block:0 36px;border-bottom:1px solid var(--line);margin-bottom:40px;}
-  .eyebrow{font-size:13px;font-weight:600;color:var(--teal);letter-spacing:.04em;}
-  .masthead h1{font-size:clamp(32px,4.6vw,48px);margin:0;}
-  .masthead .sub{font-size:17px;color:var(--ink-soft);max-width:66ch;}
-  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
-  .meta-chip{font-size:12.5px;font-weight:600;color:var(--teal-deep);background:var(--teal-wash);padding:5px 12px;border-radius:999px;}
-
-  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px;}
-  .stat-tile{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;padding:16px 14px;box-shadow:var(--shadow);}
-  .stat-tile .n{font-family:'Markazi Text',serif;font-size:32px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;}
-  .stat-tile .l{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
-  @media (max-width:640px){.stat-row{grid-template-columns:repeat(2,1fr);}}
-
-  /* Sections */
-  section{padding-block:40px;}
-  section + section{border-top:1px solid var(--line);}
-  .section-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
-  .section-icon{
-    flex:none;width:38px;height:38px;border-radius:11px;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--teal-wash);color:var(--teal-deep);
-    font-size:18px;
+  /* Nav */
+  .nav{
+    position:sticky;top:0;z-index:40;
+    backdrop-filter:blur(14px) saturate(1.4);
+    background:color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom:1px solid var(--line);
   }
-  .section-head h2{font-size:24px;margin:0;}
-  .lede{color:var(--ink-soft);max-width:70ch;font-size:14.5px;margin:0 0 22px;}
-
-  .feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
-  @media (max-width:700px){.feature-grid{grid-template-columns:1fr;}}
-
-  .feature{
-    background:var(--paper-raised);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:16px 18px;
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding-block:12px;}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .brand img{width:34px;height:34px;border-radius:9px;}
+  .brand span{font-family:'Markazi Text',serif;font-weight:700;font-size:20px;color:var(--ink);}
+  .nav-links{display:flex;align-items:center;gap:22px;}
+  .nav-links a.text-link{font-size:14px;font-weight:600;color:var(--ink-soft);text-decoration:none;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-weight:700;font-size:14.5px;
+    padding:11px 22px;border-radius:999px;
+    text-decoration:none;border:none;cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
   }
-  .feature .dot{
-    flex:none;width:8px;height:8px;border-radius:50%;
-    background:var(--teal);margin-top:7px;
-  }
-  .feature b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:2px;}
-  .feature span{font-size:13px;color:var(--ink-soft);}
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{background:var(--teal);color:#fff;box-shadow:0 12px 24px -12px color-mix(in srgb, var(--teal) 70%, transparent);}
+  .btn-primary:hover{background:var(--teal-deep);}
+  .btn-ghost{background:var(--teal-wash);color:var(--teal-deep);}
+  .btn svg{width:17px;height:17px;flex:none;}
+  @media (max-width:640px){.nav-links a.text-link{display:none;}}
 
-  .feature.new .dot{background:var(--gold);}
-  .badge-new{
-    display:inline-block;font-size:10px;font-weight:700;color:var(--gold);
-    background:var(--gold-wash);padding:1px 7px;border-radius:999px;
-    margin-inline-start:6px;vertical-align:middle;
-  }
+  /* Hero */
+  .hero{padding-block:56px 40px;}
+  .hero-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:36px;align-items:center;}
+  @media (max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--teal-deep);background:var(--teal-wash);padding:6px 14px;border-radius:999px;margin-bottom:18px;}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .hero h1{font-size:clamp(34px,4.6vw,54px);margin-bottom:18px;}
+  .hero h1 em{font-style:normal;color:var(--teal);}
+  .hero .sub{font-size:17px;color:var(--ink-soft);max-width:56ch;margin-bottom:28px;}
+  .hero-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:30px;}
+  .hero-trust{display:flex;flex-wrap:wrap;gap:18px;}
+  .trust-item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);font-weight:600;}
+  .trust-item svg{width:16px;height:16px;color:var(--teal);flex:none;}
 
-  /* Closing highlight */
-  .highlight{
-    background:var(--teal-wash);
-    border:1px solid color-mix(in srgb, var(--teal) 30%, transparent);
-    border-radius:20px;
-    padding:28px 30px;
-    margin-top:8px;
+  .hero-visual{position:relative;aspect-ratio:1/1;max-height:480px;}
+  #hero-canvas{width:100%;height:100%;display:block;cursor:grab;}
+  .hero-visual-fallback{
+    position:absolute;inset:0;border-radius:28px;
+    background:linear-gradient(145deg, var(--teal-wash), transparent 60%);
+    display:none;align-items:center;justify-content:center;
+    font-family:'Markazi Text',serif;font-size:22px;color:var(--teal-deep);
+    text-align:center;padding:20px;
   }
-  .highlight h3{font-size:19px;margin:0 0 8px;color:var(--teal-deep);}
-  .highlight p{margin:0;font-size:14px;color:var(--ink-soft);max-width:70ch;}
+  .no-webgl .hero-visual-fallback{display:flex;}
+  .no-webgl #hero-canvas{display:none;}
 
-  footer{max-width:960px;margin:56px auto 0;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);}
+  /* Why */
+  .section-head{text-align:center;max-width:680px;margin-inline:auto;margin-bottom:40px;}
+  .section-head .eyebrow{margin-inline:auto;}
+  .section-head h2{font-size:clamp(26px,3.2vw,34px);margin-bottom:10px;}
+  .section-head p{color:var(--ink-soft);font-size:15px;}
+
+  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media (max-width:900px){.why-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:520px){.why-grid{grid-template-columns:1fr;}}
+  .why-card{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:18px;
+    padding:24px 20px;box-shadow:var(--shadow);
+    opacity:0;transform:translateY(16px);transition:opacity .6s ease, transform .6s ease;
+  }
+  .why-card.in-view{opacity:1;transform:translateY(0);}
+  .why-icon{
+    width:44px;height:44px;border-radius:13px;background:var(--teal-wash);color:var(--teal-deep);
+    display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+  }
+  .why-icon svg{width:22px;height:22px;}
+  .why-card b{display:block;font-size:15.5px;margin-bottom:6px;color:var(--ink);}
+  .why-card span{font-size:13.5px;color:var(--ink-soft);}
+
+  /* Features preview */
+  .features-band{background:var(--paper-raised);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media (max-width:760px){.feature-grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:520px){.feature-grid{grid-template-columns:1fr;}}
+  .feature-pill{
+    display:flex;align-items:flex-start;gap:11px;
+    background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+  }
+  .feature-pill .fdot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-top:7px;}
+  .feature-pill b{display:block;font-size:14px;color:var(--ink);}
+  .feature-pill span{font-size:12.5px;color:var(--ink-soft);}
+  .see-all{display:flex;justify-content:center;margin-top:28px;}
+
+  /* How it works */
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:step;}
+  @media (max-width:800px){.how-grid{grid-template-columns:1fr;}}
+  .how-step{position:relative;padding-inline-start:0;text-align:center;}
+  .how-num{
+    width:52px;height:52px;border-radius:50%;background:var(--teal);color:#fff;
+    display:flex;align-items:center;justify-content:center;margin-inline:auto;margin-bottom:16px;
+    font-family:'Markazi Text',serif;font-weight:700;font-size:22px;
+    box-shadow:0 14px 26px -12px color-mix(in srgb, var(--teal) 70%, transparent);
+  }
+  .how-step b{display:block;font-size:16px;margin-bottom:6px;}
+  .how-step span{font-size:13.5px;color:var(--ink-soft);}
+
+  /* Pricing */
+  .price-card{
+    max-width:560px;margin-inline:auto;text-align:center;
+    background:linear-gradient(160deg, var(--teal-wash), var(--paper-raised) 70%);
+    border:1px solid var(--line);border-radius:24px;padding:40px 32px;box-shadow:var(--shadow);
+  }
+  .price-tag{font-family:'Markazi Text',serif;font-size:52px;font-weight:700;color:var(--teal-deep);}
+  .price-tag span{font-size:16px;color:var(--ink-soft);font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:600;}
+  .price-list{list-style:none;padding:0;margin:22px 0 28px;display:flex;flex-direction:column;gap:10px;text-align:right;}
+  .price-list li{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);}
+  .price-list svg{width:17px;height:17px;color:var(--teal);flex:none;}
+
+  /* Final CTA */
+  .cta-final{
+    background:linear-gradient(135deg, var(--teal-deep), var(--teal));
+    border-radius:28px;padding:52px 36px;text-align:center;color:#fff;
+    margin-inline:20px;
+  }
+  .cta-final h2{color:#fff;font-size:clamp(24px,3.4vw,32px);margin-bottom:12px;}
+  .cta-final p{color:color-mix(in srgb, white 82%, transparent);font-size:15px;max-width:56ch;margin-inline:auto 24px;margin-bottom:24px;}
+  .cta-final .btn-primary{background:#fff;color:var(--teal-deep);}
+  .cta-final .btn-primary:hover{background:#EFFBFD;}
+
+  footer{border-top:1px solid var(--line);padding-block:28px;}
+  .footer-inner{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;font-size:12.5px;color:var(--ink-faint);}
+  .footer-links{display:flex;gap:16px;}
+  .footer-links a{text-decoration:none;color:var(--ink-faint);font-weight:600;}
+
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in-view{opacity:1;transform:translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    .eyebrow .dot{animation:none;}
+    .why-card,.reveal{transition:none;opacity:1;transform:none;}
+  }
 </style>
 </head>
 <body>
 
-<div class="wrap masthead">
-  <div class="eyebrow">لمحة شاملة عن التطبيق</div>
-  <h1>عيادتي</h1>
-  <p class="sub">تطبيق إدارة عيادة متكامل يعمل بلا إنترنت إطلاقًا — لأي تخصص طبي، على آيباد أو أندرويد، بواجهة عربية كاملة.</p>
-  <div class="meta">
-    <span class="meta-chip">يعمل دون إنترنت بالكامل</span>
-    <span class="meta-chip">عربي ١٠٠٪ (RTL)</span>
-    <span class="meta-chip">لأي تخصص طبي</span>
-    <span class="meta-chip">آيباد وأندرويد</span>
-  </div>
-  <div class="stat-row">
-    <div class="stat-tile"><div class="n">٧</div><div class="l">أقسام رئيسية</div></div>
-    <div class="stat-tile"><div class="n">+٣٥</div><div class="l">ميزة فعلية</div></div>
-    <div class="stat-tile"><div class="n">٠</div><div class="l">اعتماد على الإنترنت</div></div>
-    <div class="stat-tile"><div class="n">١٤</div><div class="l">يوم تجربة مجانية</div></div>
-  </div>
-</div>
+<a href="#main" class="visually-hidden">تخطي إلى المحتوى الرئيسي</a>
 
-<section class="wrap" id="patients">
-  <div class="section-head">
-    <div class="section-icon">🗂️</div>
-    <h2>سجلات المرضى</h2>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a href="index.html" class="brand">
+      <img src="assets/logo-96.png" alt="شعار عيادتي" width="34" height="34">
+      <span>عيادتي</span>
+    </a>
+    <div class="nav-links">
+      <a class="text-link" href="features.html">كل الميزات</a>
+      <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
+        تواصلي معنا
+      </a>
+    </div>
   </div>
-  <p class="lede">إضبارة كل مريض كاملة في مكان واحد — بحث فوري، تاريخ طبي، وأدوات لا تتوفر بالدفتر الورقي.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>إضافة وتعديل سريع</b><span>الاسم الكامل وحده مطلوب، كل حقل آخر اختياري ويُكمَّل لاحقًا.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>بحث فوري</b><span>بالاسم أو رقم الهاتف أو رقم الملف، مع تصفية نشط/غير نشط.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>تاريخ طبي وأدوية</b><span>الشكاية، الأدوية السابقة والحالية، الحساسية، العمليات السابقة.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>تصدير PDF</b><span>إضبارة المريض كاملة، جاهزة للطباعة أو المشاركة.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>استيراد من إكسل/CSV <span class="badge-new">جديد</span></b><span>نقل قائمة مرضى جاهزة دفعة واحدة بدل إدخالها يدويًا.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>مقارنة صور قبل/بعد <span class="badge-new">جديد</span></b><span>عرض صورتين من زيارتين مختلفتين جنبًا إلى جنب.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>خطة متابعة دورية <span class="badge-new">جديد</span></b><span>لمريض مزمن — كل زيارة جديدة تُعلَّم "يحتاج متابعة" تلقائيًا.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>وصفة طبية احترافية <span class="badge-new">جديد</span></b><span>طباعة PDF بترويسة العيادة، مع أرشيف كل وصفة سابقة لإعادة طباعتها فورًا.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>تقارير طبية وإجازات مرضية <span class="badge-new">جديد</span></b><span>إجازة مرضية بعدد أيام محدد، أو تقرير طبي عام بنص حر — كلاهما جاهز للطباعة.</span></div></div>
-  </div>
-</section>
+</header>
 
-<section class="wrap" id="visits">
-  <div class="section-head">
-    <div class="section-icon">🩺</div>
-    <h2>زيارات الفحص</h2>
-  </div>
-  <p class="lede">السجل الطبي التفصيلي لكل زيارة — نموذج الفحص نفسه يُبنى من الصفر ليناسب أي تخصص، لا عيادة عيون فقط.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>نموذج فحص قابل للتخصيص الكامل</b><span>كل عيادة تضيف حقولها الخاصة — رقم واحد أو قيمتين (يمين/يسار).</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>صور مرفقة بالزيارة</b><span>من الكاميرا أو المعرض، حتى قبل حفظ الزيارة لأول مرة.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>علامة "يحتاج متابعة"</b><span>بتاريخ مستهدف اختياري — تظهر بقائمة مركزية وتختفي تلقائيًا بعد الزيارة التالية.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>الكشفية لكل زيارة <span class="badge-new">جديد</span></b><span>المبلغ والمدفوع فعليًا — يغذّي التقرير المالي الحقيقي.</span></div></div>
-  </div>
-</section>
+<main id="main">
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> يعمل بلا إنترنت — لأي تخصص طبي</span>
+        <h1>عيادتك منظّمة بالكامل، <em>حتى لو انقطع النت</em>.</h1>
+        <p class="sub">تطبيق عيادتي يجمع سجلات مرضاك، مواعيدك، ووصفاتك الطبية بمكان واحد — على آيباد أو أندرويد، بواجهة عربية كاملة، ودون أي اعتماد على اشتراك إنترنت شهري.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
+            احصلي على نسختك الآن
+          </a>
+          <a class="btn btn-ghost" href="features.html">
+            شاهدي كل الميزات
+          </a>
+        </div>
+        <div class="hero-trust">
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دفعة واحدة، بلا اشتراك</span>
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> تجربة مجانية ١٤ يومًا</span>
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دعم شخصي مباشر</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <canvas id="hero-canvas" aria-hidden="true"></canvas>
+        <div class="hero-visual-fallback">عيادتي<br>يعمل بلا إنترنت</div>
+      </div>
+    </div>
+  </section>
 
-<section class="wrap" id="followups">
-  <div class="section-head">
-    <div class="section-icon">📋</div>
-    <h2>متابعة المرضى</h2>
-  </div>
-  <p class="lede">تحويل "يحتاج متابعة" من ملاحظة تُنسى إلى قائمة عمل فعلية بيد الطبيب.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>قائمة متابعات مستحقة</b><span>كل مريض بحاجة متابعة، مرتّبين حسب الأقرب موعدًا أو المتأخرين.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>تذكير بالشاشة الرئيسية</b><span>شريط تنبيه يظهر تلقائيًا كلما وُجد مريض بحاجة متابعة.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>اتصال مباشر <span class="badge-new">جديد</span></b><span>زر يفتح تطبيق الهاتف برقم المريض مباشرة من القائمة.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>تذكير واتساب <span class="badge-new">جديد</span></b><span>رسالة تذكير جاهزة تتضمن اسم المريض وتاريخ المتابعة.</span></div></div>
-  </div>
-</section>
+  <section class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">ليش عيادتي</span>
+      <h2>مبني لواقع العيادة السورية فعليًا</h2>
+      <p>لا ترجمة حرفية لتطبيق أجنبي — كل قرار بالتصميم مبني على مشكلة حقيقية يعاني منها طبيب يستخدم دفترًا ورقيًا أو إكسل.</p>
+    </div>
+    <div class="why-grid">
+      <div class="why-card reveal">
+        <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M4.9 4.9l14.2 14.2"/></svg></div>
+        <b>يعمل بلا إنترنت بالكامل</b>
+        <span>كل بيانات العيادة محفوظة محليًا على جهازك — لا خادم، لا انقطاع خدمة أثناء يوم عمل كامل.</span>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8M12 18v2"/></svg></div>
+        <b>دفعة واحدة، لا اشتراك</b>
+        <span>تشترينه مرة واحدة ويبقى ملكك — مهم جدًا بواقع اقتصادي لا يحتمل فواتير شهرية إضافية.</span>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
+        <b>عربي ١٠٠٪ من الصفر</b>
+        <span>واجهة وتقارير وطباعة PDF كلها بالعربية الفصحى — مصممة لطريقة عمل الطبيب السوري تحديدًا.</span>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg></div>
+        <b>مساعد ذكاء اصطناعي اختياري</b>
+        <span>اقتراح جرعات، صياغة تقارير رسمية، وسؤال حر عن أرقام عيادتك — دائمًا تحت مراجعتك أنتِ.</span>
+      </div>
+    </div>
+  </section>
 
-<section class="wrap" id="appointments">
-  <div class="section-head">
-    <div class="section-icon">📅</div>
-    <h2>المواعيد وصالة الانتظار</h2>
-  </div>
-  <p class="lede">حجز يومي منظّم، مع تصنيف تلقائي للتسعير حسب توقيت آخر كشفية.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>عرض يومي بالتنقل بين الأيام</b><span>كشفية، نصف معاينة، أو متابعة مجانية — يُحدَّد تلقائيًا.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>منع تعارض الحجز</b><span>تنبيه فوري عند محاولة حجز نفس الموعد لمريضين.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>إجراءات سريعة من البطاقة</b><span>"بدء الفحص" و"تمت الزيارة" بضغطة واحدة، دون فتح شاشة إضافية.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>شاشة انتظار لصالة الاستقبال</b><span>عرض قائمة الدور يشاهده المرضى، يتحدّث تلقائيًا كل ٢٠ ثانية.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>دعم أكثر من طبيب <span class="badge-new">جديد</span></b><span>لعيادة جماعية — إسناد كل موعد لطبيب محدد، وفلترة جدول اليوم حسب الطبيب.</span></div></div>
-  </div>
-</section>
+  <section class="features-band">
+    <div class="wrap" style="padding-block:56px;">
+      <div class="section-head reveal">
+        <span class="eyebrow">لمحة سريعة</span>
+        <h2>كل ما تحتاجينه لإدارة عيادتك يوميًا</h2>
+      </div>
+      <div class="feature-grid reveal">
+        <div class="feature-pill"><div class="fdot"></div><div><b>سجلات مرضى كاملة</b><span>بحث فوري، تاريخ طبي، وتصدير PDF.</span></div></div>
+        <div class="feature-pill"><div class="fdot"></div><div><b>مواعيد وصالة انتظار</b><span>حجز يومي منظّم بلا تعارض مواعيد.</span></div></div>
+        <div class="feature-pill"><div class="fdot"></div><div><b>وصفات طبية احترافية</b><span>طباعة فورية بترويسة العيادة.</span></div></div>
+        <div class="feature-pill"><div class="fdot"></div><div><b>تقارير وإجازات مرضية</b><span>جاهزة للطباعة خلال ثوانٍ.</span></div></div>
+        <div class="feature-pill"><div class="fdot"></div><div><b>تقارير مالية حقيقية</b><span>إجمالي، محصَّل، ومتبقٍ بأرقام دقيقة.</span></div></div>
+        <div class="feature-pill"><div class="fdot"></div><div><b>نسخ احتياطي تلقائي</b><span>حماية بياناتك بصمت بالخلفية.</span></div></div>
+      </div>
+      <div class="see-all reveal">
+        <a class="btn btn-ghost" href="features.html">شاهدي كل الميزات بالتفصيل ←</a>
+      </div>
+    </div>
+  </section>
 
-<section class="wrap" id="reports">
-  <div class="section-head">
-    <div class="section-icon">📊</div>
-    <h2>التقارير والمالية</h2>
-  </div>
-  <p class="lede">أرقام حقيقية بدل التخمين — سواء عن نشاط العيادة أو عن الدخل الفعلي.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>التقرير الشهري</b><span>عدد الكشفيات، نصف المعاينات، المتابعات المجانية، والمرضى الجدد.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>التقرير المالي الحقيقي <span class="badge-new">جديد</span></b><span>إجمالي الكشفيات، المُحصَّل فعليًا، والمتبقي — بمبالغ حقيقية لا أعداد.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>تصدير PDF لكل تقرير</b><span>جاهز للطباعة أو الأرشفة أو المحاسب.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>سجل النشاط</b><span>من فعل ماذا ومتى — مهم بمجرد وجود أكثر من مستخدم بالعيادة.</span></div></div>
-  </div>
-</section>
+  <section class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">كيف تحصلين عليه</span>
+      <h2>ثلاث خطوات بسيطة، بلا تعقيد</h2>
+    </div>
+    <div class="how-grid reveal">
+      <div class="how-step">
+        <div class="how-num">١</div>
+        <b>تواصلي معنا على واتساب</b>
+        <span>نرتب معًا عرضًا مباشرًا مدته ١٠ دقائق على جهازك.</span>
+      </div>
+      <div class="how-step">
+        <div class="how-num">٢</div>
+        <b>جرّبي التطبيق ١٤ يومًا مجانًا</b>
+        <span>كل الميزات مفتوحة بالكامل بلا أي قيد خلال التجربة.</span>
+      </div>
+      <div class="how-step">
+        <div class="how-num">٣</div>
+        <b>فعّلي نسختك الدائمة</b>
+        <span>دفعة واحدة كاش، ورمز تفعيل خاص بجهازك فقط.</span>
+      </div>
+    </div>
+  </section>
 
-<section class="wrap" id="admin">
-  <div class="section-head">
-    <div class="section-icon">⚙️</div>
-    <h2>الإدارة والأمان</h2>
-  </div>
-  <p class="lede">التحكم الكامل بالعيادة، وبمن يدخل إليها.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>حسابات متعددة بأدوار</b><span>مدير أو ممرضة، كل حساب بصلاحياته الخاصة.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>عيادات متعددة على نفس الجهاز</b><span>كل عيادة بقاعدة بيانات منفصلة تمامًا — فصل حقيقي، لا مجرد فلترة.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>قفل بالرمز (PIN)</b><span>اختياري، مع رمز استرداد بلا حاجة لبريد إلكتروني فعلي.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>تخصيص نموذج الفحص</b><span>إضافة أو حذف أو إعادة ترتيب الحقول متى شاءت العيادة.</span></div></div>
-  </div>
-</section>
+  <section class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">السعر</span>
+      <h2>بسيط وواضح، بلا مفاجآت</h2>
+    </div>
+    <div class="price-card reveal">
+      <div class="price-tag">٥٠-١٠٠<span> دولار — دفعة واحدة</span></div>
+      <ul class="price-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> بلا اشتراك شهري أو سنوي</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> تجربة مجانية كاملة الميزات لمدة ١٤ يومًا</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دعم شخصي مباشر عبر واتساب</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> يعمل على جهازك للأبد بلا انتهاء صلاحية</li>
+      </ul>
+      <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">تواصلي معنا لتفاصيل السعر النهائي</a>
+    </div>
+  </section>
 
-<section class="wrap" id="reliability">
-  <div class="section-head">
-    <div class="section-icon">🔄</div>
-    <h2>النسخ الاحتياطي والتحديثات</h2>
-  </div>
-  <p class="lede">حماية البيانات ليست مجرد زر — هي طبقة كاملة تعمل بصمت في الخلفية.</p>
-  <div class="feature-grid">
-    <div class="feature"><div class="dot"></div><div><b>نسخ احتياطي يدوي + تذكير دوري</b><span>مع خيار استعادة "كعيادة جديدة" بدل استبدال البيانات الحالية.</span></div></div>
-    <div class="feature"><div class="dot"></div><div><b>نسخة أمان تلقائية عند التحديث</b><span>كل تحديث إصدار يأخذ نسخة احتياطية تلقائيًا قبل أي تغيير.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>آلية تحديث فعلية <span class="badge-new">جديد</span></b><span>تنبيه تلقائي عند توفر إصدار أحدث، بزر تنزيل مباشر.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>فترة تجربة ١٤ يومًا <span class="badge-new">جديد</span></b><span>كل عيادة تجرّب كامل المزايا قبل الشراء، بلا أي قيد.</span></div></div>
-  </div>
-</section>
+  <section class="wrap">
+    <div class="cta-final reveal">
+      <h2>جاهزة تجرّبي عيادتك بدون دفتر ورقي؟</h2>
+      <p>راسلينا الآن على واتساب — نرتب لكِ عرضًا مباشرًا ونشغّل لكِ التجربة المجانية بنفس اليوم.</p>
+      <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
+        راسلينا على واتساب الآن
+      </a>
+    </div>
+  </section>
+</main>
 
-<section class="wrap" id="ai">
-  <div class="section-head">
-    <div class="section-icon">✨</div>
-    <h2>مساعد ذكاء اصطناعي <span class="badge-new">جديد</span></h2>
+<footer>
+  <div class="wrap footer-inner">
+    <span>عيادتي © 2026 · نظام إدارة عيادات طبية يعمل بلا إنترنت.</span>
+    <div class="footer-links">
+      <a href="features.html">كل الميزات</a>
+      <a class="js-whatsapp" href="#" target="_blank" rel="noopener">تواصل واتساب</a>
+    </div>
   </div>
-  <p class="lede">استثناء واحد فقط من مبدأ العمل بلا إنترنت — مساعد اختياري يقترح، والطبيب يقرر ويراجع دائمًا قبل الحفظ أو الطباعة.</p>
-  <div class="feature-grid">
-    <div class="feature new"><div class="dot"></div><div><b>اقتراح جرعة الدواء <span class="badge-new">جديد</span></b><span>جرعة وعدد مرات ومدة اعتيادية لأي دواء تكتبينه بالوصفة — مرجعي فقط، يُراجَع دائمًا.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>صياغة رسمية للتقارير <span class="badge-new">جديد</span></b><span>تحويل ملاحظة مختصرة إلى نص إجازة مرضية أو تقرير طبي رسمي جاهز للطباعة.</span></div></div>
-    <div class="feature new"><div class="dot"></div><div><b>اسأل عن عيادتك <span class="badge-new">جديد</span></b><span>سؤال حر بالعربية عن أرقام هذا الشهر، تُجاب حصرًا من بيانات العيادة الفعلية.</span></div></div>
-  </div>
-</section>
+</footer>
 
-<section class="wrap" id="offline">
-  <div class="highlight">
-    <h3>الميزة التي تبني عليها كل ميزة أخرى</h3>
-    <p>كل بيانات العيادة محفوظة محليًا على الجهاز نفسه — لا خادم، لا اشتراك إنترنت مطلوب، ولا قلق من انقطاع الشبكة أثناء يوم عمل كامل. الاستثناءان الوحيدان المتعمَّدان هما التحقق من إصدار جديد ومساعد الذكاء الاصطناعي الاختياري أعلاه — وكلاهما يفشل بصمت دون التأثير على عمل التطبيق عند غياب الإنترنت.</p>
-  </div>
-</section>
+<script>
+  var WHATSAPP_NUMBER = '963984668063';
+  var WHATSAPP_MESSAGE = 'مرحبًا، بدي أعرف أكتر عن تطبيق عيادتي وأجرّب النسخة المجانية.';
+  var waHref = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(WHATSAPP_MESSAGE);
+  document.querySelectorAll('.js-whatsapp').forEach(function(a){ a.setAttribute('href', waHref); });
 
-<footer class="wrap">عيادتي · لمحة شاملة عن مزايا التطبيق · مبنية على حالة الكود الفعلية.</footer>
+  var revealTargets = document.querySelectorAll('.reveal, .why-card');
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.15});
+    revealTargets.forEach(function(el){ io.observe(el); });
+  } else {
+    revealTargets.forEach(function(el){ el.classList.add('in-view'); });
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+<script defer>
+  window.addEventListener('load', function(){
+    var canvas = document.getElementById('hero-canvas');
+    var container = canvas ? canvas.parentElement : null;
+    if (!canvas || !container || typeof THREE === 'undefined') return;
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true, antialias: true});
+    } catch(e){
+      document.body.classList.add('no-webgl');
+      return;
+    }
+    if (!renderer){ document.body.classList.add('no-webgl'); return; }
+
+    var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var teal = isDark ? 0x4FC1DD : 0x0E7490;
+    var tealDeep = isDark ? 0x123039 : 0x0B5563;
+    var gold = 0xC98A2E;
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0.4, 6.2);
+
+    function size(){
+      var w = container.clientWidth, h = container.clientHeight;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    size();
+    window.addEventListener('resize', size);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    var key = new THREE.DirectionalLight(0xffffff, 0.9);
+    key.position.set(3, 4, 5);
+    scene.add(key);
+    var rim = new THREE.DirectionalLight(teal, 0.6);
+    rim.position.set(-4, -2, -3);
+    scene.add(rim);
+
+    var deviceGroup = new THREE.Group();
+    var body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.6, 3.4, 0.16),
+      new THREE.MeshStandardMaterial({color: tealDeep, roughness: 0.35, metalness: 0.25})
+    );
+    deviceGroup.add(body);
+
+    var screen = new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 3.05, 0.02),
+      new THREE.MeshStandardMaterial({color: isDark ? 0x0E161C : 0xF5F7F8, roughness: 0.5})
+    );
+    screen.position.z = 0.09;
+    deviceGroup.add(screen);
+
+    var barColors = [teal, gold, teal, 0x2FA36B];
+    for (var i = 0; i < 4; i++){
+      var bar = new THREE.Mesh(
+        new THREE.BoxGeometry(1.9, 0.32, 0.03),
+        new THREE.MeshStandardMaterial({color: barColors[i], roughness: 0.4})
+      );
+      bar.position.set(0, 1.15 - i * 0.55, 0.11);
+      deviceGroup.add(bar);
+    }
+
+    deviceGroup.rotation.y = -0.35;
+    deviceGroup.rotation.x = 0.08;
+    scene.add(deviceGroup);
+
+    function floatingShape(geo, color, x, y, z){
+      var mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: color, roughness: 0.3, metalness: 0.15}));
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      return mesh;
+    }
+    var shapes = [
+      floatingShape(new THREE.IcosahedronGeometry(0.28, 0), gold, 1.9, 1.2, 0.6),
+      floatingShape(new THREE.TorusGeometry(0.22, 0.08, 12, 24), teal, -1.8, -1.0, 0.9),
+      floatingShape(new THREE.SphereGeometry(0.18, 16, 16), 0x2FA36B, -1.7, 1.3, 0.4),
+      floatingShape(new THREE.OctahedronGeometry(0.22, 0), teal, 1.7, -1.35, 0.5)
+    ];
+
+    var clock = new THREE.Clock();
+    var targetRotY = deviceGroup.rotation.y;
+    var pointerActive = false;
+
+    container.addEventListener('pointermove', function(e){
+      var rect = container.getBoundingClientRect();
+      var nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      targetRotY = -0.35 + nx * 0.35;
+      pointerActive = true;
+    });
+    container.addEventListener('pointerleave', function(){ pointerActive = false; });
+
+    var running = true;
+    document.addEventListener('visibilitychange', function(){
+      running = document.visibilityState === 'visible';
+      if (running) animate();
+    });
+
+    function animate(){
+      if (!running) return;
+      requestAnimationFrame(animate);
+      var t = clock.getElapsedTime();
+
+      if (!reduceMotion){
+        deviceGroup.rotation.y += (targetRotY - deviceGroup.rotation.y) * 0.04;
+        if (!pointerActive) deviceGroup.rotation.y += Math.sin(t * 0.4) * 0.0008;
+        deviceGroup.position.y = Math.sin(t * 0.8) * 0.08;
+
+        shapes.forEach(function(s, idx){
+          s.rotation.x += 0.006 + idx * 0.001;
+          s.rotation.y += 0.008;
+          s.position.y += Math.sin(t * 0.6 + idx) * 0.0025;
+        });
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+  });
+</script>
 
 </body>
 </html>
