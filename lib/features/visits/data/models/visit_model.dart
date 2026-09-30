@@ -14,6 +14,7 @@ class VisitModel extends Visit {
     super.createdAt,
     super.visitType,
     super.followUpOutcome,
+    super.examSummary,
   });
 
   factory VisitModel.fromEntity(Visit v) => VisitModel(
@@ -28,6 +29,7 @@ class VisitModel extends Visit {
     createdAt: v.createdAt,
     visitType: v.visitType,
     followUpOutcome: v.followUpOutcome,
+    examSummary: v.examSummary,
   );
 
   factory VisitModel.fromMap(Map<String, Object?> map) => VisitModel(
@@ -49,6 +51,7 @@ class VisitModel extends Visit {
       orElse: () => VisitType.consultation,
     ),
     followUpOutcome: map['follow_up_outcome'] as String?,
+    examSummary: map['exam_summary'] as String?,
   );
 
   Map<String, Object?> toMap() {
@@ -65,6 +68,7 @@ class VisitModel extends Visit {
       'updated_at': now,
       'visit_type': visitType.name,
       'follow_up_outcome': followUpOutcome,
+      'exam_summary': examSummary,
     };
   }
 }

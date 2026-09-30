@@ -50,6 +50,7 @@ class VisitFormPage extends StatefulWidget {
 class _VisitFormPageState extends State<VisitFormPage> {
   late DateTime _visitDate = widget.visit?.visitDate ?? DateTime.now();
   final _notesController = TextEditingController();
+  final _examSummaryController = TextEditingController();
   late bool _needsFollowUp = widget.visit?.needsFollowUp ?? false;
   late DateTime? _followUpBy = widget.visit?.followUpBy;
   bool _followUpFromPlan = false;
@@ -77,6 +78,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
   void initState() {
     super.initState();
     _notesController.text = widget.visit?.notes ?? '';
+    _examSummaryController.text = widget.visit?.examSummary ?? '';
     _feeController.text = _formatAmount(widget.visit?.feeAmount);
     final visitPaid = widget.visit?.amountPaid;
     final visitFee = widget.visit?.feeAmount;
@@ -198,6 +200,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
   @override
   void dispose() {
     _notesController.dispose();
+    _examSummaryController.dispose();
     _feeController.dispose();
     _paidController.dispose();
     _followUpOutcomeController.dispose();
@@ -256,6 +259,9 @@ class _VisitFormPageState extends State<VisitFormPage> {
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
+      examSummary: _examSummaryController.text.trim().isEmpty
+          ? null
+          : _examSummaryController.text.trim(),
       needsFollowUp: _needsFollowUp,
       followUpBy: _needsFollowUp ? _followUpBy : null,
       // No amount typed in "المدفوع فعليًا" means "دُفعت الكشفية كاملة" —
@@ -465,6 +471,21 @@ class _VisitFormPageState extends State<VisitFormPage> {
                           rightControllers: _rightControllers,
                           leftControllers: _leftControllers,
                         ),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: AppShadows.card,
+                        ),
+                        child: TextField(
+                          controller: _examSummaryController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'خلاصة الفحص',
+                          ),
+                        ),
+                      ),
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         decoration: BoxDecoration(

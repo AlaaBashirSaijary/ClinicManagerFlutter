@@ -1216,6 +1216,17 @@ class _VisitRow extends StatelessWidget {
                 ),
               ],
             ),
+            if (visit.examSummary != null && visit.examSummary!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, right: 26),
+                child: Text(
+                  'خلاصة الفحص: ${visit.examSummary}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ),
             if (visit.followUpOutcome != null &&
                 visit.followUpOutcome!.isNotEmpty)
               Padding(

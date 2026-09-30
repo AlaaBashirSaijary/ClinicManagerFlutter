@@ -23,12 +23,19 @@ class Visit extends Equatable {
     this.createdAt,
     this.visitType = VisitType.consultation,
     this.followUpOutcome,
+    this.examSummary,
   });
 
   final int? id;
   final int patientId;
   final DateTime visitDate;
   final String? notes;
+
+  /// The doctor's diagnostic conclusion for this visit's exam — e.g. "التهاب
+  /// ملتحمة خفيف" — kept separate from [notes] (which is free-form and
+  /// often written before the exam readings are final) so the chart has one
+  /// clear place a later visit's doctor looks first.
+  final String? examSummary;
 
   /// مراجعة (full paid consultation) vs معاينة (a reduced/free recheck within
   /// the clinic's follow-up window). Defaults to [VisitType.consultation];
@@ -92,6 +99,8 @@ class Visit extends Equatable {
     VisitType? visitType,
     String? followUpOutcome,
     bool clearFollowUpOutcome = false,
+    String? examSummary,
+    bool clearExamSummary = false,
   }) {
     return Visit(
       id: id ?? this.id,
@@ -107,6 +116,7 @@ class Visit extends Equatable {
       followUpOutcome: clearFollowUpOutcome
           ? null
           : (followUpOutcome ?? this.followUpOutcome),
+      examSummary: clearExamSummary ? null : (examSummary ?? this.examSummary),
     );
   }
 
@@ -122,5 +132,6 @@ class Visit extends Equatable {
     amountPaid,
     visitType,
     followUpOutcome,
+    examSummary,
   ];
 }
