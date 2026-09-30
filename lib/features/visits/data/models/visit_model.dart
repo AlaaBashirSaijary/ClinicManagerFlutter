@@ -1,4 +1,5 @@
 import '../../domain/entities/visit.dart';
+import '../../domain/entities/visit_type.dart';
 
 class VisitModel extends Visit {
   const VisitModel({
@@ -11,6 +12,8 @@ class VisitModel extends Visit {
     super.feeAmount,
     super.amountPaid,
     super.createdAt,
+    super.visitType,
+    super.followUpOutcome,
   });
 
   factory VisitModel.fromEntity(Visit v) => VisitModel(
@@ -23,6 +26,8 @@ class VisitModel extends Visit {
     feeAmount: v.feeAmount,
     amountPaid: v.amountPaid,
     createdAt: v.createdAt,
+    visitType: v.visitType,
+    followUpOutcome: v.followUpOutcome,
   );
 
   factory VisitModel.fromMap(Map<String, Object?> map) => VisitModel(
@@ -39,6 +44,11 @@ class VisitModel extends Visit {
     createdAt: map['created_at'] == null
         ? null
         : DateTime.parse(map['created_at']! as String),
+    visitType: VisitType.values.firstWhere(
+      (t) => t.name == map['visit_type'],
+      orElse: () => VisitType.consultation,
+    ),
+    followUpOutcome: map['follow_up_outcome'] as String?,
   );
 
   Map<String, Object?> toMap() {
@@ -53,6 +63,8 @@ class VisitModel extends Visit {
       'amount_paid': amountPaid,
       'created_at': createdAt?.toIso8601String() ?? now,
       'updated_at': now,
+      'visit_type': visitType.name,
+      'follow_up_outcome': followUpOutcome,
     };
   }
 }

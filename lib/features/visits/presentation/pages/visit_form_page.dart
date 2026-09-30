@@ -8,16 +8,19 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../appointments/domain/usecases/get_follow_up_days.dart';
 import '../../../patients/domain/usecases/get_patient.dart';
 import '../../domain/entities/exam_field_template.dart';
 import '../../domain/entities/visit.dart';
 import '../../domain/entities/visit_field_value.dart';
 import '../../domain/entities/visit_photo.dart';
+import '../../domain/entities/visit_type.dart';
 import '../../domain/usecases/add_visit_photo.dart';
 import '../../domain/usecases/delete_visit_photo.dart';
 import '../../domain/usecases/get_exam_templates.dart';
 import '../../domain/usecases/get_visit_field_values.dart';
 import '../../domain/usecases/get_visit_photos.dart';
+import '../../domain/usecases/get_visits.dart';
 import '../../domain/usecases/save_visit.dart';
 import '../../domain/usecases/save_visit_field_values.dart';
 import 'exam_template_settings_page.dart';
@@ -52,6 +55,8 @@ class _VisitFormPageState extends State<VisitFormPage> {
   bool _followUpFromPlan = false;
   final _feeController = TextEditingController();
   final _paidController = TextEditingController();
+  late VisitType _visitType = widget.visit?.visitType ?? VisitType.consultation;
+  final _followUpOutcomeController = TextEditingController();
 
   bool _loadingTemplates = true;
   List<ExamFieldTemplate> _templates = [];
@@ -78,8 +83,39 @@ class _VisitFormPageState extends State<VisitFormPage> {
     _paidController.text = (visitPaid != null && visitPaid != visitFee)
         ? _formatAmount(visitPaid)
         : '';
+    _followUpOutcomeController.text = widget.visit?.followUpOutcome ?? '';
     _load();
-    if (!_isEdit) _applyFollowUpPlanDefault();
+    if (!_isEdit) {
+      _applyFollowUpPlanDefault();
+      _suggestVisitType();
+    }
+  }
+
+  /// Mirrors the appointments feature's own "متابعة مجانية" window (see
+  /// GetFollowUpDays): a brand-new visit defaults to a full [VisitType.
+  /// consultation] unless it falls within the clinic's follow-up-days
+  /// window after the patient's last consultation, in which case it's
+  /// suggested as a [VisitType.checkup] instead. The doctor can always
+  /// override the chip either way before saving.
+  Future<void> _suggestVisitType() async {
+    final visitsResult = await sl<GetVisits>().call(widget.patientId);
+    final visits = visitsResult.fold((_) => <Visit>[], (v) => v);
+    final priorConsultations = visits.where(
+      (v) => v.visitType == VisitType.consultation,
+    );
+    if (priorConsultations.isEmpty) return;
+    final lastConsultation = priorConsultations.first;
+
+    final daysResult = await sl<GetFollowUpDays>().call(const NoParams());
+    final followUpDays = daysResult.fold((_) => 30, (d) => d);
+    final daysSince = DateTime.now()
+        .difference(lastConsultation.visitDate)
+        .inDays;
+
+    if (!mounted) return;
+    if (daysSince <= followUpDays) {
+      setState(() => _visitType = VisitType.checkup);
+    }
   }
 
   /// A brand-new visit for a patient on a standing "خطة متابعة دورية"
@@ -164,6 +200,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
     _notesController.dispose();
     _feeController.dispose();
     _paidController.dispose();
+    _followUpOutcomeController.dispose();
     for (final c in _singleControllers.values) {
       c.dispose();
     }
@@ -227,6 +264,12 @@ class _VisitFormPageState extends State<VisitFormPage> {
       feeAmount: fee,
       amountPaid: fee == null ? null : (enteredPaid ?? fee),
       createdAt: widget.visit?.createdAt,
+      visitType: _visitType,
+      followUpOutcome: _visitType == VisitType.checkup
+          ? (_followUpOutcomeController.text.trim().isEmpty
+                ? null
+                : _followUpOutcomeController.text.trim())
+          : null,
     );
 
     final result = await sl<SaveVisit>().call(visit);
@@ -349,6 +392,47 @@ class _VisitFormPageState extends State<VisitFormPage> {
                               ),
                             ],
                           ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: AppShadows.card,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'نوع الزيارة',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                for (final type in VisitType.values)
+                                  ChoiceChip(
+                                    label: Text(type.label),
+                                    selected: _visitType == type,
+                                    onSelected: (_) =>
+                                        setState(() => _visitType = type),
+                                  ),
+                              ],
+                            ),
+                            if (_visitType == VisitType.checkup) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              TextField(
+                                controller: _followUpOutcomeController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(
+                                  labelText:
+                                      'نتيجة المتابعة (مثلًا: الالتهاب راح، تحسنت الرؤية...)',
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       if (_templates.isEmpty)

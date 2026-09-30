@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 12;
+  static const _schemaVersion = 13;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -165,7 +165,9 @@ class ClinicDataDatabase {
         amount_paid REAL,
         doctor_id INTEGER REFERENCES doctors(id) ON DELETE SET NULL,
         created_at TEXT,
-        updated_at TEXT
+        updated_at TEXT,
+        visit_type TEXT NOT NULL DEFAULT 'consultation',
+        follow_up_outcome TEXT
       )
     ''');
 
@@ -554,6 +556,12 @@ class ClinicDataDatabase {
       );
       await _createPrescriptionsTable(db);
       await _createMedicalCertificatesTable(db);
+    }
+    if (oldVersion < 13) {
+      await db.execute(
+        "ALTER TABLE visits ADD COLUMN visit_type TEXT NOT NULL DEFAULT 'consultation'",
+      );
+      await db.execute('ALTER TABLE visits ADD COLUMN follow_up_outcome TEXT');
     }
   }
 }

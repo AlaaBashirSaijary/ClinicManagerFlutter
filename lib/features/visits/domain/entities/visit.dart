@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'visit_type.dart';
+
 /// A single exam visit — the digital equivalent of one filled-in page from
 /// the clinic's paper "إضبارة" chart. A patient accumulates one of these
 /// per visit rather than the chart having a single fixed exam section.
@@ -19,12 +21,26 @@ class Visit extends Equatable {
     this.feeAmount,
     this.amountPaid,
     this.createdAt,
+    this.visitType = VisitType.consultation,
+    this.followUpOutcome,
   });
 
   final int? id;
   final int patientId;
   final DateTime visitDate;
   final String? notes;
+
+  /// مراجعة (full paid consultation) vs معاينة (a reduced/free recheck within
+  /// the clinic's follow-up window). Defaults to [VisitType.consultation];
+  /// the form suggests [VisitType.checkup] instead once this visit falls
+  /// inside the follow-up-days window after the patient's last consultation,
+  /// but the doctor can always override it — see [VisitType].
+  final VisitType visitType;
+
+  /// What happened at this checkup — free text like "الالتهاب راح" or
+  /// "ما تحسّن، بحاجة لعملية". Only meaningful when [visitType] is
+  /// [VisitType.checkup]; null for a full consultation visit.
+  final String? followUpOutcome;
 
   /// The doctor's own judgment call at the time of this visit — "this
   /// patient needs to be checked on again" — independent of the clinic's
@@ -73,6 +89,9 @@ class Visit extends Equatable {
     double? amountPaid,
     bool clearAmountPaid = false,
     DateTime? createdAt,
+    VisitType? visitType,
+    String? followUpOutcome,
+    bool clearFollowUpOutcome = false,
   }) {
     return Visit(
       id: id ?? this.id,
@@ -84,6 +103,10 @@ class Visit extends Equatable {
       feeAmount: clearFeeAmount ? null : (feeAmount ?? this.feeAmount),
       amountPaid: clearAmountPaid ? null : (amountPaid ?? this.amountPaid),
       createdAt: createdAt ?? this.createdAt,
+      visitType: visitType ?? this.visitType,
+      followUpOutcome: clearFollowUpOutcome
+          ? null
+          : (followUpOutcome ?? this.followUpOutcome),
     );
   }
 
@@ -97,5 +120,7 @@ class Visit extends Equatable {
     followUpBy,
     feeAmount,
     amountPaid,
+    visitType,
+    followUpOutcome,
   ];
 }

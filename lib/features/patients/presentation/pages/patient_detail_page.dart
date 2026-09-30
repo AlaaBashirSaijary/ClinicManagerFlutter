@@ -17,6 +17,7 @@ import '../../../prescriptions/domain/usecases/get_prescriptions.dart';
 import '../../../prescriptions/presentation/pages/prescription_form_page.dart';
 import '../../../prescriptions/presentation/pdf/prescription_pdf_export.dart';
 import '../../../visits/domain/entities/visit.dart';
+import '../../../visits/domain/entities/visit_type.dart';
 import '../../../visits/presentation/pages/photo_comparison_page.dart';
 import '../../../visits/presentation/pages/visit_form_page.dart';
 import '../../../visits/presentation/providers/follow_ups_provider.dart';
@@ -739,6 +740,7 @@ class _VisitsSectionState extends ConsumerState<_VisitsSection> {
             for (final visit in pageVisits)
               _VisitRow(
                 visit: visit,
+                number: state.visits.length - state.visits.indexOf(visit),
                 onOpen: () async {
                   final saved = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
@@ -1088,11 +1090,13 @@ class _MedicalCertificatesSectionState
 class _VisitRow extends StatelessWidget {
   const _VisitRow({
     required this.visit,
+    required this.number,
     required this.onOpen,
     required this.onDelete,
   });
 
   final Visit visit;
+  final int number;
   final VoidCallback onOpen;
   final VoidCallback onDelete;
 
@@ -1100,81 +1104,130 @@ class _VisitRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final date =
         '${visit.visitDate.year}-${visit.visitDate.month.toString().padLeft(2, '0')}-${visit.visitDate.day.toString().padLeft(2, '0')}';
+    final isCheckup = visit.visitType == VisitType.checkup;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onOpen,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.visibility_rounded,
-              color: AppColors.aqua,
-              size: 18,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                date,
-                textDirection: TextDirection.ltr,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            if (visit.feeAmount != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: visit.remainingAmount != null
-                      ? AppColors.danger.withValues(alpha: 0.1)
-                      : AppColors.ok.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
+            Row(
+              children: [
+                const Icon(
+                  Icons.visibility_rounded,
+                  color: AppColors.aqua,
+                  size: 18,
                 ),
-                child: Text(
-                  visit.remainingAmount != null
-                      ? 'متبقي ${visit.remainingAmount!.toStringAsFixed(0)}'
-                      : '${visit.feeAmount!.toStringAsFixed(0)} ل.س',
-                  style: TextStyle(
-                    fontSize: 10.5,
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'زيارة $number',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: visit.remainingAmount != null
-                        ? AppColors.danger
-                        : AppColors.ok,
+                    fontSize: 12,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    date,
+                    textDirection: TextDirection.ltr,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isCheckup ? AppColors.focus : AppColors.aqua)
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    visit.visitType.label,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: isCheckup ? AppColors.focus : AppColors.aqua,
+                    ),
+                  ),
+                ),
+                if (visit.feeAmount != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: visit.remainingAmount != null
+                          ? AppColors.danger.withValues(alpha: 0.1)
+                          : AppColors.ok.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      visit.remainingAmount != null
+                          ? 'متبقي ${visit.remainingAmount!.toStringAsFixed(0)}'
+                          : '${visit.feeAmount!.toStringAsFixed(0)} ل.س',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: visit.remainingAmount != null
+                            ? AppColors.danger
+                            : AppColors.ok,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppColors.danger,
+                    size: 20,
+                  ),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('حذف الزيارة؟'),
+                        content: const Text('لا يمكن التراجع عن هذا الإجراء.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('إلغاء'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text(
+                              'حذف',
+                              style: TextStyle(color: AppColors.danger),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) onDelete();
+                  },
+                ),
+              ],
+            ),
+            if (visit.followUpOutcome != null &&
+                visit.followUpOutcome!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, right: 26),
+                child: Text(
+                  'نتيجة المتابعة: ${visit.followUpOutcome}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkSoft,
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-            IconButton(
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                color: AppColors.danger,
-                size: 20,
-              ),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('حذف الزيارة؟'),
-                    content: const Text('لا يمكن التراجع عن هذا الإجراء.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('إلغاء'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text(
-                          'حذف',
-                          style: TextStyle(color: AppColors.danger),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) onDelete();
-              },
-            ),
           ],
         ),
       ),

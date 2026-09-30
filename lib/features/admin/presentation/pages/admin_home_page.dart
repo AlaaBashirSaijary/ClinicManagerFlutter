@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -2097,6 +2098,8 @@ class _TrialStatusSection extends StatefulWidget {
 }
 
 class _TrialStatusSectionState extends State<_TrialStatusSection> {
+  static const _supportWhatsAppNumber = '963984668063';
+
   final _codeController = TextEditingController();
   bool? _activated;
   String? _deviceCode;
@@ -2148,6 +2151,33 @@ class _TrialStatusSectionState extends State<_TrialStatusSection> {
     }
   }
 
+  void _copyDeviceCode() {
+    if (_deviceCode == null) return;
+    Clipboard.setData(ClipboardData(text: _deviceCode!));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('تم نسخ رمز الجهاز.')));
+  }
+
+  /// Lets the doctor send their own device code to the vendor proactively
+  /// at any point during the trial — not just once the trial has already
+  /// expired and TrialGatePage locks the app (which has the same button).
+  Future<void> _sendDeviceCodeViaWhatsApp() async {
+    if (_deviceCode == null) return;
+    final message = Uri.encodeComponent(
+      'مرحبًا، بدي أفعّل تطبيق عيادتي.\nرمز جهازي: $_deviceCode',
+    );
+    final uri = Uri.parse(
+      'https://wa.me/$_supportWhatsAppNumber?text=$message',
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_activated == null) return const SizedBox.shrink();
@@ -2193,16 +2223,32 @@ class _TrialStatusSectionState extends State<_TrialStatusSection> {
                             color: AppColors.inkSoft,
                           ),
                         ),
-                        Text(
-                          _deviceCode ?? '',
-                          textDirection: TextDirection.ltr,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            color: AppColors.aquaDeep,
+                        Expanded(
+                          child: Text(
+                            _deviceCode ?? '',
+                            textDirection: TextDirection.ltr,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: AppColors.aquaDeep,
+                            ),
                           ),
                         ),
+                        IconButton(
+                          tooltip: 'نسخ',
+                          icon: const Icon(Icons.copy_rounded, size: 18),
+                          onPressed: _deviceCode == null
+                              ? null
+                              : _copyDeviceCode,
+                        ),
                       ],
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _deviceCode == null
+                          ? null
+                          : _sendDeviceCodeViaWhatsApp,
+                      icon: const Icon(Icons.chat_rounded, size: 18),
+                      label: const Text('إرسال رمز الجهاز عبر واتساب'),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     const Divider(height: 1),
