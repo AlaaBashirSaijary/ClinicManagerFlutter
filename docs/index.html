@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0C6E85">
 
 <title>عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت</title>
-<meta name="description" content="عيادتي: تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك شهري. جرّبيه مجانًا ١٤ يومًا وتواصلي معنا مباشرة.">
+<meta name="description" content="عيادتي: تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك شهري. جرّب مجانًا ١٤ يومًا وتواصل معنا مباشرة.">
 <meta name="keywords" content="عيادتي, برنامج إدارة عيادات, تطبيق عيادات طبية, نظام إدارة مرضى, برنامج طبي بلا إنترنت, تطبيق طبي عربي, إدارة عيادة سوريا">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://alaabashirsaijary.github.io/ClinicManagerFlutter/">
@@ -19,14 +19,14 @@
 <meta property="og:locale" content="ar_AR">
 <meta property="og:site_name" content="عيادتي">
 <meta property="og:title" content="عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت">
-<meta property="og:description" content="تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّبيه مجانًا ١٤ يومًا.">
+<meta property="og:description" content="تطبيق لإدارة العيادات الطبية للأطباء في سوريا — يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّب مجانًا ١٤ يومًا.">
 <meta property="og:image" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="عيادتي — نظام إدارة عيادات طبية يعمل بلا إنترنت">
-<meta name="twitter:description" content="يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّبيه مجانًا ١٤ يومًا.">
+<meta name="twitter:description" content="يعمل بلا إنترنت بالكامل، عربي ١٠٠٪، ودفعة واحدة بلا اشتراك. جرّب مجانًا ١٤ يومًا.">
 <meta name="twitter:image" content="https://alaabashirsaijary.github.io/ClinicManagerFlutter/assets/og-image.png">
 
 <script type="application/ld+json">
@@ -37,12 +37,6 @@
   "applicationCategory": "MedicalApplication",
   "operatingSystem": "iPadOS, Android",
   "description": "نظام إدارة عيادات طبية يعمل بلا إنترنت بالكامل، بواجهة عربية كاملة، لأي تخصص طبي.",
-  "offers": {
-    "@type": "Offer",
-    "priceCurrency": "USD",
-    "price": "50",
-    "description": "دفعة واحدة بلا اشتراك شهري، مع فترة تجربة مجانية ١٤ يومًا."
-  },
   "inLanguage": "ar",
   "url": "https://alaabashirsaijary.github.io/ClinicManagerFlutter/"
 }
@@ -132,6 +126,15 @@
   p{margin:0;}
   .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
 
+  /* Bilingual toggle: each translatable string is wrapped twice; only one
+     copy shows at a time, keyed off <html lang>. Kept as a light client-side
+     convenience (not separate localized URLs), since the primary audience
+     reads Arabic and English is mainly for sharing with a non-Arabic contact. */
+  .t-en{display:none;}
+  html[lang="en"] .t-ar{display:none;}
+  html[lang="en"] .t-en{display:inline;}
+  html[lang="en"] body{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;}
+
   /* Pulse divider — the recurring "vital sign" motif between sections */
   .pulse-divider{width:100%;height:30px;color:var(--line-strong);overflow:visible;}
   .pulse-divider svg{width:100%;height:100%;display:block;overflow:visible;}
@@ -150,8 +153,14 @@
   .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
   .brand img{width:36px;height:36px;border-radius:10px;}
   .brand span{font-family:'Markazi Text',serif;font-weight:700;font-size:21px;color:var(--ink);}
-  .nav-links{display:flex;align-items:center;gap:24px;}
+  .nav-links{display:flex;align-items:center;gap:16px;}
   .nav-links a.text-link{font-size:14px;font-weight:600;color:var(--ink-soft);text-decoration:none;}
+  .lang-btn{
+    font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:700;
+    color:var(--ink-soft);background:transparent;border:1.5px solid var(--line-strong);
+    border-radius:999px;padding:9px 16px;cursor:pointer;transition:border-color .2s ease, color .2s ease;
+  }
+  .lang-btn:hover{border-color:var(--teal);color:var(--teal-deep);}
   .btn{
     display:inline-flex;align-items:center;gap:8px;
     font-family:'IBM Plex Sans Arabic',sans-serif;
@@ -167,7 +176,7 @@
   .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line-strong);}
   .btn-ghost:hover{border-color:var(--teal);color:var(--teal-deep);}
   .btn svg{width:17px;height:17px;flex:none;}
-  @media (max-width:640px){.nav-links a.text-link{display:none;}}
+  @media (max-width:760px){.nav-links a.text-link{display:none;}}
 
   /* Hero */
   .hero{padding-block:150px 60px;overflow:visible;}
@@ -282,11 +291,11 @@
   }
   .price-card::before{inset-inline-start:-14px;}
   .price-card::after{inset-inline-end:-14px;}
-  .price-eyebrow{font-size:12.5px;font-weight:700;color:var(--coral-deep);letter-spacing:.04em;margin-bottom:10px;}
-  .price-tag{font-family:'Markazi Text',serif;font-size:56px;font-weight:700;color:var(--teal-deep);}
-  .price-tag span{display:block;font-size:15px;color:var(--ink-soft);font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:600;margin-top:4px;}
+  .price-eyebrow{font-size:12.5px;font-weight:700;color:var(--coral-deep);letter-spacing:.04em;margin-bottom:14px;}
+  .price-headline{font-family:'Markazi Text',serif;font-size:32px;font-weight:700;color:var(--teal-deep);line-height:1.3;}
   .price-divider{border:none;border-top:1.5px dashed var(--line-strong);margin:26px 0;}
   .price-list{list-style:none;padding:0;margin:0 0 30px;display:flex;flex-direction:column;gap:11px;text-align:right;}
+  html[lang="en"] .price-list{text-align:left;}
   .price-list li{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);}
   .price-list svg{width:17px;height:17px;color:var(--mint);flex:none;}
 
@@ -328,10 +337,11 @@
       <span>عيادتي</span>
     </a>
     <div class="nav-links">
-      <a class="text-link" href="features.html">كل الميزات</a>
+      <a class="text-link" href="features.html"><span class="t-ar">كل الميزات</span><span class="t-en">All features</span></a>
+      <button type="button" class="lang-btn" id="lang-toggle">EN</button>
       <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
-        تواصلي معنا
+        <span class="t-ar">تواصل معنا</span><span class="t-en">Contact us</span>
       </a>
     </div>
   </div>
@@ -342,25 +352,33 @@
     <div class="hero-bg" aria-hidden="true"><span class="orb orb-1"></span><span class="orb orb-2"></span></div>
     <div class="hero-grid">
       <div>
-        <span class="eyebrow"><span class="dot"></span> يعمل بلا إنترنت — لأي تخصص طبي</span>
-        <h1>عيادتك منظّمة بالكامل،<br><em>حتى لو انقطع النت</em>.</h1>
-        <p class="sub">تطبيق عيادتي يجمع سجلات مرضاك، مواعيدك، ووصفاتك الطبية بمكان واحد — على آيباد أو أندرويد، بواجهة عربية كاملة، ودون أي اعتماد على اشتراك إنترنت شهري.</p>
+        <span class="eyebrow"><span class="dot"></span>
+          <span class="t-ar">يعمل بلا إنترنت — لأي تخصص طبي</span><span class="t-en">Works fully offline — for any specialty</span>
+        </span>
+        <h1>
+          <span class="t-ar">عيادتك منظّمة بالكامل،<br><em>حتى لو انقطع النت</em>.</span>
+          <span class="t-en">Your clinic, fully organized —<br><em>even without internet</em>.</span>
+        </h1>
+        <p class="sub">
+          <span class="t-ar">تطبيق عيادتي يجمع سجلات المرضى، المواعيد، والوصفات الطبية بمكان واحد — على آيباد أو أندرويد، بواجهة عربية كاملة، ودون أي اعتماد على اشتراك إنترنت شهري.</span>
+          <span class="t-en">Aayadati brings patient records, appointments, and prescriptions together in one place — on iPad or Android, with a full Arabic interface and no monthly internet subscription required.</span>
+        </p>
         <div class="hero-ctas">
           <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
-            احصلي على نسختك الآن
+            <span class="t-ar">احصل على نسختك الآن</span><span class="t-en">Get your copy now</span>
           </a>
-          <a class="btn btn-ghost" href="features.html">شاهدي كل الميزات</a>
+          <a class="btn btn-ghost" href="features.html"><span class="t-ar">شاهد كل الميزات</span><span class="t-en">See all features</span></a>
         </div>
         <div class="hero-trust">
-          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دفعة واحدة، بلا اشتراك</span>
-          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> تجربة مجانية ١٤ يومًا</span>
-          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دعم شخصي مباشر</span>
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">دفعة واحدة، بلا اشتراك</span><span class="t-en">One-time payment, no subscription</span></span>
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">تجربة مجانية ١٤ يومًا</span><span class="t-en">14-day free trial</span></span>
+          <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">دعم شخصي مباشر</span><span class="t-en">Direct personal support</span></span>
         </div>
       </div>
       <div class="hero-visual">
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
-        <div class="hero-visual-fallback">عيادتي<br>يعمل بلا إنترنت</div>
+        <div class="hero-visual-fallback"><span class="t-ar">عيادتي<br>يعمل بلا إنترنت</span><span class="t-en">Aayadati<br>Works offline</span></div>
       </div>
     </div>
   </section>
@@ -374,30 +392,36 @@
 
   <section class="wrap">
     <div class="section-head center reveal">
-      <span class="eyebrow">ليش عيادتي</span>
-      <h2>مبني لواقع العيادة السورية فعليًا</h2>
-      <p>لا ترجمة حرفية لتطبيق أجنبي — كل قرار بالتصميم مبني على مشكلة حقيقية يعاني منها طبيب يستخدم دفترًا ورقيًا أو إكسل.</p>
+      <span class="eyebrow"><span class="t-ar">ليش عيادتي</span><span class="t-en">Why Aayadati</span></span>
+      <h2><span class="t-ar">مبني لواقع العيادة السورية فعليًا</span><span class="t-en">Built for the real Syrian clinic</span></h2>
+      <p>
+        <span class="t-ar">لا ترجمة حرفية لتطبيق أجنبي — كل قرار بالتصميم مبني على مشكلة حقيقية يعاني منها طبيب يستخدم دفترًا ورقيًا أو إكسل.</span>
+        <span class="t-en">Not a literal translation of a foreign app — every design decision solves a real problem faced by a doctor still using a paper notebook or a spreadsheet.</span>
+      </p>
     </div>
     <div class="bento">
       <div class="bento-card lead">
         <div class="bento-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M4.9 4.9l14.2 14.2"/></svg></div>
-        <b>يعمل بلا إنترنت بالكامل</b>
-        <span>كل بيانات العيادة محفوظة محليًا على جهازك — لا خادم، لا انقطاع خدمة أثناء يوم عمل كامل، ولا قلق من شبكة سيئة.</span>
+        <b><span class="t-ar">يعمل بلا إنترنت بالكامل</span><span class="t-en">Fully offline</span></b>
+        <span>
+          <span class="t-ar">كل بيانات العيادة محفوظة محليًا على جهازك — لا خادم، لا انقطاع خدمة أثناء يوم عمل كامل، ولا قلق من شبكة سيئة.</span>
+          <span class="t-en">All clinic data stays on your own device — no server, no downtime during a full workday, no worrying about a bad connection.</span>
+        </span>
       </div>
       <div class="bento-card">
         <div class="bento-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8M12 18v2"/></svg></div>
-        <b>دفعة واحدة، لا اشتراك</b>
-        <span>تشترينه مرة ويبقى ملكك.</span>
+        <b><span class="t-ar">دفعة واحدة، لا اشتراك</span><span class="t-en">One-time payment</span></b>
+        <span><span class="t-ar">تُشترى مرة وتبقى ملكًا للعيادة.</span><span class="t-en">Buy it once, own it forever.</span></span>
       </div>
       <div class="bento-card">
         <div class="bento-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
-        <b>عربي ١٠٠٪ من الصفر</b>
-        <span>واجهة وطباعة PDF بالفصحى.</span>
+        <b><span class="t-ar">عربي ١٠٠٪ من الصفر</span><span class="t-en">100% Arabic, from day one</span></b>
+        <span><span class="t-ar">واجهة وطباعة PDF بالفصحى.</span><span class="t-en">Interface and PDF exports in Arabic.</span></span>
       </div>
       <div class="bento-card">
         <div class="bento-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg></div>
-        <b>مساعد ذكاء اصطناعي اختياري</b>
-        <span>اقتراحات دائمًا تحت مراجعتك.</span>
+        <b><span class="t-ar">مساعد ذكاء اصطناعي اختياري</span><span class="t-en">Optional AI assistant</span></b>
+        <span><span class="t-ar">اقتراحات تبقى دائمًا تحت المراجعة.</span><span class="t-en">Suggestions you always review.</span></span>
       </div>
     </div>
   </section>
@@ -405,49 +429,49 @@
   <section class="features-band">
     <div class="wrap" style="padding-block:76px;">
       <div class="section-head center reveal">
-        <span class="eyebrow">لمحة سريعة</span>
-        <h2>كل ما تحتاجينه لإدارة عيادتك يوميًا</h2>
+        <span class="eyebrow"><span class="t-ar">لمحة سريعة</span><span class="t-en">Quick overview</span></span>
+        <h2><span class="t-ar">كل ما تحتاجه العيادة لإدارتها يوميًا</span><span class="t-en">Everything a clinic needs, day to day</span></h2>
       </div>
       <div class="rx-pad reveal">
         <div class="rx-pad-inner">
           <div class="rx-mark">℞</div>
           <ul class="rx-list">
-            <li><span class="rx-num">٠١</span><div><b>سجلات مرضى كاملة</b><span>بحث فوري، تاريخ طبي، وتصدير PDF.</span></div></li>
-            <li><span class="rx-num">٠٢</span><div><b>مواعيد وصالة انتظار</b><span>حجز يومي منظّم بلا تعارض مواعيد.</span></div></li>
-            <li><span class="rx-num">٠٣</span><div><b>وصفات طبية احترافية</b><span>طباعة فورية بترويسة العيادة.</span></div></li>
-            <li><span class="rx-num">٠٤</span><div><b>تقارير وإجازات مرضية</b><span>جاهزة للطباعة خلال ثوانٍ.</span></div></li>
-            <li><span class="rx-num">٠٥</span><div><b>تقارير مالية حقيقية</b><span>إجمالي، محصَّل، ومتبقٍ بأرقام دقيقة.</span></div></li>
-            <li><span class="rx-num">٠٦</span><div><b>نسخ احتياطي تلقائي</b><span>حماية بياناتك بصمت بالخلفية.</span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠١</span><span class="t-en">01</span></span><div><b><span class="t-ar">سجلات مرضى كاملة</span><span class="t-en">Complete patient records</span></b><span><span class="t-ar">بحث فوري، تاريخ طبي، وتصدير PDF.</span><span class="t-en">Instant search, medical history, PDF export.</span></span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠٢</span><span class="t-en">02</span></span><div><b><span class="t-ar">مواعيد وصالة انتظار</span><span class="t-en">Appointments &amp; waiting room</span></b><span><span class="t-ar">حجز يومي منظّم بلا تعارض مواعيد.</span><span class="t-en">Organized daily bookings, no double-booking.</span></span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠٣</span><span class="t-en">03</span></span><div><b><span class="t-ar">وصفات طبية احترافية</span><span class="t-en">Professional prescriptions</span></b><span><span class="t-ar">طباعة فورية بترويسة العيادة.</span><span class="t-en">Instant printing with your clinic's letterhead.</span></span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠٤</span><span class="t-en">04</span></span><div><b><span class="t-ar">تقارير وإجازات مرضية</span><span class="t-en">Medical reports &amp; sick leave</span></b><span><span class="t-ar">جاهزة للطباعة خلال ثوانٍ.</span><span class="t-en">Print-ready within seconds.</span></span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠٥</span><span class="t-en">05</span></span><div><b><span class="t-ar">تقارير مالية حقيقية</span><span class="t-en">Real financial reports</span></b><span><span class="t-ar">إجمالي، محصَّل، ومتبقٍ بأرقام دقيقة.</span><span class="t-en">Totals, collected, and outstanding — exact figures.</span></span></div></li>
+            <li><span class="rx-num"><span class="t-ar">٠٦</span><span class="t-en">06</span></span><div><b><span class="t-ar">نسخ احتياطي تلقائي</span><span class="t-en">Automatic backups</span></b><span><span class="t-ar">حماية البيانات بصمت بالخلفية.</span><span class="t-en">Protecting your data silently in the background.</span></span></div></li>
           </ul>
         </div>
       </div>
       <div class="see-all reveal">
-        <a class="btn btn-ghost" href="features.html">شاهدي كل الميزات بالتفصيل ←</a>
+        <a class="btn btn-ghost" href="features.html"><span class="t-ar">شاهد كل الميزات بالتفصيل ←</span><span class="t-en">See all features in detail →</span></a>
       </div>
     </div>
   </section>
 
   <section class="wrap">
     <div class="section-head center reveal">
-      <span class="eyebrow">كيف تحصلين عليه</span>
-      <h2>ثلاث خطوات بسيطة، بلا تعقيد</h2>
+      <span class="eyebrow"><span class="t-ar">كيف تحصل عليه</span><span class="t-en">How to get it</span></span>
+      <h2><span class="t-ar">ثلاث خطوات بسيطة، بلا تعقيد</span><span class="t-en">Three simple steps, no hassle</span></h2>
     </div>
     <div class="how-track reveal">
       <div class="how-grid">
         <div class="how-step">
-          <div class="how-num">١</div>
-          <b>تواصلي معنا على واتساب</b>
-          <span>نرتب معًا عرضًا مباشرًا مدته ١٠ دقائق على جهازك.</span>
+          <div class="how-num"><span class="t-ar">١</span><span class="t-en">1</span></div>
+          <b><span class="t-ar">تواصل معنا على واتساب</span><span class="t-en">Message us on WhatsApp</span></b>
+          <span><span class="t-ar">نرتب معًا عرضًا مباشرًا مدته ١٠ دقائق على جهازك.</span><span class="t-en">We'll set up a live 10-minute demo on your own device.</span></span>
         </div>
         <div class="how-step">
-          <div class="how-num">٢</div>
-          <b>جرّبي التطبيق ١٤ يومًا مجانًا</b>
-          <span>كل الميزات مفتوحة بالكامل بلا أي قيد خلال التجربة.</span>
+          <div class="how-num"><span class="t-ar">٢</span><span class="t-en">2</span></div>
+          <b><span class="t-ar">جرّب التطبيق ١٤ يومًا مجانًا</span><span class="t-en">Try it free for 14 days</span></b>
+          <span><span class="t-ar">كل الميزات مفتوحة بالكامل بلا أي قيد خلال التجربة.</span><span class="t-en">Every feature fully unlocked during the trial.</span></span>
         </div>
         <div class="how-step">
-          <div class="how-num">٣</div>
-          <b>فعّلي نسختك الدائمة</b>
-          <span>دفعة واحدة كاش، ورمز تفعيل خاص بجهازك فقط.</span>
+          <div class="how-num"><span class="t-ar">٣</span><span class="t-en">3</span></div>
+          <b><span class="t-ar">فعّل نسختك الدائمة</span><span class="t-en">Activate your permanent copy</span></b>
+          <span><span class="t-ar">دفعة واحدة كاش، ورمز تفعيل خاص بجهازك فقط.</span><span class="t-en">One cash payment and an activation code unique to your device.</span></span>
         </div>
       </div>
     </div>
@@ -455,32 +479,35 @@
 
   <section class="wrap">
     <div class="section-head center reveal">
-      <span class="eyebrow">السعر</span>
-      <h2>بسيط وواضح، بلا مفاجآت</h2>
+      <span class="eyebrow"><span class="t-ar">السعر</span><span class="t-en">Pricing</span></span>
+      <h2><span class="t-ar">تواصل معنا واتفق معنا على السعر المناسب</span><span class="t-en">Contact us to agree on the right price</span></h2>
     </div>
     <div class="price-wrap reveal">
       <div class="price-card">
-        <div class="price-eyebrow">تذكرة تفعيل عيادتي</div>
-        <div class="price-tag">٥٠-١٠٠<span>دولار — دفعة واحدة</span></div>
+        <div class="price-eyebrow"><span class="t-ar">تذكرة تفعيل عيادتي</span><span class="t-en">Aayadati activation pass</span></div>
+        <div class="price-headline"><span class="t-ar">نحدد السعر معًا بعد العرض المباشر</span><span class="t-en">We agree on pricing together after the live demo</span></div>
         <hr class="price-divider">
         <ul class="price-list">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> بلا اشتراك شهري أو سنوي</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> تجربة مجانية كاملة الميزات لمدة ١٤ يومًا</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> دعم شخصي مباشر عبر واتساب</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> يعمل على جهازك للأبد بلا انتهاء صلاحية</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">بلا اشتراك شهري أو سنوي</span><span class="t-en">No monthly or yearly subscription</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">تجربة مجانية كاملة الميزات لمدة ١٤ يومًا</span><span class="t-en">Full-featured free trial for 14 days</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">دعم شخصي مباشر عبر واتساب</span><span class="t-en">Direct personal support on WhatsApp</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span class="t-ar">يعمل على جهازك للأبد بلا انتهاء صلاحية</span><span class="t-en">Works on your device forever, no expiry</span></li>
         </ul>
-        <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">تواصلي معنا لتفاصيل السعر النهائي</a>
+        <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener"><span class="t-ar">تواصل معنا لتحديد السعر</span><span class="t-en">Contact us to discuss pricing</span></a>
       </div>
     </div>
   </section>
 
   <section class="wrap">
     <div class="cta-final reveal">
-      <h2>جاهزة تجرّبي عيادتك بدون دفتر ورقي؟</h2>
-      <p>راسلينا الآن على واتساب — نرتب لكِ عرضًا مباشرًا ونشغّل لكِ التجربة المجانية بنفس اليوم.</p>
+      <h2><span class="t-ar">جاهز تجرّب عيادتك بدون دفتر ورقي؟</span><span class="t-en">Ready to run your clinic without paper?</span></h2>
+      <p>
+        <span class="t-ar">راسلنا الآن على واتساب — نرتب لك عرضًا مباشرًا ونشغّل لك التجربة المجانية بنفس اليوم.</span>
+        <span class="t-en">Message us now on WhatsApp — we'll set up a live demo and start your free trial the same day.</span>
+      </p>
       <a class="btn btn-primary js-whatsapp" href="#" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>
-        راسلينا على واتساب الآن
+        <span class="t-ar">راسلنا على واتساب الآن</span><span class="t-en">Message us on WhatsApp now</span>
       </a>
       <div class="pulse-divider" aria-hidden="true">
         <svg viewBox="0 0 800 36" preserveAspectRatio="none">
@@ -494,10 +521,10 @@
 
 <footer>
   <div class="wrap footer-inner">
-    <span>عيادتي © 2026 · نظام إدارة عيادات طبية يعمل بلا إنترنت.</span>
+    <span><span class="t-ar">عيادتي © 2026 · نظام إدارة عيادات طبية يعمل بلا إنترنت.</span><span class="t-en">Aayadati © 2026 · Offline clinic management system.</span></span>
     <div class="footer-links">
-      <a href="features.html">كل الميزات</a>
-      <a class="js-whatsapp" href="#" target="_blank" rel="noopener">تواصل واتساب</a>
+      <a href="features.html"><span class="t-ar">كل الميزات</span><span class="t-en">All features</span></a>
+      <a class="js-whatsapp" href="#" target="_blank" rel="noopener"><span class="t-ar">تواصل واتساب</span><span class="t-en">WhatsApp</span></a>
     </div>
   </div>
 </footer>
@@ -527,6 +554,20 @@
   } else {
     revealTargets.forEach(function(el){ el.classList.add('in-view'); });
   }
+
+  var langToggle = document.getElementById('lang-toggle');
+  function applyLang(lang){
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'en' ? 'ltr' : 'rtl');
+    langToggle.textContent = lang === 'en' ? 'عربي' : 'EN';
+    try { localStorage.setItem('aayadatiLang', lang); } catch(e){}
+  }
+  var savedLang = 'ar';
+  try { savedLang = localStorage.getItem('aayadatiLang') || 'ar'; } catch(e){}
+  applyLang(savedLang);
+  langToggle.addEventListener('click', function(){
+    applyLang(document.documentElement.getAttribute('lang') === 'en' ? 'ar' : 'en');
+  });
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
