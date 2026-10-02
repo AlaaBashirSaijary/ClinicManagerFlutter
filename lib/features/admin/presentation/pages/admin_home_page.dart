@@ -13,7 +13,6 @@ import '../../../../core/security/app_lock_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/trial/trial_service.dart';
 import '../../../../core/update/update_provider.dart';
-import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -39,38 +38,527 @@ import '../../../../core/widgets/app_snack.dart';
 class AdminHomePage extends ConsumerWidget {
   const AdminHomePage({super.key});
 
+  void _open(BuildContext context, Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+
+  void _openSection(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) => _open(context, _AdminSubPage(title: title, children: children));
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final groups = <_TileGroup>[
+      _TileGroup('العيادة', [
+        _Tile(
+          icon: Icons.apartment_rounded,
+          title: 'العيادات',
+          subtitle: 'تبديل العيادة وإضافة عيادة جديدة',
+          onTap: () =>
+              _openSection(context, 'العيادات', const [_ClinicsSection()]),
+        ),
+        _Tile(
+          icon: Icons.badge_rounded,
+          title: 'الأطباء',
+          subtitle: 'لعيادة فيها أكثر من طبيب',
+          onTap: () =>
+              _openSection(context, 'الأطباء', const [_DoctorsSection()]),
+        ),
+        _Tile(
+          icon: Icons.group_rounded,
+          title: 'المستخدمون',
+          subtitle: 'مدير وممرضات وصلاحياتهم',
+          onTap: () =>
+              _openSection(context, 'المستخدمون', const [_UsersSection()]),
+        ),
+        _Tile(
+          icon: Icons.tune_rounded,
+          title: 'نموذج الفحص',
+          subtitle: 'حقول الفحص الخاصة بتخصصك',
+          onTap: () => _open(context, const ExamTemplateSettingsPage()),
+        ),
+      ]),
+      _TileGroup('البيانات', [
+        _Tile(
+          icon: Icons.upload_file_rounded,
+          title: 'استيراد المرضى',
+          subtitle: 'من ملف إكسل أو CSV',
+          onTap: () => _open(context, const PatientImportPage()),
+        ),
+        _Tile(
+          icon: Icons.bar_chart_rounded,
+          title: 'التقارير',
+          subtitle: 'الشهري والمالي',
+          onTap: () =>
+              _openSection(context, 'التقارير', const [_ReportsSection()]),
+        ),
+        _Tile(
+          icon: Icons.backup_rounded,
+          title: 'النسخ الاحتياطي',
+          subtitle: 'حفظ واستعادة بيانات العيادة',
+          onTap: () => _openSection(context, 'النسخ الاحتياطي', const [
+            _BackupSection(),
+          ]),
+        ),
+        _Tile(
+          icon: Icons.folder_rounded,
+          title: 'مكان التخزين',
+          subtitle: 'أين تُحفظ قاعدة البيانات',
+          onTap: () =>
+              _openSection(context, 'مكان التخزين', const [_StorageSection()]),
+        ),
+      ]),
+      if (GeminiService.instance.isAvailable)
+        _TileGroup('الذكاء الاصطناعي', [
+          _Tile(
+            icon: Icons.auto_awesome_rounded,
+            title: 'اسأل عن عيادتك',
+            subtitle: 'أسئلة بالعربية عن أرقام عيادتك',
+            onTap: () => _open(context, const AskClinicPage()),
+          ),
+        ]),
+      _TileGroup('الحساب والأمان', [
+        _Tile(
+          icon: Icons.person_rounded,
+          title: 'حسابي',
+          subtitle: 'الاسم وكلمة المرور ورمز الاسترداد',
+          onTap: () =>
+              _openSection(context, 'حسابي', const [_AccountSection()]),
+        ),
+        _Tile(
+          icon: Icons.lock_rounded,
+          title: 'قفل التطبيق',
+          subtitle: 'رمز PIN لحماية البيانات',
+          onTap: () =>
+              _openSection(context, 'قفل التطبيق', const [_SecuritySection()]),
+        ),
+        _Tile(
+          icon: Icons.history_rounded,
+          title: 'سجل النشاط',
+          subtitle: 'من فعل ماذا ومتى',
+          onTap: () => _open(context, const ActivityLogPage()),
+        ),
+      ]),
+      _TileGroup('النظام', [
+        _Tile(
+          icon: Icons.verified_rounded,
+          title: 'الترخيص',
+          subtitle: 'حالة التفعيل ورمز الجهاز',
+          onTap: () =>
+              _openSection(context, 'الترخيص', const [_TrialStatusSection()]),
+        ),
+        _Tile(
+          icon: Icons.support_agent_rounded,
+          title: 'الدعم والإصدار',
+          subtitle: 'تواصل مع الدعم وتحقق من التحديثات',
+          onTap: () => _openSection(context, 'الدعم والإصدار', const [
+            _SupportSection(),
+            _AboutFooter(),
+          ]),
+        ),
+        _Tile(
+          icon: Icons.menu_book_rounded,
+          title: 'دليل الاستخدام',
+          subtitle: 'شرح كل أقسام التطبيق',
+          onTap: () => _open(context, const HelpGuidePage()),
+        ),
+        _Tile(
+          icon: Icons.gavel_rounded,
+          title: 'الخصوصية والشروط',
+          subtitle: 'سياسة الخصوصية وشروط الاستخدام',
+          onTap: () => _openSection(context, 'الخصوصية والشروط', const [
+            _LegalSection(),
+          ]),
+        ),
+      ]),
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text('الإدارة')),
       body: ResponsiveBody(
+        maxWidth: 1000,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          children: const [
-            StaggeredFadeSlideIn(
-              spacing: AppSpacing.xl,
-              children: [
-                _AccountSection(),
-                _HelpSection(),
-                _UsersSection(),
-                _SecuritySection(),
-                _ClinicsSection(),
-                _DoctorsSection(),
-                _ExamFormSection(),
-                _ImportSection(),
-                _ReportsSection(),
-                _AskClinicSection(),
-                _ActivityLogSection(),
-                _BackupSection(),
-                _StorageSection(),
-                _LegalSection(),
-                _TrialStatusSection(),
-                _SupportSection(),
-                _AboutFooter(),
-              ],
-            ),
+          children: [
+            const _AdminSummaryHeader(),
+            for (final group in groups) ...[
+              const SizedBox(height: AppSpacing.xl),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Text(
+                  group.title,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.inkSoft,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              _TileGrid(tiles: group.tiles),
+            ],
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TileGroup {
+  const _TileGroup(this.title, this.tiles);
+
+  final String title;
+  final List<_Tile> tiles;
+}
+
+class _Tile {
+  const _Tile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+}
+
+/// Tiles flow into 1 / 2 / 3 columns depending on the available width, so
+/// the same hub reads as a tidy list on a phone and a grid on an iPad.
+class _TileGrid extends StatelessWidget {
+  const _TileGrid({required this.tiles});
+
+  final List<_Tile> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 820 ? 3 : (width >= 520 ? 2 : 1);
+        const gap = AppSpacing.md;
+        final tileWidth = (width - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final tile in tiles)
+              SizedBox(
+                width: tileWidth,
+                child: _TileCard(tile: tile),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _TileCard extends StatelessWidget {
+  const _TileCard({required this.tile});
+
+  final _Tile tile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        onTap: tile.onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
+            boxShadow: AppShadows.card,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.aqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(tile.icon, size: 22, color: AppColors.aquaDeep),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tile.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      tile.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.inkSoft,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_left_rounded, color: AppColors.lens),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Hosts one of the existing admin sections on its own page — each section
+/// keeps its own header, cards and logic untouched; only where it's reached
+/// from changed.
+class _AdminSubPage extends StatelessWidget {
+  const _AdminSubPage({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: ResponsiveBody(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            for (final (i, child) in children.indexed) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.xl),
+              child,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The at-a-glance strip at the top of the hub: who/where, and the three
+/// things an owner actually checks — licence status, last backup, and
+/// whether an update is waiting.
+class _AdminSummaryHeader extends ConsumerStatefulWidget {
+  const _AdminSummaryHeader();
+
+  @override
+  ConsumerState<_AdminSummaryHeader> createState() =>
+      _AdminSummaryHeaderState();
+}
+
+class _AdminSummaryHeaderState extends ConsumerState<_AdminSummaryHeader> {
+  bool _activated = false;
+  int? _daysRemaining;
+  DateTime? _lastBackup;
+  String? _version;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final activated = await TrialService.instance.isActivated();
+    final days = activated ? null : await TrialService.instance.daysRemaining();
+    final backup = await ClinicBackupService.instance.lastBackupDate();
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    setState(() {
+      _activated = activated;
+      _daysRemaining = days;
+      _lastBackup = backup;
+      _version = info.version;
+      _loaded = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(authProvider).user;
+    final clinic = ref.watch(activeClinicProvider).active;
+    final update = ref.watch(updateAvailableProvider);
+
+    final backupDays = _lastBackup == null
+        ? null
+        : DateTime.now().difference(_lastBackup!).inDays;
+    final backupStale = backupDays == null || backupDays > 14;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: AppColors.aquaGradient,
+        borderRadius: BorderRadius.circular(AppRadius.card + 4),
+        boxShadow: AppShadows.raised,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.local_hospital_rounded,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.name ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                      ),
+                    ),
+                    Text(
+                      clinic?.name ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (!_loaded)
+            const SizedBox(height: 56)
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.verified_rounded,
+                    label: 'الترخيص',
+                    value: _activated
+                        ? 'مُفعَّل'
+                        : 'تجربة: ${_daysRemaining ?? 0} يوم',
+                    warn: !_activated && (_daysRemaining ?? 0) <= 3,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.backup_rounded,
+                    label: 'آخر نسخة',
+                    value: backupDays == null
+                        ? 'لا يوجد'
+                        : (backupDays == 0 ? 'اليوم' : 'قبل $backupDays يوم'),
+                    warn: backupStale,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.system_update_alt_rounded,
+                    label: 'الإصدار',
+                    value: update != null ? 'تحديث متاح' : (_version ?? '—'),
+                    warn: update != null,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.warn = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool warn;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: warn
+            ? const Color(0xFFFFF4E5)
+            : Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: warn ? const Color(0xFFB45309) : Colors.white70,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: warn ? const Color(0xFFB45309) : Colors.white70,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: warn ? const Color(0xFF92400E) : Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -463,37 +951,6 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
 }
 
 // ============================== دليل الاستخدام ==============================
-
-/// A direct link to the in-app help guide — the same content published as
-/// a standalone web page, but reachable without leaving the app. Also
-/// reachable from the dashboard header for staff who never see this page
-/// (non-admin accounts).
-class _HelpSection extends StatelessWidget {
-  const _HelpSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.menu_book_rounded,
-          title: 'دليل الاستخدام',
-          subtitle: 'شرح تفصيلي لكل شاشة وميزة في التطبيق',
-        ),
-        _SectionCard(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const HelpGuidePage())),
-            icon: const Icon(Icons.menu_book_rounded, size: 18),
-            label: const Text('فتح دليل الاستخدام'),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ============================== المستخدمون ==============================
 
@@ -1334,68 +1791,9 @@ class _DoctorsSection extends ConsumerWidget {
 
 // ============================== نموذج الفحص ==============================
 
-class _ExamFormSection extends StatelessWidget {
-  const _ExamFormSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.assignment_outlined,
-          title: 'نموذج الفحص',
-          subtitle:
-              'حقول زيارة الفحص التي تظهر لهذه العيادة — اجعليها مناسبة لتخصصك',
-        ),
-        _SectionCard(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const ExamTemplateSettingsPage(),
-              ),
-            ),
-            icon: const Icon(Icons.tune_rounded, size: 18),
-            label: const Text('إعداد نموذج الفحص'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ============================== التقرير الشهري ==============================
 
 // ============================== استيراد المرضى ==============================
-
-class _ImportSection extends StatelessWidget {
-  const _ImportSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.upload_file_rounded,
-          title: 'استيراد المرضى',
-          subtitle:
-              'استوردي قائمة مرضى جاهزة من ملف Excel أو CSV بدل إدخالها '
-              'يدويًا واحدًا تلو الآخر',
-        ),
-        _SectionCard(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PatientImportPage()),
-            ),
-            icon: const Icon(Icons.upload_file_rounded, size: 18),
-            label: const Text('استيراد من ملف'),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _ReportsSection extends StatelessWidget {
   const _ReportsSection();
@@ -1444,65 +1842,7 @@ class _ReportsSection extends StatelessWidget {
 
 // ========================== اسأل عن عيادتك (ذكاء اصطناعي) ==========================
 
-class _AskClinicSection extends StatelessWidget {
-  const _AskClinicSection();
-
-  @override
-  Widget build(BuildContext context) {
-    if (!GeminiService.instance.isAvailable) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.auto_awesome_rounded,
-          title: 'اسأل عن عيادتك',
-          subtitle:
-              'اسألي بالعربية عن أرقام عيادتك، ويجيب المساعد الذكي '
-              'بالاعتماد على بياناتك المحلية فقط',
-        ),
-        _SectionCard(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const AskClinicPage())),
-            icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-            label: const Text('اسأل الآن'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ============================== سجل النشاط ==============================
-
-class _ActivityLogSection extends StatelessWidget {
-  const _ActivityLogSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.history_rounded,
-          title: 'سجل النشاط',
-          subtitle: 'من فعل ماذا ومتى — لكل التغييرات في هذه العيادة',
-        ),
-        _SectionCard(
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const ActivityLogPage())),
-            icon: const Icon(Icons.history_rounded, size: 18),
-            label: const Text('عرض سجل النشاط'),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ============================== النسخ الاحتياطي ==============================
 
