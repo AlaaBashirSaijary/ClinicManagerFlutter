@@ -1100,148 +1100,182 @@ class _VisitRow extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onDelete;
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف الزيارة؟'),
+        content: const Text('لا يمكن التراجع عن هذا الإجراء.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('حذف', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onDelete();
+  }
+
   @override
   Widget build(BuildContext context) {
     final date =
         '${visit.visitDate.year}-${visit.visitDate.month.toString().padLeft(2, '0')}-${visit.visitDate.day.toString().padLeft(2, '0')}';
     final isCheckup = visit.visitType == VisitType.checkup;
+    final accent = isCheckup ? AppColors.focus : AppColors.aqua;
+    final hasSummary =
+        visit.examSummary != null && visit.examSummary!.isNotEmpty;
+    final hasOutcome =
+        visit.followUpOutcome != null && visit.followUpOutcome!.isNotEmpty;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onOpen,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Material(
+        color: AppColors.mist,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.visibility_rounded,
-                  color: AppColors.aqua,
-                  size: 18,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'زيارة $number',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    date,
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: (isCheckup ? AppColors.focus : AppColors.aqua)
-                        .withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
+                    color: accent.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
                   child: Text(
-                    visit.visitType.label,
+                    '$number',
                     style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: isCheckup ? AppColors.focus : AppColors.aqua,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: accent,
                     ),
                   ),
                 ),
-                if (visit.feeAmount != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: visit.remainingAmount != null
-                          ? AppColors.danger.withValues(alpha: 0.1)
-                          : AppColors.ok.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      visit.remainingAmount != null
-                          ? 'متبقي ${visit.remainingAmount!.toStringAsFixed(0)}'
-                          : '${visit.feeAmount!.toStringAsFixed(0)} ل.س',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: visit.remainingAmount != null
-                            ? AppColors.danger
-                            : AppColors.ok,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            date,
+                            textDirection: TextDirection.ltr,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          _VisitPill(
+                            label: visit.visitType.label,
+                            color: accent,
+                          ),
+                          if (visit.feeAmount != null)
+                            _VisitPill(
+                              label: visit.remainingAmount != null
+                                  ? 'متبقي ${visit.remainingAmount!.toStringAsFixed(0)}'
+                                  : '${visit.feeAmount!.toStringAsFixed(0)} ل.س',
+                              color: visit.remainingAmount != null
+                                  ? AppColors.danger
+                                  : AppColors.ok,
+                            ),
+                        ],
                       ),
-                    ),
+                      if (hasSummary) ...[
+                        const SizedBox(height: 6),
+                        _VisitNote(label: 'الخلاصة', text: visit.examSummary!),
+                      ],
+                      if (hasOutcome) ...[
+                        const SizedBox(height: 4),
+                        _VisitNote(
+                          label: 'نتيجة المتابعة',
+                          text: visit.followUpOutcome!,
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
+                ),
                 IconButton(
+                  tooltip: 'حذف',
+                  visualDensity: VisualDensity.compact,
                   icon: const Icon(
                     Icons.delete_outline_rounded,
                     color: AppColors.danger,
                     size: 20,
                   ),
-                  onPressed: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('حذف الزيارة؟'),
-                        content: const Text('لا يمكن التراجع عن هذا الإجراء.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: const Text('إلغاء'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: const Text(
-                              'حذف',
-                              style: TextStyle(color: AppColors.danger),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirmed == true) onDelete();
-                  },
+                  onPressed: () => _confirmDelete(context),
                 ),
               ],
             ),
-            if (visit.examSummary != null && visit.examSummary!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, right: 26),
-                child: Text(
-                  'خلاصة الفحص: ${visit.examSummary}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-              ),
-            if (visit.followUpOutcome != null &&
-                visit.followUpOutcome!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, right: 26),
-                child: Text(
-                  'نتيجة المتابعة: ${visit.followUpOutcome}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _VisitPill extends StatelessWidget {
+  const _VisitPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _VisitNote extends StatelessWidget {
+  const _VisitNote({required this.label, required this.text});
+
+  final String label;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label: ',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          TextSpan(text: text),
+        ],
+      ),
+      style: const TextStyle(fontSize: 12.5, color: AppColors.ink, height: 1.5),
     );
   }
 }

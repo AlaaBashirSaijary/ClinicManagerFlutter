@@ -62,6 +62,16 @@ class AppShadows {
   ];
 }
 
+/// Corner radii used across surfaces so cards, fields and chips share one
+/// visual rhythm.
+class AppRadius {
+  const AppRadius._();
+
+  static const card = 20.0;
+  static const field = 14.0;
+  static const chip = 999.0;
+}
+
 class AppTheme {
   const AppTheme._();
 
@@ -126,8 +136,10 @@ class AppTheme {
           fontSize: 12,
           color: Colors.white,
         ),
+        checkmarkColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           side: BorderSide(color: AppColors.ink.withValues(alpha: 0.08)),
         ),
       ),
@@ -190,6 +202,68 @@ class AppTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         elevation: 0,
         highlightElevation: 0,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.aqua,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.field),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.aquaDeep,
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: AppColors.ink.withValues(alpha: 0.08),
+        thickness: 1,
+        space: 1,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        titleTextStyle: const TextStyle(
+          color: AppColors.ink,
+          fontSize: 17,
+          fontWeight: FontWeight.w800,
+          fontFamily: _fontFamily,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.ink,
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontFamily: _fontFamily,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.field),
+        ),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        side: BorderSide(
+          color: AppColors.ink.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
     );
   }

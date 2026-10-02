@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../core/widgets/surface_card.dart';
 import '../../../appointments/domain/usecases/get_follow_up_days.dart';
 import '../../../patients/domain/usecases/get_patient.dart';
 import '../../domain/entities/exam_field_template.dart';
@@ -342,8 +342,290 @@ class _VisitFormPageState extends State<VisitFormPage> {
     }
   }
 
+  String get _dateLabel =>
+      '${_visitDate.year}-${_visitDate.month.toString().padLeft(2, '0')}-${_visitDate.day.toString().padLeft(2, '0')}';
+
+  Widget _dateCard() => SurfaceCard(
+    padding: EdgeInsets.zero,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      onTap: _pickDate,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.aqua.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.event_rounded,
+                color: AppColors.aquaDeep,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            const Text(
+              'تاريخ الزيارة',
+              style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5),
+            ),
+            const Spacer(),
+            Text(
+              _dateLabel,
+              textDirection: TextDirection.ltr,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            const Icon(Icons.expand_more_rounded, color: AppColors.lens),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _visitTypeCard() => SurfaceCard(
+    title: 'نوع الزيارة',
+    icon: Icons.local_hospital_rounded,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<VisitType>(
+          showSelectedIcon: false,
+          segments: [
+            for (final type in VisitType.values)
+              ButtonSegment(value: type, label: Text(type.label)),
+          ],
+          selected: {_visitType},
+          onSelectionChanged: (s) => setState(() => _visitType = s.first),
+          style: SegmentedButton.styleFrom(
+            selectedBackgroundColor: AppColors.aqua,
+            selectedForegroundColor: Colors.white,
+            foregroundColor: AppColors.ink,
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          _visitType == VisitType.consultation
+              ? 'كشفية كاملة — أول زيارة أو بعد انتهاء فترة المتابعة.'
+              : 'ضمن فترة المتابعة — غالبًا نصف السعر أو مجانية.',
+          style: const TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+        ),
+        if (_visitType == VisitType.checkup) ...[
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _followUpOutcomeController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'نتيجة المتابعة',
+              hintText: 'مثلًا: الالتهاب راح، تحسنت الرؤية...',
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _examSection() {
+    if (_templates.isEmpty) {
+      return SurfaceCard(
+        title: 'القياسات',
+        icon: Icons.assignment_rounded,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'لم يتم إعداد أي حقول للفحص بعد.',
+              style: TextStyle(color: AppColors.inkSoft),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(
+              onPressed: _openTemplateSettings,
+              icon: const Icon(Icons.tune_rounded, size: 18),
+              label: const Text('إعداد نموذج الفحص'),
+            ),
+          ],
+        ),
+      );
+    }
+    return _ExamTable(
+      templates: _templates,
+      singleControllers: _singleControllers,
+      rightControllers: _rightControllers,
+      leftControllers: _leftControllers,
+    );
+  }
+
+  Widget _summaryCard() => SurfaceCard(
+    title: 'الخلاصة والملاحظات',
+    icon: Icons.fact_check_rounded,
+    child: Column(
+      children: [
+        TextField(
+          controller: _examSummaryController,
+          maxLines: 3,
+          decoration: const InputDecoration(labelText: 'خلاصة الفحص'),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TextField(
+          controller: _notesController,
+          maxLines: 4,
+          decoration: const InputDecoration(labelText: 'ملاحظات إضافية'),
+        ),
+      ],
+    ),
+  );
+
+  Widget _billingCard() => SurfaceCard(
+    title: 'الكشفية',
+    icon: Icons.payments_rounded,
+    child: Column(
+      children: [
+        TextField(
+          controller: _feeController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'المبلغ (اختياري)',
+            suffixText: 'ل.س',
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TextField(
+          controller: _paidController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'المدفوع فعليًا',
+            helperText: 'اتركه فارغًا إذا دُفعت الكشفية كاملة',
+            suffixText: 'ل.س',
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _followUpCard() => SurfaceCard(
+    title: 'المتابعة',
+    icon: Icons.event_repeat_rounded,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CheckboxListTile(
+          value: _needsFollowUp,
+          onChanged: (v) => setState(() {
+            _needsFollowUp = v ?? false;
+            _followUpFromPlan = false;
+          }),
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'هذا المريض يحتاج متابعة',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            _followUpFromPlan
+                ? 'مُقترح تلقائيًا حسب خطة المتابعة الدورية — يمكن تعديله'
+                : 'يظهر ضمن "متابعات مستحقة" حتى تُسجَّل له زيارة جديدة',
+            style: const TextStyle(fontSize: 11.5),
+          ),
+        ),
+        if (_needsFollowUp) ...[
+          const SizedBox(height: AppSpacing.sm),
+          InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            onTap: _pickFollowUpDate,
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.sky,
+                borderRadius: BorderRadius.circular(AppRadius.field),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.event_rounded,
+                    color: AppColors.aqua,
+                    size: 18,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      _followUpBy == null
+                          ? 'تاريخ مستهدف للمتابعة (اختياري)'
+                          : 'المتابعة بحلول: '
+                                '${_followUpBy!.year}-'
+                                '${_followUpBy!.month.toString().padLeft(2, '0')}-'
+                                '${_followUpBy!.day.toString().padLeft(2, '0')}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (_followUpBy != null)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      onPressed: () => setState(() => _followUpBy = null),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _photosCard() => _isEdit
+      ? _PhotosSection(visitId: widget.visit!.id!)
+      : _PendingPhotosSection(
+          photos: _pendingPhotos,
+          onAdd: (bytes) => setState(() => _pendingPhotos.add(bytes)),
+          onRemove: (index) => setState(() => _pendingPhotos.removeAt(index)),
+        );
+
+  Widget _saveButton() => _saving
+      ? const Center(
+          child: SizedBox(
+            height: 24,
+            width: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+        )
+      : GradientButton(
+          label: _isEdit ? 'حفظ التعديلات' : 'حفظ الزيارة',
+          icon: Icons.save_rounded,
+          onPressed: _submit,
+        );
+
+  /// Two columns on tablets / wide windows — clinical content (type,
+  /// measurements, conclusion) on one side, the administrative cards
+  /// (fee, follow-up, photos) on the other — and a single stacked column
+  /// on phones, so the same screen reads naturally at any width.
   @override
   Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    const gap = AppSpacing.md;
+
+    final clinical = <Widget>[_visitTypeCard(), _examSection(), _summaryCard()];
+    final admin = <Widget>[_billingCard(), _followUpCard(), _photosCard()];
+
+    Widget column(List<Widget> items) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, w) in items.indexed) ...[
+          if (i > 0) const SizedBox(height: gap),
+          w,
+        ],
+      ],
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEdit ? 'تعديل زيارة' : 'زيارة فحص جديدة'),
@@ -355,302 +637,37 @@ class _VisitFormPageState extends State<VisitFormPage> {
           ),
         ],
       ),
-      body: ResponsiveBody(
-        maxWidth: 900,
-        child: _loadingTemplates
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                children: [
-                  StaggeredFadeSlideIn(
-                    spacing: AppSpacing.md,
-                    children: [
-                      const _ExamHero(),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: _pickDate,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: AppShadows.card,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.event_rounded,
-                                color: AppColors.aqua,
-                                size: 20,
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                'تاريخ الزيارة: '
-                                '${_visitDate.year}-${_visitDate.month.toString().padLeft(2, '0')}-${_visitDate.day.toString().padLeft(2, '0')}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const Spacer(),
-                              const Icon(
-                                Icons.chevron_left_rounded,
-                                color: AppColors.lens,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: AppShadows.card,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'نوع الزيارة',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                for (final type in VisitType.values)
-                                  ChoiceChip(
-                                    label: Text(type.label),
-                                    selected: _visitType == type,
-                                    onSelected: (_) =>
-                                        setState(() => _visitType = type),
-                                  ),
-                              ],
-                            ),
-                            if (_visitType == VisitType.checkup) ...[
-                              const SizedBox(height: AppSpacing.md),
-                              TextField(
-                                controller: _followUpOutcomeController,
-                                maxLines: 3,
-                                decoration: const InputDecoration(
-                                  labelText:
-                                      'نتيجة المتابعة (مثلًا: الالتهاب راح، تحسنت الرؤية...)',
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (_templates.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          decoration: BoxDecoration(
-                            color: AppColors.sky.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'لم يتم إعداد أي حقول للفحص بعد.',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              OutlinedButton.icon(
-                                onPressed: _openTemplateSettings,
-                                icon: const Icon(Icons.tune_rounded, size: 18),
-                                label: const Text('إعداد نموذج الفحص'),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        _ExamTable(
-                          templates: _templates,
-                          singleControllers: _singleControllers,
-                          rightControllers: _rightControllers,
-                          leftControllers: _leftControllers,
-                        ),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: AppShadows.card,
-                        ),
-                        child: TextField(
-                          controller: _examSummaryController,
-                          maxLines: 3,
-                          decoration: const InputDecoration(
-                            labelText: 'خلاصة الفحص',
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: AppShadows.card,
-                        ),
-                        child: TextField(
-                          controller: _notesController,
-                          maxLines: 4,
-                          decoration: const InputDecoration(
-                            labelText: 'ملاحظات إضافية',
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: AppShadows.card,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'الكشفية',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            TextField(
-                              controller: _feeController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: const InputDecoration(
-                                labelText: 'المبلغ (اختياري)',
-                                suffixText: 'ل.س',
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            TextField(
-                              controller: _paidController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: const InputDecoration(
-                                labelText:
-                                    'المبلغ المدفوع فعليًا (اتركيه فارغًا إذا دُفعت الكشفية كاملة)',
-                                suffixText: 'ل.س',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: AppShadows.card,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            CheckboxListTile(
-                              value: _needsFollowUp,
-                              onChanged: (v) => setState(() {
-                                _needsFollowUp = v ?? false;
-                                _followUpFromPlan = false;
-                              }),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text(
-                                'هذا المريض يحتاج متابعة',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              subtitle: Text(
-                                _followUpFromPlan
-                                    ? 'مُقترح تلقائيًا حسب خطة المتابعة الدورية — يمكن تعديله'
-                                    : 'يظهر ضمن "متابعات مستحقة" حتى تُسجَّل له زيارة جديدة',
-                                style: const TextStyle(fontSize: 11.5),
-                              ),
-                            ),
-                            if (_needsFollowUp) ...[
-                              const SizedBox(height: AppSpacing.sm),
-                              InkWell(
-                                borderRadius: BorderRadius.circular(14),
-                                onTap: _pickFollowUpDate,
-                                child: Container(
-                                  padding: const EdgeInsets.all(AppSpacing.md),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.sky,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.event_repeat_rounded,
-                                        color: AppColors.aqua,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Text(
-                                        _followUpBy == null
-                                            ? 'تاريخ مستهدف للمتابعة (اختياري)'
-                                            : 'المتابعة بحلول: '
-                                                  '${_followUpBy!.year}-'
-                                                  '${_followUpBy!.month.toString().padLeft(2, '0')}-'
-                                                  '${_followUpBy!.day.toString().padLeft(2, '0')}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      if (_followUpBy != null)
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.close_rounded,
-                                            size: 18,
-                                          ),
-                                          onPressed: () => setState(
-                                            () => _followUpBy = null,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (_isEdit)
-                        _PhotosSection(visitId: widget.visit!.id!)
-                      else
-                        _PendingPhotosSection(
-                          photos: _pendingPhotos,
-                          onAdd: (bytes) =>
-                              setState(() => _pendingPhotos.add(bytes)),
-                          onRemove: (index) =>
-                              setState(() => _pendingPhotos.removeAt(index)),
-                        ),
-                      _saving
-                          ? const Center(
-                              child: SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
-                            )
-                          : GradientButton(
-                              label: _isEdit ? 'حفظ التعديلات' : 'حفظ الزيارة',
-                              icon: Icons.save_rounded,
-                              onPressed: _submit,
-                            ),
-                    ],
-                  ),
-                ],
+      body: _loadingTemplates
+          ? const Center(child: CircularProgressIndicator())
+          : Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: wide ? 1180 : 720),
+                child: ListView(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [
+                    const _ExamHero(),
+                    const SizedBox(height: gap),
+                    _dateCard(),
+                    const SizedBox(height: gap),
+                    if (wide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: column(clinical)),
+                          const SizedBox(width: gap),
+                          Expanded(flex: 4, child: column(admin)),
+                        ],
+                      )
+                    else
+                      column([...clinical, ...admin]),
+                    const SizedBox(height: AppSpacing.lg),
+                    _saveButton(),
+                    const SizedBox(height: AppSpacing.xl),
+                  ],
+                ),
               ),
-      ),
+            ),
     );
   }
 }
@@ -758,13 +775,15 @@ class _ExamTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: AppShadows.card,
+    return SurfaceCard(
+      title: 'القياسات',
+      icon: Icons.assignment_rounded,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.sm,
       ),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Column(
         children: [
           for (final (index, template) in templates.indexed)
@@ -1024,23 +1043,31 @@ class _PhotosSectionState extends State<_PhotosSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: AppShadows.card,
-      ),
+    return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.aqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.photo_library_rounded,
+                  size: 16,
+                  color: AppColors.aquaDeep,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               const Expanded(
                 child: Text(
                   'الصور المرفقة',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
                     color: AppColors.ink,
                   ),
                 ),
@@ -1220,23 +1247,31 @@ class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: AppShadows.card,
-      ),
+    return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.aqua.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.photo_library_rounded,
+                  size: 16,
+                  color: AppColors.aquaDeep,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               const Expanded(
                 child: Text(
                   'الصور المرفقة',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
                     color: AppColors.ink,
                   ),
                 ),
