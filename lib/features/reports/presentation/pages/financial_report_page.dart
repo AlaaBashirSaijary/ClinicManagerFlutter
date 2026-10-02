@@ -10,6 +10,8 @@ import '../../../patients/domain/usecases/get_new_patients_count.dart'
 import '../../../visits/domain/entities/financial_report.dart';
 import '../../../visits/domain/usecases/get_financial_report.dart';
 import '../pdf/financial_report_pdf_export.dart';
+import '../../../../core/widgets/app_snack.dart';
+import '../../../../core/error/error_messages.dart';
 
 /// Real money in, real money out — actual fee/payment amounts entered per
 /// visit, summed for a month, as opposed to MonthlyReportPage's count of
@@ -83,9 +85,7 @@ class _FinancialReportPageState extends ConsumerState<FinancialReportPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر تصدير التقرير: $e')));
+      AppSnack.error(context, friendlyMessage('تعذّر تصدير التقرير', e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }

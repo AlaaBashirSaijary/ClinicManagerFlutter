@@ -37,7 +37,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _local.rememberSession(user.id);
       return Right(user);
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر تسجيل الدخول: $e'));
+      return Left(UnexpectedFailure.from('تعذّر تسجيل الدخول', e));
     }
   }
 
@@ -59,7 +59,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       return Right(await _local.updateName(userId, name.trim()));
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر تحديث الاسم: $e'));
+      return Left(UnexpectedFailure.from('تعذّر تحديث الاسم', e));
     }
   }
 
@@ -87,7 +87,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return const Right(unit);
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر تغيير كلمة المرور: $e'));
+      return Left(UnexpectedFailure.from('تعذّر تغيير كلمة المرور', e));
     }
   }
 
@@ -113,7 +113,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return const Right(unit);
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّرت إعادة تعيين كلمة المرور: $e'));
+      return Left(UnexpectedFailure.from('تعذّرت إعادة تعيين كلمة المرور', e));
     }
   }
 
@@ -122,7 +122,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       return Right(await _local.regenerateRecoveryCode(userId));
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر إنشاء رمز استرداد جديد: $e'));
+      return Left(UnexpectedFailure.from('تعذّر إنشاء رمز استرداد جديد', e));
     }
   }
 
@@ -131,7 +131,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       return Right(await _local.listUsersForClinic(clinicId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة قائمة المستخدمين: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة قائمة المستخدمين', e));
     }
   }
 
@@ -170,7 +170,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on StateError catch (e) {
       return Left(ValidationFailure({'email': e.message}));
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر إنشاء الحساب: $e'));
+      return Left(UnexpectedFailure.from('تعذّر إنشاء الحساب', e));
     }
   }
 
@@ -191,7 +191,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return const Right(unit);
     } catch (e) {
-      return Left(UnexpectedFailure('تعذّر تغيير كلمة المرور: $e'));
+      return Left(UnexpectedFailure.from('تعذّر تغيير كلمة المرور', e));
     }
   }
 
@@ -208,7 +208,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on StateError catch (e) {
       return Left(ValidationFailure({'user': e.message}));
     } catch (e) {
-      return Left(StorageFailure('تعذّر حذف المستخدم: $e'));
+      return Left(StorageFailure.from('تعذّر حذف المستخدم', e));
     }
   }
 }

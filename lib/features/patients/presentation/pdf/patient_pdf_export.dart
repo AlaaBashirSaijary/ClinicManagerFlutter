@@ -12,6 +12,8 @@ import '../../../visits/domain/usecases/get_exam_templates.dart';
 import '../../../visits/domain/usecases/get_visit_field_values_for_visits.dart';
 import '../../../visits/domain/usecases/get_visits.dart';
 import '../../domain/entities/patient.dart';
+import '../../../../core/widgets/app_snack.dart';
+import '../../../../core/error/error_messages.dart';
 
 /// Builds and presents (print/save/share) a full printout of one patient's
 /// إضبارة — their own fields plus every recorded exam visit — the offline
@@ -212,9 +214,7 @@ class _PatientPdfExportButtonState extends State<PatientPdfExportButton> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر تصدير الملف: $e')));
+      AppSnack.error(context, friendlyMessage('تعذّر تصدير الملف', e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }

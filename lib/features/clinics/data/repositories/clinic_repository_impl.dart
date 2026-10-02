@@ -22,7 +22,7 @@ class ClinicRepositoryImpl implements ClinicRepository {
       final models = await _local.list();
       return Right(List<Clinic>.from(models));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة قائمة العيادات: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة قائمة العيادات', e));
     }
   }
 
@@ -34,7 +34,7 @@ class ClinicRepositoryImpl implements ClinicRepository {
     try {
       return Right(await _local.create(name.trim()));
     } catch (e) {
-      return Left(StorageFailure('تعذّر إنشاء العيادة: $e'));
+      return Left(StorageFailure.from('تعذّر إنشاء العيادة', e));
     }
   }
 
@@ -46,7 +46,7 @@ class ClinicRepositoryImpl implements ClinicRepository {
     try {
       return Right(await _local.rename(id, newName.trim()));
     } catch (e) {
-      return Left(StorageFailure('تعذّر تعديل اسم العيادة: $e'));
+      return Left(StorageFailure.from('تعذّر تعديل اسم العيادة', e));
     }
   }
 }

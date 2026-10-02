@@ -23,7 +23,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       return Right(await _local.listBetween(start, end));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة المواعيد: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة المواعيد', e));
     }
   }
 
@@ -34,7 +34,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       return Right(await _local.listUpcoming(limit: limit));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة المواعيد القادمة: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة المواعيد القادمة', e));
     }
   }
 
@@ -50,7 +50,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       );
       return Right(created);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حجز الموعد: $e'));
+      return Left(StorageFailure.from('تعذّر حجز الموعد', e));
     }
   }
 
@@ -66,7 +66,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       );
       return Right(updated);
     } catch (e) {
-      return Left(StorageFailure('تعذّر تحديث الموعد: $e'));
+      return Left(StorageFailure.from('تعذّر تحديث الموعد', e));
     }
   }
 
@@ -81,7 +81,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       );
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حذف الموعد: $e'));
+      return Left(StorageFailure.from('تعذّر حذف الموعد', e));
     }
   }
 
@@ -96,7 +96,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       return Right(await _local.lastConsultationDate(patientId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة سجل الكشفيات: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة سجل الكشفيات', e));
     }
   }
 
@@ -105,7 +105,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       return Right(await _local.getFollowUpDays());
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة إعداد فترة المتابعة: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة إعداد فترة المتابعة', e));
     }
   }
 
@@ -115,7 +115,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       await _local.setFollowUpDays(days);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ إعداد فترة المتابعة: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ إعداد فترة المتابعة', e));
     }
   }
 
@@ -124,7 +124,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       return Right(await _local.getHalfPriceDays());
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة إعداد فترة نصف المعاينة: $e'));
+      return Left(
+        StorageFailure.from('تعذّرت قراءة إعداد فترة نصف المعاينة', e),
+      );
     }
   }
 
@@ -134,7 +136,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       await _local.setHalfPriceDays(days);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ إعداد فترة نصف المعاينة: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ إعداد فترة نصف المعاينة', e));
     }
   }
 
@@ -150,7 +152,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           AppointmentType.fromValue(entry.key): entry.value,
       });
     } catch (e) {
-      return Left(StorageFailure('تعذّر حساب إحصاء المواعيد: $e'));
+      return Left(StorageFailure.from('تعذّر حساب إحصاء المواعيد', e));
     }
   }
 
@@ -164,7 +166,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         await _local.findConflict(scheduledAt, excludeId: excludeId),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّر التحقق من تعارض الموعد: $e'));
+      return Left(StorageFailure.from('تعذّر التحقق من تعارض الموعد', e));
     }
   }
 }

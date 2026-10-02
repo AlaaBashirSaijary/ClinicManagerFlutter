@@ -18,7 +18,7 @@ class MedicalCertificateRepositoryImpl implements MedicalCertificateRepository {
     try {
       return Right(await _local.listForPatient(patientId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة التقارير الطبية: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة التقارير الطبية', e));
     }
   }
 
@@ -31,7 +31,7 @@ class MedicalCertificateRepositoryImpl implements MedicalCertificateRepository {
         await _local.create(MedicalCertificateModel.fromEntity(certificate)),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ التقرير الطبي: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ التقرير الطبي', e));
     }
   }
 }

@@ -28,7 +28,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listForPatient(patientId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة زيارات الفحص: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة زيارات الفحص', e));
     }
   }
 
@@ -42,7 +42,7 @@ class VisitRepositoryImpl implements VisitRepository {
       );
       return Right(created);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ زيارة الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ زيارة الفحص', e));
     }
   }
 
@@ -56,7 +56,7 @@ class VisitRepositoryImpl implements VisitRepository {
       );
       return Right(updated);
     } catch (e) {
-      return Left(StorageFailure('تعذّر تحديث زيارة الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر تحديث زيارة الفحص', e));
     }
   }
 
@@ -73,7 +73,7 @@ class VisitRepositoryImpl implements VisitRepository {
       );
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حذف زيارة الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر حذف زيارة الفحص', e));
     }
   }
 
@@ -82,7 +82,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listDueForFollowUp());
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة المتابعات المستحقة: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة المتابعات المستحقة', e));
     }
   }
 
@@ -94,7 +94,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.financialReport(start, end));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة التقرير المالي: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة التقرير المالي', e));
     }
   }
 
@@ -103,7 +103,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.countDistinctPatientsToday());
     } catch (e) {
-      return Left(StorageFailure('تعذّر حساب مرضى اليوم: $e'));
+      return Left(StorageFailure.from('تعذّر حساب مرضى اليوم', e));
     }
   }
 
@@ -112,7 +112,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listPhotos(visitId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة صور الزيارة: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة صور الزيارة', e));
     }
   }
 
@@ -125,7 +125,7 @@ class VisitRepositoryImpl implements VisitRepository {
       await _local.addPhoto(visitId, imageData);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ الصورة: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ الصورة', e));
     }
   }
 
@@ -135,7 +135,7 @@ class VisitRepositoryImpl implements VisitRepository {
       await _local.deletePhoto(id);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حذف الصورة: $e'));
+      return Left(StorageFailure.from('تعذّر حذف الصورة', e));
     }
   }
 
@@ -146,7 +146,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listPhotosForPatient(patientId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة صور المريض: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة صور المريض', e));
     }
   }
 
@@ -157,7 +157,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listFieldValues(visitId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة بيانات الفحص: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة بيانات الفحص', e));
     }
   }
 
@@ -167,7 +167,7 @@ class VisitRepositoryImpl implements VisitRepository {
     try {
       return Right(await _local.listFieldValuesForVisits(visitIds));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة بيانات الفحص: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة بيانات الفحص', e));
     }
   }
 
@@ -188,7 +188,7 @@ class VisitRepositoryImpl implements VisitRepository {
       ]);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ بيانات الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ بيانات الفحص', e));
     }
   }
 }

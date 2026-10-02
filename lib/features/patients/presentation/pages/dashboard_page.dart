@@ -23,6 +23,8 @@ import 'patient_detail_page.dart';
 import 'patient_form_page.dart';
 import '../providers/dashboard_stats_provider.dart';
 import '../providers/patients_provider.dart';
+import '../../../../core/widgets/app_snack.dart';
+import '../../../../core/error/error_messages.dart';
 
 /// Mirrors resources/views/home.blade.php: search + status filter + list,
 /// scoped to the signed-in user's clinic — plus a real dashboard header
@@ -65,14 +67,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     try {
       await ClinicBackupService.instance.createBackup();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تم إنشاء نسخة احتياطية.')));
+      AppSnack.success(context, 'تم إنشاء نسخة احتياطية.');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر إنشاء نسخة احتياطية: $e')));
+      AppSnack.error(context, friendlyMessage('تعذّر إنشاء نسخة احتياطية', e));
     }
   }
 
@@ -608,9 +606,7 @@ class _UpdateAvailableBanner extends StatelessWidget {
         uri != null &&
         await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح رابط التحديث.')));
+      AppSnack.error(context, 'تعذّر فتح رابط التحديث.');
     }
   }
 

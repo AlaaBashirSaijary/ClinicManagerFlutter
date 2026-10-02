@@ -10,6 +10,8 @@ import '../../../appointments/presentation/widgets/appointment_type_style.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../patients/domain/usecases/get_new_patients_count.dart';
 import '../pdf/monthly_report_pdf_export.dart';
+import '../../../../core/widgets/app_snack.dart';
+import '../../../../core/error/error_messages.dart';
 
 /// A per-month snapshot for the clinic owner: how many paid consultations
 /// and free follow-ups happened, and how many new patients came in — all
@@ -101,9 +103,7 @@ class _MonthlyReportPageState extends ConsumerState<MonthlyReportPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر تصدير التقرير: $e')));
+      AppSnack.error(context, friendlyMessage('تعذّر تصدير التقرير', e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }

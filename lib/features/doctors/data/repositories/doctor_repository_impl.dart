@@ -16,7 +16,7 @@ class DoctorRepositoryImpl implements DoctorRepository {
     try {
       return Right(await _local.list(activeOnly: activeOnly));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة قائمة الأطباء: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة قائمة الأطباء', e));
     }
   }
 
@@ -25,7 +25,7 @@ class DoctorRepositoryImpl implements DoctorRepository {
     try {
       return Right(await _local.create(DoctorModel.fromEntity(doctor)));
     } catch (e) {
-      return Left(StorageFailure('تعذّر إضافة الطبيب: $e'));
+      return Left(StorageFailure.from('تعذّر إضافة الطبيب', e));
     }
   }
 
@@ -34,7 +34,7 @@ class DoctorRepositoryImpl implements DoctorRepository {
     try {
       return Right(await _local.update(DoctorModel.fromEntity(doctor)));
     } catch (e) {
-      return Left(StorageFailure('تعذّر تعديل بيانات الطبيب: $e'));
+      return Left(StorageFailure.from('تعذّر تعديل بيانات الطبيب', e));
     }
   }
 
@@ -50,7 +50,7 @@ class DoctorRepositoryImpl implements DoctorRepository {
       );
       return Right(await _local.update(updated));
     } catch (e) {
-      return Left(StorageFailure('تعذّر تغيير حالة الطبيب: $e'));
+      return Left(StorageFailure.from('تعذّر تغيير حالة الطبيب', e));
     }
   }
 }

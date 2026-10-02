@@ -16,7 +16,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
     try {
       return Right(await _local.list());
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة نموذج الفحص: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة نموذج الفحص', e));
     }
   }
 
@@ -29,7 +29,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
     try {
       return Right(await _local.create(label, hasSides, isLongText));
     } catch (e) {
-      return Left(StorageFailure('تعذّر إضافة حقل الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر إضافة حقل الفحص', e));
     }
   }
 
@@ -50,7 +50,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
         ),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّر تحديث حقل الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر تحديث حقل الفحص', e));
     }
   }
 
@@ -60,7 +60,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
       await _local.delete(id);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حذف حقل الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر حذف حقل الفحص', e));
     }
   }
 
@@ -70,7 +70,7 @@ class ExamTemplateRepositoryImpl implements ExamTemplateRepository {
       await _local.reorder(orderedIds);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('تعذّر إعادة ترتيب حقول الفحص: $e'));
+      return Left(StorageFailure.from('تعذّر إعادة ترتيب حقول الفحص', e));
     }
   }
 }

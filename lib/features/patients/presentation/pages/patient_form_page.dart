@@ -10,6 +10,7 @@ import '../../../appointments/presentation/pages/appointment_form_page.dart';
 import '../../domain/entities/patient.dart';
 import '../../domain/usecases/create_patient.dart';
 import '../../domain/usecases/update_patient.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// One form for both "مريض جديد" and "تعديل إضبارة" — mirrors how the
 /// Laravel side already shares patients._form.blade.php between
@@ -157,9 +158,7 @@ class _PatientFormPageState extends ConsumerState<PatientFormPage> {
           _saving = false;
           if (failure is ValidationFailure) _fieldErrors = failure.fieldErrors;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
+        AppSnack.error(context, failure.message);
       },
       (saved) async {
         if (!_isEdit) {

@@ -18,7 +18,7 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
     try {
       return Right(await _local.listForPatient(patientId));
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة الوصفات الطبية: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة الوصفات الطبية', e));
     }
   }
 
@@ -31,7 +31,7 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
         await _local.create(PrescriptionModel.fromEntity(prescription)),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ الوصفة الطبية: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ الوصفة الطبية', e));
     }
   }
 }

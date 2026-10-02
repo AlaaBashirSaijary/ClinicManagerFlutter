@@ -24,6 +24,7 @@ import '../../domain/usecases/get_visits.dart';
 import '../../domain/usecases/save_visit.dart';
 import '../../domain/usecases/save_visit_field_values.dart';
 import 'exam_template_settings_page.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// A visit's photos live as BLOBs inside the clinic's own SQLite file (see
 /// ClinicDataDatabase) — nothing prunes them, so an unbounded photo count
@@ -336,9 +337,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
     if (error == null) {
       Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      AppSnack.error(context, error);
     }
   }
 
@@ -963,9 +962,7 @@ class _PhotosSectionState extends State<_PhotosSection> {
     setState(() => _adding = false);
 
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       (_) => _load(),
     );
   }
@@ -1016,9 +1013,7 @@ class _PhotosSectionState extends State<_PhotosSection> {
     final result = await sl<DeleteVisitPhoto>().call(photo.id!);
     if (!mounted) return;
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       (_) => _load(),
     );
   }

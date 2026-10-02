@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_mark.dart';
 import 'trial_service.dart';
+import '../../core/widgets/app_snack.dart';
 
 const _supportWhatsAppNumber = '963984668063';
 
@@ -68,9 +69,7 @@ class _TrialGatePageState extends State<TrialGatePage> {
     );
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+      AppSnack.error(context, 'تعذّر فتح واتساب.');
     }
   }
 
@@ -148,12 +147,9 @@ class _TrialGatePageState extends State<TrialGatePage> {
                                       Clipboard.setData(
                                         ClipboardData(text: _deviceCode!),
                                       );
-                                      ScaffoldMessenger.of(
+                                      AppSnack.success(
                                         context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('تم نسخ رمز الجهاز.'),
-                                        ),
+                                        'تم نسخ رمز الجهاز.',
                                       );
                                     },
                             ),

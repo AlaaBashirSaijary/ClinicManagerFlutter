@@ -8,6 +8,7 @@ import '../../domain/usecases/delete_exam_template.dart';
 import '../../domain/usecases/get_exam_templates.dart';
 import '../../domain/usecases/reorder_exam_templates.dart';
 import '../../domain/usecases/save_exam_template.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// Lets a clinic build its own exam form — add/edit/remove/reorder the
 /// rows a visit records, instead of the app assuming any one specialty's
@@ -50,9 +51,7 @@ class _ExamTemplateSettingsPageState extends State<ExamTemplateSettingsPage> {
     final result = await sl<SaveExamTemplate>().call(saved);
     if (!mounted) return;
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       (_) => _load(),
     );
   }
@@ -83,9 +82,7 @@ class _ExamTemplateSettingsPageState extends State<ExamTemplateSettingsPage> {
     final result = await sl<DeleteExamTemplate>().call(template.id!);
     if (!mounted) return;
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       (_) => _load(),
     );
   }

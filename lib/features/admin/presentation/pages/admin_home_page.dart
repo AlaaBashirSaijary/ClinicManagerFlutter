@@ -30,6 +30,7 @@ import '../../../reports/presentation/pages/financial_report_page.dart';
 import '../../../reports/presentation/pages/monthly_report_page.dart';
 import '../../../visits/presentation/pages/exam_template_settings_page.dart';
 import 'activity_log_page.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// The "الإدارة" tab: everything a clinic owner needs to manage their own
 /// account, the clinics registered on this device, and where the data
@@ -225,9 +226,7 @@ class _AccountSection extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (code == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذّر توليد رمز استرداد جديد.')),
-      );
+      AppSnack.error(context, 'تعذّر توليد رمز استرداد جديد.');
       return;
     }
 
@@ -568,9 +567,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
         .read(authProvider.notifier)
         .adminSetPassword(userId: user.id, newPassword: newPassword);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error ?? 'تم تغيير كلمة مرور ${user.name}.')),
-    );
+    AppSnack.error(context, error ?? 'تم تغيير كلمة مرور ${user.name}.');
   }
 
   Future<void> _deleteUser(AppUser user) async {
@@ -600,9 +597,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
         .deleteStaffUser(user.id);
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      AppSnack.error(context, error);
     } else {
       _load();
     }
@@ -876,11 +871,7 @@ class _SecuritySection extends ConsumerWidget {
         .read(appLockProvider.notifier)
         .changePin(currentPin: current, newPin: newPin);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'تم تغيير الرمز.' : 'الرمز الحالي غير صحيح.'),
-      ),
-    );
+    AppSnack.error(context, ok ? 'تم تغيير الرمز.' : 'الرمز الحالي غير صحيح.');
   }
 
   Future<void> _disable(BuildContext context, WidgetRef ref) async {
@@ -893,9 +884,7 @@ class _SecuritySection extends ConsumerWidget {
     final ok = await ref.read(appLockProvider.notifier).disable(current);
     if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('الرمز الحالي غير صحيح.')));
+      AppSnack.error(context, 'الرمز الحالي غير صحيح.');
     }
   }
 
@@ -1257,9 +1246,7 @@ class _DoctorsSection extends ConsumerWidget {
         .read(doctorsProvider.notifier)
         .save((doctor ?? const Doctor(name: '')).copyWith(name: result.trim()));
     if (error != null && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      AppSnack.error(context, error);
     }
   }
 
@@ -2154,9 +2141,7 @@ class _TrialStatusSectionState extends State<_TrialStatusSection> {
   void _copyDeviceCode() {
     if (_deviceCode == null) return;
     Clipboard.setData(ClipboardData(text: _deviceCode!));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('تم نسخ رمز الجهاز.')));
+    AppSnack.success(context, 'تم نسخ رمز الجهاز.');
   }
 
   /// Lets the doctor send their own device code to the vendor proactively
@@ -2172,9 +2157,7 @@ class _TrialStatusSectionState extends State<_TrialStatusSection> {
     );
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+      AppSnack.error(context, 'تعذّر فتح واتساب.');
     }
   }
 
@@ -2330,14 +2313,11 @@ class _SupportSectionState extends ConsumerState<_SupportSection> {
     setState(() => _checkingUpdate = false);
 
     final info = ref.read(updateAvailableProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          info == null
-              ? 'أنتِ على آخر إصدار.'
-              : 'يتوفر إصدار جديد (${info.version}) — راجعي الشريط أعلى الشاشة الرئيسية.',
-        ),
-      ),
+    AppSnack.error(
+      context,
+      info == null
+          ? 'أنتِ على آخر إصدار.'
+          : 'يتوفر إصدار جديد (${info.version}) — راجعي الشريط أعلى الشاشة الرئيسية.',
     );
   }
 
@@ -2350,9 +2330,7 @@ class _SupportSectionState extends ConsumerState<_SupportSection> {
     );
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+      AppSnack.error(context, 'تعذّر فتح واتساب.');
     }
   }
 

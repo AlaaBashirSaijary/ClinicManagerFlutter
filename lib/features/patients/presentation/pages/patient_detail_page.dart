@@ -28,6 +28,7 @@ import '../../domain/usecases/toggle_patient_status.dart';
 import '../../domain/usecases/update_patient.dart';
 import '../pdf/patient_pdf_export.dart';
 import 'patient_form_page.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// Mirrors resources/views/patients/show.blade.php.
 class PatientDetailPage extends ConsumerStatefulWidget {
@@ -102,9 +103,7 @@ class _PatientDetailPageState extends ConsumerState<PatientDetailPage> {
     if (!mounted) return;
     setState(() => _togglingStatus = false);
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       (updated) => setState(() => _patient = updated),
     );
   }
@@ -429,9 +428,7 @@ class _FollowUpPlanCardState extends State<_FollowUpPlanCard> {
     if (!mounted) return;
     setState(() => _saving = false);
     result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => AppSnack.error(context, failure.message),
       widget.onUpdated,
     );
   }

@@ -8,6 +8,7 @@ import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../patients/presentation/pages/patient_detail_page.dart';
 import '../../domain/entities/follow_up_due.dart';
 import '../providers/follow_ups_provider.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// Best-effort normalization for wa.me links: strips everything but digits,
 /// then assumes a local 0-prefixed Syrian number if there's no country
@@ -132,9 +133,7 @@ class _FollowUpCard extends StatelessWidget {
     final uri = Uri(scheme: 'tel', path: item.patientPhone);
     final opened = await launchUrl(uri);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر بدء الاتصال.')));
+      AppSnack.error(context, 'تعذّر بدء الاتصال.');
     }
   }
 
@@ -151,9 +150,7 @@ class _FollowUpCard extends StatelessWidget {
     final uri = Uri.parse('https://wa.me/$number?text=$message');
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر فتح واتساب.')));
+      AppSnack.error(context, 'تعذّر فتح واتساب.');
     }
   }
 

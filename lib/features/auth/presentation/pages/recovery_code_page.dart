@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/widgets/app_snack.dart';
 
 /// Shown exactly once, right after onboarding creates the admin account —
 /// the app is fully offline, so this code (not an email link) is the only
@@ -27,9 +28,7 @@ class _RecoveryCodePageState extends ConsumerState<RecoveryCodePage> {
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: widget.code));
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('تم نسخ الرمز.')));
+    AppSnack.success(context, 'تم نسخ الرمز.');
   }
 
   @override

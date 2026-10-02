@@ -35,7 +35,7 @@ class PatientRepositoryImpl implements PatientRepository {
         ),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة قائمة المرضى: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة قائمة المرضى', e));
     }
   }
 
@@ -48,7 +48,7 @@ class PatientRepositoryImpl implements PatientRepository {
       }
       return Right(patient);
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة بيانات المريض: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة بيانات المريض', e));
     }
   }
 
@@ -62,7 +62,7 @@ class PatientRepositoryImpl implements PatientRepository {
       );
       return Right(created);
     } catch (e) {
-      return Left(StorageFailure('تعذّر حفظ إضبارة المريض: $e'));
+      return Left(StorageFailure.from('تعذّر حفظ إضبارة المريض', e));
     }
   }
 
@@ -80,7 +80,7 @@ class PatientRepositoryImpl implements PatientRepository {
       );
       return Right(updated);
     } catch (e) {
-      return Left(StorageFailure('تعذّر تحديث إضبارة المريض: $e'));
+      return Left(StorageFailure.from('تعذّر تحديث إضبارة المريض', e));
     }
   }
 
@@ -100,7 +100,7 @@ class PatientRepositoryImpl implements PatientRepository {
       );
       return Right(updated);
     } catch (e) {
-      return Left(StorageFailure('تعذّر تحديث حالة المريض: $e'));
+      return Left(StorageFailure.from('تعذّر تحديث حالة المريض', e));
     }
   }
 
@@ -109,7 +109,7 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       return Right(await _local.nextPatientNumber());
     } catch (e) {
-      return Left(StorageFailure('تعذّر توليد رقم المريض: $e'));
+      return Left(StorageFailure.from('تعذّر توليد رقم المريض', e));
     }
   }
 
@@ -125,7 +125,7 @@ class PatientRepositoryImpl implements PatientRepository {
         ),
       );
     } catch (e) {
-      return Left(StorageFailure('تعذّرت قراءة إحصاءات المرضى: $e'));
+      return Left(StorageFailure.from('تعذّرت قراءة إحصاءات المرضى', e));
     }
   }
 
@@ -137,7 +137,7 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       return Right(await _local.countCreatedBetween(start, end));
     } catch (e) {
-      return Left(StorageFailure('تعذّر حساب المرضى الجدد: $e'));
+      return Left(StorageFailure.from('تعذّر حساب المرضى الجدد', e));
     }
   }
 }
