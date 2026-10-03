@@ -17,6 +17,7 @@ import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinic_assistant/presentation/pages/ask_clinic_page.dart';
+import '../../../clinic_defaults/presentation/pages/clinic_defaults_page.dart';
 import '../../../clinics/domain/entities/clinic.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
 import '../../../doctors/domain/entities/doctor.dart';
@@ -71,6 +72,12 @@ class AdminHomePage extends ConsumerWidget {
           subtitle: 'مدير وممرضات وصلاحياتهم',
           onTap: () =>
               _openSection(context, 'المستخدمون', const [_UsersSection()]),
+        ),
+        _Tile(
+          icon: Icons.bolt_rounded,
+          title: 'الأسعار والعبارات السريعة',
+          subtitle: 'تعبئة تلقائية للكشفية والخلاصة',
+          onTap: () => _open(context, const ClinicDefaultsPage()),
         ),
         _Tile(
           icon: Icons.tune_rounded,

@@ -15,7 +15,7 @@ class ClinicDataDatabase {
 
   static final ClinicDataDatabase instance = ClinicDataDatabase._();
 
-  static const _schemaVersion = 14;
+  static const _schemaVersion = 15;
 
   /// The eye-clinic exam rows this app shipped with before exam fields
   /// became doctor-configurable — seeded into every new clinic so existing
@@ -181,6 +181,7 @@ class ClinicDataDatabase {
 
     await _createAppointmentsTable(db);
     await _createClinicSettingsTable(db);
+    await _createPhrasesTable(db);
     await _createVisitPhotosTable(db);
     await _createExamFieldTables(db);
     await _seedDefaultExamFields(db);
@@ -458,7 +459,9 @@ class ClinicDataDatabase {
       CREATE TABLE clinic_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         follow_up_days INTEGER NOT NULL DEFAULT 30,
-        half_price_days INTEGER NOT NULL DEFAULT 60
+        half_price_days INTEGER NOT NULL DEFAULT 60,
+        consultation_fee REAL,
+        checkup_fee REAL
       )
     ''');
     await db.insert('clinic_settings', {
@@ -567,5 +570,38 @@ class ClinicDataDatabase {
     if (oldVersion < 14) {
       await db.execute('ALTER TABLE visits ADD COLUMN exam_summary TEXT');
     }
+    if (oldVersion < 15) {
+      // An upgrade from a very old version recreates clinic_settings above
+      // with these columns already in place, so only add what's missing.
+      final cols = (await db.rawQuery(
+        'PRAGMA table_info(clinic_settings)',
+      )).map((r) => r['name']).toSet();
+      if (!cols.contains('consultation_fee')) {
+        await db.execute(
+          'ALTER TABLE clinic_settings ADD COLUMN consultation_fee REAL',
+        );
+      }
+      if (!cols.contains('checkup_fee')) {
+        await db.execute(
+          'ALTER TABLE clinic_settings ADD COLUMN checkup_fee REAL',
+        );
+      }
+      await _createPhrasesTable(db);
+    }
+  }
+
+  /// Quick phrases for free-text visit fields — each saved text bumps its
+  /// `uses`, so the chips shown in the form are the doctor's own most-used
+  /// wording rather than a fixed list that wouldn't fit every specialty.
+  Future<void> _createPhrasesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS phrases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT NOT NULL,
+        text TEXT NOT NULL,
+        uses INTEGER NOT NULL DEFAULT 1,
+        UNIQUE (kind, text)
+      )
+    ''');
   }
 }

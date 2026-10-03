@@ -3,6 +3,11 @@ import 'package:get_it/get_it.dart';
 import '../database/app_database.dart';
 import '../database/clinic_data_database.dart';
 import '../security/app_lock_service.dart';
+import '../../features/clinic_defaults/data/datasources/clinic_defaults_local_datasource.dart';
+import '../../features/clinic_defaults/data/repositories/clinic_defaults_repository_impl.dart';
+import '../../features/clinic_defaults/domain/repositories/clinic_defaults_repository.dart';
+import '../../features/clinic_defaults/domain/usecases/fee_defaults_usecases.dart';
+import '../../features/clinic_defaults/domain/usecases/phrase_usecases.dart';
 import '../../features/appointments/data/datasources/appointment_local_datasource.dart';
 import '../../features/appointments/data/repositories/appointment_repository_impl.dart';
 import '../../features/appointments/domain/repositories/appointment_repository.dart';
@@ -103,6 +108,17 @@ void setupDependencyInjection() {
   sl.registerFactory(() => GetDoctors(sl()));
   sl.registerFactory(() => SaveDoctor(sl()));
   sl.registerFactory(() => ToggleDoctorStatus(sl()));
+
+  // Clinic defaults (fees per visit type + learned quick phrases)
+  sl.registerLazySingleton(() => ClinicDefaultsLocalDataSource(sl()));
+  sl.registerLazySingleton<ClinicDefaultsRepository>(
+    () => ClinicDefaultsRepositoryImpl(sl()),
+  );
+  sl.registerFactory(() => GetFeeDefaults(sl()));
+  sl.registerFactory(() => SaveFeeDefaults(sl()));
+  sl.registerFactory(() => GetPhrases(sl()));
+  sl.registerFactory(() => RecordPhrase(sl()));
+  sl.registerFactory(() => DeletePhrase(sl()));
 
   // Prescriptions
   sl.registerLazySingleton(() => PrescriptionLocalDataSource(sl()));

@@ -9,6 +9,10 @@ import '../../../../core/usecases/usecase.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../../core/widgets/surface_card.dart';
 import '../../../appointments/domain/usecases/get_follow_up_days.dart';
+import '../../../clinic_defaults/domain/entities/fee_defaults.dart';
+import '../../../clinic_defaults/domain/entities/phrase_kind.dart';
+import '../../../clinic_defaults/domain/usecases/fee_defaults_usecases.dart';
+import '../../../clinic_defaults/domain/usecases/phrase_usecases.dart';
 import '../../../patients/domain/usecases/get_patient.dart';
 import '../../domain/entities/exam_field_template.dart';
 import '../../domain/entities/visit.dart';
@@ -60,6 +64,10 @@ class _VisitFormPageState extends State<VisitFormPage> {
   late VisitType _visitType = widget.visit?.visitType ?? VisitType.consultation;
   final _followUpOutcomeController = TextEditingController();
 
+  FeeDefaults _fees = const FeeDefaults();
+  bool _feeTouched = false;
+  final Map<PhraseKind, List<String>> _phrases = {};
+
   bool _loadingTemplates = true;
   List<ExamFieldTemplate> _templates = [];
   final _singleControllers = <int, TextEditingController>{};
@@ -88,10 +96,53 @@ class _VisitFormPageState extends State<VisitFormPage> {
         : '';
     _followUpOutcomeController.text = widget.visit?.followUpOutcome ?? '';
     _load();
+    _loadPhrases();
     if (!_isEdit) {
       _applyFollowUpPlanDefault();
-      _suggestVisitType();
+      _initTypeAndFee();
     }
+  }
+
+  Future<void> _loadPhrases() async {
+    for (final kind in PhraseKind.values) {
+      final result = await sl<GetPhrases>().call(kind);
+      result.fold((_) {}, (list) => _phrases[kind] = list);
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Order matters: the clinic's default fees load first, then the visit
+  /// type is suggested (first visit / inside the follow-up window), then the
+  /// fee for that type is filled in — so a new visit opens with type and
+  /// fee already set, and the doctor only edits what's different.
+  Future<void> _initTypeAndFee() async {
+    final fees = await sl<GetFeeDefaults>().call(const NoParams());
+    fees.fold((_) {}, (f) => _fees = f);
+    await _suggestVisitType();
+    _applyDefaultFee();
+  }
+
+  /// Fills the fee from the clinic's default for the current type — but only
+  /// for a new visit and only until the doctor types their own amount, so a
+  /// late-arriving default or a type change never overwrites their entry.
+  void _applyDefaultFee() {
+    if (!mounted || _isEdit || _feeTouched) return;
+    final fee = _visitType == VisitType.consultation
+        ? _fees.consultationFee
+        : _fees.checkupFee;
+    setState(() => _feeController.text = _formatAmount(fee));
+  }
+
+  /// Puts a tapped quick phrase into [controller] — replacing an empty field,
+  /// otherwise appending so several phrases can be combined.
+  void _insertPhrase(TextEditingController controller, String phrase) {
+    final current = controller.text.trim();
+    if (current.contains(phrase)) return;
+    controller.text = current.isEmpty ? phrase : '$current، $phrase';
+    controller.selection = TextSelection.collapsed(
+      offset: controller.text.length,
+    );
+    setState(() {});
   }
 
   /// Mirrors the appointments feature's own "متابعة مجانية" window (see
@@ -247,6 +298,21 @@ class _VisitFormPageState extends State<VisitFormPage> {
     await _load();
   }
 
+  /// Anything saved in these two fields becomes a suggestion next time (see
+  /// RecordPhrase) — only short, phrase-like entries, not whole paragraphs.
+  Future<void> _recordPhrases() async {
+    final summary = _examSummaryController.text.trim();
+    if (summary.isNotEmpty && summary.length <= 80) {
+      await sl<RecordPhrase>().call(PhraseParams(PhraseKind.summary, summary));
+    }
+    final outcome = _followUpOutcomeController.text.trim();
+    if (_visitType == VisitType.checkup &&
+        outcome.isNotEmpty &&
+        outcome.length <= 80) {
+      await sl<RecordPhrase>().call(PhraseParams(PhraseKind.outcome, outcome));
+    }
+  }
+
   Future<void> _submit() async {
     setState(() => _saving = true);
 
@@ -314,6 +380,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
       final valuesResult = await sl<SaveVisitFieldValues>().call(
         SaveVisitFieldValuesParams(visitId: saved.id!, values: values),
       );
+      await _recordPhrases();
       final valuesError = valuesResult.fold(
         (failure) => failure.message,
         (_) => null,
@@ -401,7 +468,10 @@ class _VisitFormPageState extends State<VisitFormPage> {
               ButtonSegment(value: type, label: Text(type.label)),
           ],
           selected: {_visitType},
-          onSelectionChanged: (s) => setState(() => _visitType = s.first),
+          onSelectionChanged: (s) {
+            setState(() => _visitType = s.first);
+            _applyDefaultFee();
+          },
           style: SegmentedButton.styleFrom(
             selectedBackgroundColor: AppColors.aqua,
             selectedForegroundColor: Colors.white,
@@ -428,6 +498,10 @@ class _VisitFormPageState extends State<VisitFormPage> {
               labelText: 'نتيجة المتابعة',
               hintText: 'مثلًا: الالتهاب راح، تحسنت الرؤية...',
             ),
+          ),
+          _PhraseChips(
+            phrases: _phrases[PhraseKind.outcome] ?? const [],
+            onPick: (p) => _insertPhrase(_followUpOutcomeController, p),
           ),
         ],
       ],
@@ -474,6 +548,10 @@ class _VisitFormPageState extends State<VisitFormPage> {
           maxLines: 3,
           decoration: const InputDecoration(labelText: 'خلاصة الفحص'),
         ),
+        _PhraseChips(
+          phrases: _phrases[PhraseKind.summary] ?? const [],
+          onPick: (p) => _insertPhrase(_examSummaryController, p),
+        ),
         const SizedBox(height: AppSpacing.md),
         TextField(
           controller: _notesController,
@@ -491,6 +569,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
       children: [
         TextField(
           controller: _feeController,
+          onChanged: (_) => _feeTouched = true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: const InputDecoration(
             labelText: 'المبلغ (اختياري)',
@@ -1349,6 +1428,42 @@ class _PendingPhotosSectionState extends State<_PendingPhotosSection> {
             'سيتم حفظ الصور مع الزيارة عند الضغط على "حفظ الزيارة".',
             style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The doctor's own most-used phrases as tappable chips under a free-text
+/// field — one tap instead of retyping the same wording visit after visit.
+class _PhraseChips extends StatelessWidget {
+  const _PhraseChips({required this.phrases, required this.onPick});
+
+  final List<String> phrases;
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    if (phrases.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final phrase in phrases.take(8))
+            ActionChip(
+              label: Text(phrase),
+              labelStyle: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.aquaDeep,
+              ),
+              backgroundColor: AppColors.aqua.withValues(alpha: 0.08),
+              side: BorderSide.none,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => onPick(phrase),
+            ),
         ],
       ),
     );
