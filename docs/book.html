@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0C6E85">
+<meta name="robots" content="noindex, nofollow">
+<title>حجز موعد</title>
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#F6F1E6; --raised:#FFFDF9; --ink:#1C2320; --soft:#56615A;
+    --teal:#0C6E85; --teal-deep:#073F4D; --teal-tint:#E3ECEA;
+    --coral:#E1592C; --wa:#1FA855; --line:#E4DAC7; --line-strong:#D3C6AC;
+    --danger:#B42318;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0D1513; --raised:#161F1C; --ink:#F1ECE0; --soft:#B8C0B8;
+      --teal:#55C9DE; --teal-deep:#9AE2EE; --teal-tint:#132327;
+      --coral:#FF8557; --line:#25322C; --line-strong:#324139; --danger:#FF8A80;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;line-height:1.7;
+    padding:20px 16px 48px}
+  .wrap{max-width:520px;margin-inline:auto}
+  header{text-align:center;padding:12px 0 22px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;
+    color:var(--teal-deep);background:var(--teal-tint);padding:6px 14px;border-radius:999px}
+  h1{font-family:'Markazi Text',serif;font-size:34px;line-height:1.15;margin:14px 0 6px}
+  header p{margin:0;color:var(--soft);font-size:14px}
+  form{background:var(--raised);border:1px solid var(--line);border-radius:22px;
+    padding:22px 18px;box-shadow:0 24px 56px -34px rgba(20,25,20,.45);display:flex;
+    flex-direction:column;gap:20px}
+  label,.label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
+  input[type=text],input[type=tel],textarea{width:100%;font:inherit;font-size:15px;color:var(--ink);
+    background:var(--paper);border:1.5px solid var(--line-strong);border-radius:14px;
+    padding:12px 14px}
+  input:focus,textarea:focus{outline:none;border-color:var(--teal)}
+  textarea{resize:vertical;min-height:70px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);background:var(--paper);
+    border:1.5px solid var(--line-strong);border-radius:999px;padding:9px 15px;cursor:pointer;
+    transition:background .15s,border-color .15s}
+  .chip small{display:block;font-size:10.5px;color:var(--soft);font-weight:500}
+  .chip[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+  .chip[aria-pressed=true] small{color:rgba(255,255,255,.85)}
+  .submit{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    font:inherit;font-weight:700;font-size:16px;color:#fff;background:var(--wa);border:0;
+    border-radius:999px;padding:15px;cursor:pointer;box-shadow:0 16px 28px -14px rgba(31,168,85,.8)}
+  .submit svg{width:20px;height:20px}
+  .error{color:var(--danger);font-size:13px;min-height:1.2em;margin:0}
+  .note{text-align:center;color:var(--soft);font-size:12px;margin:14px 0 0}
+  .fatal{text-align:center;padding:40px 10px;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <noscript><p class="fatal">يلزم تفعيل جافاسكربت لإتمام الحجز.</p></noscript>
+</div>
+
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var clinic = (q.get('c') || '').trim();
+  var wa = (q.get('w') || '').replace(/\D/g, '');
+  var days = (q.get('d') || '').split(',').map(Number).filter(function(n){ return n >= 0 && n <= 6; });
+  var from = parseInt(q.get('f'), 10);
+  var to = parseInt(q.get('t'), 10);
+  var app = document.getElementById('app');
+
+  if (wa.length < 9 || !days.length || !(from >= 0 && to > from && to <= 24)) {
+    app.innerHTML = '<p class="fatal">رابط الحجز غير صالح. اطلب الرابط من العيادة مرة أخرى.</p>';
+    return;
+  }
+
+  var weekdays = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var selectedDay = null, selectedTime = null;
+
+  function esc(s){ return s.replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function timeLabel(h){
+    var h12 = h % 12 === 0 ? 12 : h % 12;
+    return h12 + ':00 ' + (h < 12 ? 'صباحًا' : 'مساءً');
+  }
+
+  var options = [];
+  var today = new Date(); today.setHours(0,0,0,0);
+  for (var i = 0; i < 21 && options.length < 12; i++) {
+    var d = new Date(today); d.setDate(today.getDate() + i);
+    if (days.indexOf(d.getDay()) === -1) continue;
+    var tag = i === 0 ? 'اليوم' : (i === 1 ? 'غدًا' : '');
+    options.push({
+      label: weekdays[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1),
+      tag: tag
+    });
+  }
+
+  var times = [];
+  for (var h = from; h < to; h++) times.push(h);
+
+  app.innerHTML =
+    '<header><span class="badge">حجز موعد</span>' +
+    '<h1>' + (clinic ? esc(clinic) : 'احجز موعدك') + '</h1>' +
+    '<p>اختر اليوم والوقت المناسبين، ثم أرسل الطلب عبر واتساب.</p></header>' +
+    '<form id="f" novalidate>' +
+      '<div><label for="name">الاسم الكامل</label><input id="name" type="text" autocomplete="name" required></div>' +
+      '<div><label for="phone">رقم الهاتف</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="09XXXXXXXX" dir="ltr" required></div>' +
+      '<div><span class="label">اليوم</span><div class="chips" id="days"></div></div>' +
+      '<div><span class="label">الوقت</span><div class="chips" id="times"></div></div>' +
+      '<div><label for="reason">سبب الزيارة (اختياري)</label><textarea id="reason"></textarea></div>' +
+      '<p class="error" id="err" role="alert"></p>' +
+      '<button class="submit" type="submit">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.33 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.11c-.24.68-1.4 1.32-1.93 1.4-.49.08-1.11.11-1.79-.11-.41-.13-.94-.3-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94s.73-2.09.99-2.38c.26-.28.56-.35.75-.35h.54c.17 0 .41-.02.62.48.24.58.81 2 .88 2.15.07.15.11.32.02.51-.08.19-.13.3-.26.46-.13.16-.28.36-.4.48-.13.13-.27.27-.12.53.15.26.67 1.11 1.44 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.17.65-.76.83-1.02.17-.26.34-.21.57-.13.24.09 1.5.71 1.76.84.26.13.43.19.49.3.07.11.07.61-.17 1.29z"/></svg>' +
+        'إرسال طلب الحجز عبر واتساب</button>' +
+    '</form>' +
+    '<p class="note">سيصلك تأكيد الموعد من العيادة على واتساب.</p>';
+
+  function renderChips(id, items, getLabel, getTag, onPick){
+    var box = document.getElementById(id);
+    items.forEach(function(item, idx){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'false');
+      var tag = getTag ? getTag(item) : '';
+      b.innerHTML = esc(getLabel(item)) + (tag ? '<small>' + tag + '</small>' : '');
+      b.addEventListener('click', function(){
+        Array.prototype.forEach.call(box.children, function(c){ c.setAttribute('aria-pressed', 'false'); });
+        b.setAttribute('aria-pressed', 'true');
+        onPick(item);
+      });
+      box.appendChild(b);
+    });
+  }
+  renderChips('days', options, function(o){ return o.label; }, function(o){ return o.tag; }, function(o){ selectedDay = o; });
+  renderChips('times', times, timeLabel, null, function(t){ selectedTime = t; });
+
+  document.getElementById('f').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('name').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    var reason = document.getElementById('reason').value.trim();
+    var err = document.getElementById('err');
+    var digits = phone.replace(/[^\d٠-٩]/g, '');
+    if (!name) { err.textContent = 'اكتب اسمك الكامل.'; return; }
+    if (digits.length < 9) { err.textContent = 'اكتب رقم هاتف صحيح.'; return; }
+    if (!selectedDay) { err.textContent = 'اختر اليوم.'; return; }
+    if (selectedTime === null) { err.textContent = 'اختر الوقت.'; return; }
+    err.textContent = '';
+
+    // The labels below are exactly what the clinic app's booking-message
+    // reader looks for (الاسم / الهاتف / اليوم / الوقت / السبب).
+    var lines = [
+      'طلب حجز موعد',
+      'الاسم: ' + name,
+      'الهاتف: ' + phone,
+      'اليوم: ' + selectedDay.label,
+      'الوقت: الساعة ' + timeLabel(selectedTime)
+    ];
+    if (reason) lines.push('السبب: ' + reason);
+    location.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(lines.join('\n'));
+  });
+})();
+</script>
+</body>
+</html>

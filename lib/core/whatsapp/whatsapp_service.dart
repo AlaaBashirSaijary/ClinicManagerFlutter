@@ -32,6 +32,11 @@ class WhatsAppService {
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  /// Opens any WhatsApp URL (e.g. wa.me/?text=… with no recipient, so the
+  /// user picks the contact themselves).
+  static Future<bool> openUri(Uri uri) =>
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+
   /// Arabic-Indic (٠-٩) and Persian (۰-۹) digits to ASCII, so numbers typed
   /// or pasted from an Arabic keyboard still normalize.
   static String _asciiDigits(String input) {

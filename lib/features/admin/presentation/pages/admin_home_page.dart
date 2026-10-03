@@ -17,6 +17,7 @@ import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinic_assistant/presentation/pages/ask_clinic_page.dart';
+import '../../../appointments/presentation/pages/booking_link_page.dart';
 import '../../../clinic_defaults/presentation/pages/clinic_defaults_page.dart';
 import '../../../clinics/domain/entities/clinic.dart';
 import '../../../clinics/presentation/providers/active_clinic_provider.dart';
@@ -72,6 +73,12 @@ class AdminHomePage extends ConsumerWidget {
           subtitle: 'مدير وممرضات وصلاحياتهم',
           onTap: () =>
               _openSection(context, 'المستخدمون', const [_UsersSection()]),
+        ),
+        _Tile(
+          icon: Icons.qr_code_2_rounded,
+          title: 'رابط الحجز عبر واتساب',
+          subtitle: 'رابط وQR يحجز به المرضى من هواتفهم',
+          onTap: () => _open(context, const BookingLinkPage()),
         ),
         _Tile(
           icon: Icons.bolt_rounded,

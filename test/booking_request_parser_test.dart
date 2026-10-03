@@ -47,4 +47,18 @@ void main() {
   test('unrelated text yields an empty request', () {
     expect(BookingRequestParser.parse('شكرا دكتور', now: now).isEmpty, isTrue);
   });
+
+  test('reads exactly what docs/book.html sends', () {
+    // Copied from the message built in docs/book.html's submit handler.
+    final r = BookingRequestParser.parse(
+      'طلب حجز موعد\nالاسم: فاطمة علي\nالهاتف: 0944 123 456\n'
+      'اليوم: الأحد 4/10\nالوقت: الساعة 5:00 مساءً\nالسبب: ألم بالعين',
+      now: DateTime(2026, 10, 3, 9),
+    );
+    expect(r.name, 'فاطمة علي');
+    expect(r.phone, '0944123456');
+    expect(r.day, DateTime(2026, 10, 4));
+    expect(r.time, (hour: 17, minute: 0));
+    expect(r.reason, 'ألم بالعين');
+  });
 }
