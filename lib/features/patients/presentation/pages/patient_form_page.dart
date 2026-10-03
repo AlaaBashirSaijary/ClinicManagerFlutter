@@ -16,9 +16,25 @@ import '../../../../core/widgets/app_snack.dart';
 /// Laravel side already shares patients._form.blade.php between
 /// create.blade.php and edit.blade.php. [patient] is null in create mode.
 class PatientFormPage extends ConsumerStatefulWidget {
-  const PatientFormPage({super.key, this.patient});
+  const PatientFormPage({
+    super.key,
+    this.patient,
+    this.initialName,
+    this.initialPhone,
+    this.onCreated,
+  });
 
   final Patient? patient;
+
+  /// Pre-fills a brand-new patient — used when the record is being created
+  /// from a pasted WhatsApp booking request (see BookingFromMessagePage).
+  final String? initialName;
+  final String? initialPhone;
+
+  /// Runs right after a new patient is saved, in place of the default "book
+  /// an appointment now?" prompt — lets a caller that is already in the
+  /// middle of a booking continue it with the patient it just created.
+  final Future<void> Function(Patient patient)? onCreated;
 
   @override
   ConsumerState<PatientFormPage> createState() => _PatientFormPageState();
@@ -31,10 +47,10 @@ class _PatientFormPageState extends ConsumerState<PatientFormPage> {
     text: widget.patient?.patientNumber ?? '',
   );
   late final _fullNameController = TextEditingController(
-    text: widget.patient?.fullName ?? '',
+    text: widget.patient?.fullName ?? widget.initialName ?? '',
   );
   late final _phoneController = TextEditingController(
-    text: widget.patient?.phone ?? '',
+    text: widget.patient?.phone ?? widget.initialPhone ?? '',
   );
   late final _addressController = TextEditingController(
     text: widget.patient?.address ?? '',
@@ -162,7 +178,11 @@ class _PatientFormPageState extends ConsumerState<PatientFormPage> {
       },
       (saved) async {
         if (!_isEdit) {
-          await _offerBooking(saved);
+          if (widget.onCreated != null) {
+            await widget.onCreated!(saved);
+          } else {
+            await _offerBooking(saved);
+          }
         }
         if (!mounted) return;
         Navigator.of(context).pop(true);

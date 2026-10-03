@@ -5,7 +5,11 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../../../../core/whatsapp/whatsapp_service.dart';
+import '../../../../core/widgets/app_snack.dart';
 import '../../../../core/widgets/brand_mark.dart';
+import '../../../clinics/presentation/providers/active_clinic_provider.dart';
+import '../util/appointment_messages.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../doctors/presentation/providers/doctors_provider.dart';
@@ -19,7 +23,9 @@ import '../../../visits/presentation/providers/follow_ups_provider.dart';
 import '../providers/appointments_provider.dart';
 import '../widgets/appointment_type_style.dart';
 import 'appointment_form_page.dart';
+import 'booking_from_message_page.dart';
 import 'queue_display_page.dart';
+import 'tomorrow_reminders_page.dart';
 
 /// Day-by-day view of scheduled appointments — the future-looking
 /// counterpart to the patients dashboard, which only shows history.
@@ -116,6 +122,28 @@ class AppointmentsPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _sendWhatsApp(
+    BuildContext context,
+    WidgetRef ref,
+    Appointment appointment,
+    AppointmentMessageKind kind,
+  ) async {
+    final phone = appointment.patientPhone;
+    if (WhatsAppService.normalize(phone) == null) {
+      AppSnack.info(context, 'لا يوجد رقم هاتف مسجَّل لهذا المريض.');
+      return;
+    }
+    final message = AppointmentMessages.build(
+      kind: kind,
+      appointment: appointment,
+      clinicName: ref.read(activeClinicProvider).active?.name ?? '',
+    );
+    final opened = await WhatsAppService.open(phone!, message);
+    if (!opened && context.mounted) {
+      AppSnack.error(context, 'تعذّر فتح واتساب على هذا الجهاز.');
+    }
+  }
+
   /// Confirms, then deletes and reports whether it actually happened — used
   /// directly as [Dismissible.confirmDismiss] so the swipe-away animation
   /// only plays through once the delete is real, instead of firing the
@@ -178,6 +206,17 @@ class AppointmentsPage extends ConsumerWidget {
             onQueueDisplay: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const QueueDisplayPage())),
+            onFromMessage: () async {
+              final saved = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => const BookingFromMessagePage(),
+                ),
+              );
+              if (saved == true) notifier.loadDay(day);
+            },
+            onReminders: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TomorrowRemindersPage()),
+            ),
             total: visible.length,
             full: fullCount,
             half: halfCount,
@@ -263,6 +302,8 @@ class AppointmentsPage extends ConsumerWidget {
                                 );
                             if (saved == true) notifier.loadDay(day);
                           },
+                          onWhatsApp: (kind) =>
+                              _sendWhatsApp(context, ref, appointment, kind),
                           onConfirmDelete: () =>
                               _confirmAndDelete(context, ref, appointment),
                           onQuickComplete: () => notifier.save(
@@ -315,6 +356,8 @@ class _AppointmentsHeader extends StatelessWidget {
   const _AppointmentsHeader({
     required this.onSettings,
     required this.onQueueDisplay,
+    required this.onFromMessage,
+    required this.onReminders,
     required this.total,
     required this.full,
     required this.half,
@@ -323,6 +366,8 @@ class _AppointmentsHeader extends StatelessWidget {
 
   final VoidCallback onSettings;
   final VoidCallback onQueueDisplay;
+  final VoidCallback onFromMessage;
+  final VoidCallback onReminders;
   final int total;
   final int full;
   final int half;
@@ -360,6 +405,19 @@ class _AppointmentsHeader extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ),
+                  IconButton(
+                    tooltip: 'حجز من رسالة واتساب',
+                    icon: const Icon(Icons.chat_rounded, color: Colors.white),
+                    onPressed: onFromMessage,
+                  ),
+                  IconButton(
+                    tooltip: 'تذكيرات الغد',
+                    icon: const Icon(
+                      Icons.notifications_active_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: onReminders,
                   ),
                   IconButton(
                     tooltip: 'شاشة الانتظار',
@@ -583,6 +641,7 @@ class _AppointmentCard extends StatelessWidget {
     required this.appointment,
     required this.timeFormat,
     required this.onTap,
+    required this.onWhatsApp,
     required this.onConfirmDelete,
     required this.onQuickComplete,
     required this.onStartVisit,
@@ -591,6 +650,10 @@ class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final DateFormat timeFormat;
   final VoidCallback onTap;
+
+  /// Opens WhatsApp with a ready message (confirm / remind / reschedule) —
+  /// patients mostly book and talk over WhatsApp, so this lives on the card.
+  final void Function(AppointmentMessageKind kind) onWhatsApp;
 
   /// Shows the confirm dialog and, if accepted, deletes — returns whether
   /// it actually happened, so the swipe-away animation only completes on
@@ -745,6 +808,19 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                 ),
                 if (appointment.status == AppointmentStatus.scheduled) ...[
+                  PopupMenuButton<AppointmentMessageKind>(
+                    tooltip: 'رسالة واتساب',
+                    onSelected: onWhatsApp,
+                    icon: const Icon(
+                      Icons.chat_rounded,
+                      color: Color(0xFF1FA855),
+                      size: 20,
+                    ),
+                    itemBuilder: (_) => [
+                      for (final kind in AppointmentMessageKind.values)
+                        PopupMenuItem(value: kind, child: Text(kind.label)),
+                    ],
+                  ),
                   _QuickActionButton(
                     tooltip: 'ابدئي الفحص',
                     icon: Icons.medical_information_outlined,

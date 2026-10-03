@@ -23,6 +23,8 @@ class AppointmentFormPage extends ConsumerStatefulWidget {
     this.appointment,
     this.initialDay,
     this.preselectedPatient,
+    this.initialTime,
+    this.initialNotes,
   });
 
   final Appointment? appointment;
@@ -35,6 +37,11 @@ class AppointmentFormPage extends ConsumerStatefulWidget {
   /// Skips the patient search step — used when this form is opened right
   /// after creating that patient (see PatientFormPage's "book now?" prompt).
   final Patient? preselectedPatient;
+
+  /// Pre-fill from a pasted WhatsApp booking request (see
+  /// BookingFromMessagePage) — only used for a brand-new booking.
+  final TimeOfDay? initialTime;
+  final String? initialNotes;
 
   @override
   ConsumerState<AppointmentFormPage> createState() =>
@@ -85,7 +92,8 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     } else {
       final day = widget.initialDay ?? DateTime.now();
       _date = DateTime(day.year, day.month, day.day);
-      _time = TimeOfDay.now();
+      _time = widget.initialTime ?? TimeOfDay.now();
+      _notesController.text = widget.initialNotes ?? '';
 
       final preselected = widget.preselectedPatient;
       if (preselected != null) {
