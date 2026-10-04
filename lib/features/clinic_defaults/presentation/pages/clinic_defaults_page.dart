@@ -132,7 +132,7 @@ class _ClinicDefaultsPageState extends State<ClinicDefaultsPage> {
                             decimal: true,
                           ),
                           decoration: const InputDecoration(
-                            labelText: 'مراجعة (كشفية كاملة)',
+                            labelText: 'معاينة (كشفية كاملة)',
                             suffixText: 'ل.س',
                           ),
                         ),
@@ -143,7 +143,7 @@ class _ClinicDefaultsPageState extends State<ClinicDefaultsPage> {
                             decimal: true,
                           ),
                           decoration: const InputDecoration(
-                            labelText: 'معاينة (نصف السعر أو مجانية)',
+                            labelText: 'مراجعة (نصف السعر أو مجانية)',
                             hintText: 'اتركه فارغًا إن كانت مجانية',
                             suffixText: 'ل.س',
                           ),

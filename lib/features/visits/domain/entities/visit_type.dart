@@ -1,4 +1,4 @@
-/// Whether a visit is a full paid consultation or a reduced/free recheck —
+/// Whether a visit is a full-price معاينة or a reduced/free مراجعة —
 /// distinct from [Visit.needsFollowUp] (which flags that a *future* visit is
 /// needed). This instead classifies the visit being recorded right now.
 ///
@@ -14,7 +14,7 @@ enum VisitType {
   checkup;
 
   String get label => switch (this) {
-    VisitType.consultation => 'مراجعة',
-    VisitType.checkup => 'معاينة',
+    VisitType.consultation => 'معاينة',
+    VisitType.checkup => 'مراجعة',
   };
 }

@@ -37,16 +37,15 @@ class Visit extends Equatable {
   /// clear place a later visit's doctor looks first.
   final String? examSummary;
 
-  /// مراجعة (full paid consultation) vs معاينة (a reduced/free recheck within
+  /// معاينة (full-price visit) vs مراجعة (a reduced/free recheck within
   /// the clinic's follow-up window). Defaults to [VisitType.consultation];
   /// the form suggests [VisitType.checkup] instead once this visit falls
   /// inside the follow-up-days window after the patient's last consultation,
   /// but the doctor can always override it — see [VisitType].
   final VisitType visitType;
 
-  /// What happened at this checkup — free text like "الالتهاب راح" or
-  /// "ما تحسّن، بحاجة لعملية". Only meaningful when [visitType] is
-  /// [VisitType.checkup]; null for a full consultation visit.
+  /// What happened since the last visit — free text like "الالتهاب راح" or
+  /// "ما تحسّن، بحاجة لعملية". Recorded for either visit type.
   final String? followUpOutcome;
 
   /// The doctor's own judgment call at the time of this visit — "this

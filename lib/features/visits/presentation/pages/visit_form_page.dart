@@ -306,9 +306,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
       await sl<RecordPhrase>().call(PhraseParams(PhraseKind.summary, summary));
     }
     final outcome = _followUpOutcomeController.text.trim();
-    if (_visitType == VisitType.checkup &&
-        outcome.isNotEmpty &&
-        outcome.length <= 80) {
+    if (outcome.isNotEmpty && outcome.length <= 80) {
       await sl<RecordPhrase>().call(PhraseParams(PhraseKind.outcome, outcome));
     }
   }
@@ -338,11 +336,9 @@ class _VisitFormPageState extends State<VisitFormPage> {
       amountPaid: fee == null ? null : (enteredPaid ?? fee),
       createdAt: widget.visit?.createdAt,
       visitType: _visitType,
-      followUpOutcome: _visitType == VisitType.checkup
-          ? (_followUpOutcomeController.text.trim().isEmpty
-                ? null
-                : _followUpOutcomeController.text.trim())
-          : null,
+      followUpOutcome: _followUpOutcomeController.text.trim().isEmpty
+          ? null
+          : _followUpOutcomeController.text.trim(),
     );
 
     final result = await sl<SaveVisit>().call(visit);
@@ -489,7 +485,7 @@ class _VisitFormPageState extends State<VisitFormPage> {
               : 'ضمن فترة المتابعة — غالبًا نصف السعر أو مجانية.',
           style: const TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
         ),
-        if (_visitType == VisitType.checkup) ...[
+        ...[
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _followUpOutcomeController,
