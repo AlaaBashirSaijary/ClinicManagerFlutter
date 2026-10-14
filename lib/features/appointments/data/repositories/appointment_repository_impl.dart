@@ -125,7 +125,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       return Right(await _local.getHalfPriceDays());
     } catch (e) {
       return Left(
-        StorageFailure.from('تعذّرت قراءة إعداد فترة نصف المعاينة', e),
+        StorageFailure.from('تعذّرت قراءة إعداد فترة المراجعة بنصف السعر', e),
       );
     }
   }
@@ -136,7 +136,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       await _local.setHalfPriceDays(days);
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure.from('تعذّر حفظ إعداد فترة نصف المعاينة', e));
+      return Left(
+        StorageFailure.from('تعذّر حفظ إعداد فترة المراجعة بنصف السعر', e),
+      );
     }
   }
 

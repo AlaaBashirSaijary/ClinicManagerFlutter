@@ -36,9 +36,9 @@ class MonthlyReportPdfExport {
             1: pw.FlexColumnWidth(1.2),
           },
           children: [
-            _row('كشفيات مدفوعة', consultations),
-            _row('نصف معاينة', halfConsultations),
-            _row('متابعات مجانية', followUps),
+            _row('معاينات مدفوعة', consultations),
+            _row('مراجعات بنصف السعر', halfConsultations),
+            _row('مراجعات مجانية', followUps),
             _row('مرضى جدد', newPatients),
             _row(
               'إجمالي المواعيد',

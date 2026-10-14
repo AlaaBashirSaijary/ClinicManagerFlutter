@@ -65,7 +65,7 @@ class AppointmentsPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'عدد الأيام بعد الكشفية التي تُعتبر خلالها مواعيد المتابعة '
+              'عدد الأيام بعد المعاينة التي تُعتبر خلالها مواعيد المراجعة '
               'مجانية تلقائيًا.',
               style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
             ),
@@ -76,13 +76,13 @@ class AppointmentsPage extends ConsumerWidget {
               textDirection: TextDirection.ltr,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'متابعة مجانية (يوم)',
+                labelText: 'مراجعة مجانية (يوم)',
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             const Text(
               'عدد الأيام الإضافية بعدها — حتى هذا الحد تُعتبر المواعيد '
-              '"نصف معاينة" (نصف الأجرة)، وبعده تعود كشفية كاملة.',
+              '"مراجعة بنصف السعر"، وبعده تعود معاينة كاملة.',
               style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -91,7 +91,7 @@ class AppointmentsPage extends ConsumerWidget {
               textDirection: TextDirection.ltr,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'نصف معاينة حتى (يوم)',
+                labelText: 'مراجعة بنصف السعر حتى (يوم)',
               ),
             ),
           ],
@@ -446,7 +446,7 @@ class _AppointmentsHeader extends StatelessWidget {
                     child: _HeaderStat(
                       icon: AppointmentType.consultation.icon,
                       value: '$full',
-                      label: 'كشفية',
+                      label: 'معاينة',
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -454,7 +454,7 @@ class _AppointmentsHeader extends StatelessWidget {
                     child: _HeaderStat(
                       icon: AppointmentType.halfConsultation.icon,
                       value: '$half',
-                      label: 'نصف معاينة',
+                      label: 'مراجعة ½',
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -462,7 +462,7 @@ class _AppointmentsHeader extends StatelessWidget {
                     child: _HeaderStat(
                       icon: AppointmentType.followUp.icon,
                       value: '$free',
-                      label: 'متابعة',
+                      label: 'مراجعة مجانية',
                     ),
                   ),
                 ],

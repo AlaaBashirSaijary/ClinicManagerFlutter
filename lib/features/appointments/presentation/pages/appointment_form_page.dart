@@ -257,7 +257,7 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     final suggestion = _suggestion;
     if (suggestion == null) return null;
     if (suggestion.lastConsultationDate == null) {
-      return 'لا توجد كشفية سابقة — مقترحة كـ"كشفية".';
+      return 'لا توجد معاينة سابقة — مقترحة كـ"معاينة".';
     }
     final daysSince = DateTime.now()
         .difference(suggestion.lastConsultationDate!)
@@ -265,13 +265,13 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     switch (suggestion.suggestedType) {
       case AppointmentType.followUp:
         final remaining = suggestion.followUpDays - daysSince;
-        return 'ضمن فترة المتابعة المجانية (متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
+        return 'ضمن فترة المراجعة المجانية (متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
       case AppointmentType.halfConsultation:
         final remaining = suggestion.halfPriceDays - daysSince;
-        return 'انتهت فترة المتابعة المجانية — ضمن فترة نصف المعاينة '
+        return 'انتهت فترة المراجعة المجانية — ضمن فترة المراجعة بنصف السعر '
             '(متبقّي ${remaining < 0 ? 0 : remaining} يوم).';
       case AppointmentType.consultation:
-        return 'انتهت فترة نصف المعاينة (${suggestion.halfPriceDays} يوم) منذ آخر كشفية.';
+        return 'انتهت فترة المراجعة بنصف السعر (${suggestion.halfPriceDays} يوم) منذ آخر معاينة.';
     }
   }
 

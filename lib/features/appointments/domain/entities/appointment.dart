@@ -34,9 +34,9 @@ enum AppointmentType {
   followUp;
 
   String get label => switch (this) {
-    AppointmentType.consultation => 'كشفية',
-    AppointmentType.halfConsultation => 'نصف معاينة',
-    AppointmentType.followUp => 'متابعة',
+    AppointmentType.consultation => 'معاينة',
+    AppointmentType.halfConsultation => 'مراجعة بنصف السعر',
+    AppointmentType.followUp => 'مراجعة مجانية',
   };
 
   /// True for both full and half-price consultations — only a free
