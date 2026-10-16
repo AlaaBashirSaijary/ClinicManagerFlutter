@@ -1,0 +1,10 @@
+{
+  "teal":   {"label":"فيروزي",  "color":"#1287A0"},
+  "green":  {"label":"أخضر",    "color":"#2F7D4F"},
+  "indigo": {"label":"نيلي",    "color":"#2B3F8C"},
+  "rose":   {"label":"وردي",    "color":"#B8475A"},
+  "amber":  {"label":"عنبري",   "color":"#B7791F"},
+  "violet": {"label":"بنفسجي",  "color":"#6D45B5"},
+  "slate":  {"label":"رمادي أزرق","color":"#3E5C76"},
+  "coral":  {"label":"مرجاني",  "color":"#D1553A"}
+}

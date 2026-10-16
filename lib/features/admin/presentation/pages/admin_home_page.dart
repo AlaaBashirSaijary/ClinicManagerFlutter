@@ -14,6 +14,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/trial/trial_service.dart';
 import '../../../../core/update/update_provider.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../clinic_page/presentation/pages/clinic_page_page.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../clinic_assistant/presentation/pages/ask_clinic_page.dart';
@@ -79,6 +80,12 @@ class AdminHomePage extends ConsumerWidget {
           title: 'رابط الحجز عبر واتساب',
           subtitle: 'رابط وQR يحجز به المرضى من هواتفهم',
           onTap: () => _open(context, const BookingLinkPage()),
+        ),
+        _Tile(
+          icon: Icons.language_rounded,
+          title: 'صفحة عيادتي على الإنترنت',
+          subtitle: 'صفحة احترافية بحجز واتساب وتصميم يختاره الطبيب',
+          onTap: () => _open(context, const ClinicPagePage()),
         ),
         _Tile(
           icon: Icons.bolt_rounded,
